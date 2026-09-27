@@ -20,10 +20,13 @@ _Last updated: 2026-09-27_
 - Must be deployed by someone with EDIT access (the requester has View only).
 - 2026-09-27: user's live test on a copy got as far as `getState` → found the `27-Sep` tab but the
   header differed ("Sahaja Yoga ( IND) Speaker Name", no mobile column) → fixed with word-based
-  header matching. Needs a re-run of getState + deploy on the copy.
+  header matching.
+- 2026-09-27: LIVE TEST PASSED on the user's own copy of the sheet (deployed web app):
+  page load on 27-Sep, claim, release, two-device race, sheet→page refresh all confirmed.
 - Only the `27-Sep` and `28-Sep` layouts were seen (via screenshots). Other tabs may differ;
   if not, the page errors loudly rather than guessing.
 
 ## Next step
+0. Check the 29-Sep, 30-Sep and 1-Oct tab layouts (user sending screenshots).
 Sheet editor follows README Steps 1–5 and sends back the `/exec` link. Then fix anything the
 live run reveals (most likely: header text or tab-name differences).
