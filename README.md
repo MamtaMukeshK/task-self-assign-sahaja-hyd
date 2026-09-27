@@ -67,8 +67,8 @@ In the sheet: **File → Settings → Time zone** must be
 ## Step 5 — Try it once
 
 On the page: type a test name and mobile, click **Claim** on an open row, and
-check the name appears in the speaker-name column of today's tab, with the mobile either in
-the speaker-mobile column (if the tab has one) or on a second line under the name.
+check the name appears in the speaker-name column of today's tab, with the mobile on the
+line below it. No other column is touched.
 Then click **Release** and check both cells are empty again.
 
 ---
@@ -79,7 +79,7 @@ Then click **Release** and check both cells are empty again.
 |---|---|
 | Name each day's tab like `28-Sep` (or `5-Oct` / `05-Oct`). | The page finds today's tab by this name. Tabs like `Dummy-26-Sep` or `Summary` are ignored. |
 | Only one tab per date. | Otherwise the page refuses to guess and shows an error. |
-| Row 1 is the header row. Exactly one header must contain the words **Speaker** and **Name** (e.g. "Sahaja Yoga ( IND) Speaker Name"). A header containing **Speaker** and **Mobile** is optional. | The page writes the name there. With no speaker-mobile column, the mobile goes on a second line under the name, the same way organisers already type it. |
+| Row 1 is the header row. Exactly one header must contain the words **Speaker** and **Name** (e.g. "Sahaja Yoga ( IND) Speaker Name"). | The page writes "name, new line, mobile" into that cell only, the same way organisers already type it. Every other column (including "Local Sahaja Yogi" / "Speaker Mobile") is never touched. |
 | A row is "open" when its **Speaker Name** cell is empty. | To free a slot yourself, just clear that cell in the sheet. |
 | You can still edit the sheet directly as usual. | The page refreshes every 15 seconds and always shows what's in the sheet. |
 

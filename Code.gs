@@ -10,10 +10,11 @@
 var CONFIG = {
   SHEET_ID: '',                                   // leave empty when installed via the sheet's Extensions → Apps Script
   HEADER_ROW: 1,                                  // row that holds the column names
-  // Columns are found by words in their header (case-insensitive), so
+  // The speaker column is found by words in its header (case-insensitive), so
   // 'Sahaja Yoga Speaker Name' and 'Sahaja Yoga ( IND) Speaker Name' both work.
-  NAME_HEADER_WORDS: ['speaker', 'name'],         // required; a row is open while this cell is empty
-  MOBILE_HEADER_WORDS: ['speaker', 'mobile'],     // optional; if absent, the mobile goes under the name
+  // A row is open while this cell is empty. Claims write 'name<newline>mobile'
+  // into it, the way organisers already do; no other column is ever written.
+  NAME_HEADER_WORDS: ['speaker', 'name'],
   TAB_NAME_OVERRIDE: '',                          // e.g. '28-Sep' to force a tab while testing
 
   // Tabs are named like '28-Sep'. Today's date is rendered in these formats
@@ -75,17 +76,11 @@ function mutate_(action, rowNum, fingerprint, rawName, rawMobile) {
     if (action === 'claim') {
       if (row.speaker && !sameName_(row.speakerName, name)) throw new Error('Already taken by ' + row.speakerName + '.');
       if (!row.speaker) {
-        if (tab.mobileCol) {
-          writeText_(sheet, rowNum, tab.nameCol, name);
-          writeText_(sheet, rowNum, tab.mobileCol, mobile);
-        } else {
-          writeText_(sheet, rowNum, tab.nameCol, name + '\n' + mobile); // same style organisers use
-        }
+        writeText_(sheet, rowNum, tab.nameCol, name + '\n' + mobile);
       }
     } else if (row.speaker) {
       if (!sameName_(row.speakerName, name)) throw new Error('Only ' + row.speakerName + ' can release this row.');
       sheet.getRange(rowNum, tab.nameCol).clearContent();
-      if (tab.mobileCol) sheet.getRange(rowNum, tab.mobileCol).clearContent();
     }
     SpreadsheetApp.flush();
     CacheService.getScriptCache().remove(cacheKey_(sheet));
@@ -121,7 +116,7 @@ function findTodaySheet_(ss) {
 
 /**
  * Reads the whole tab. Every column is returned for display; the fingerprint
- * covers everything except the speaker name/mobile cells, so a claim is refused
+ * covers everything except the speaker cell, so a claim is refused
  * if the school details of that row changed or rows were moved.
  */
 function readTab_(sheet) {
@@ -131,19 +126,18 @@ function readTab_(sheet) {
   var values = sheet.getRange(CONFIG.HEADER_ROW, 1, lastRow - CONFIG.HEADER_ROW + 1, lastCol).getDisplayValues();
   var headers = values[0];
   var nIdx = findHeader_(sheet, headers, CONFIG.NAME_HEADER_WORDS);
-  var mIdx = findHeader_(sheet, headers, CONFIG.MOBILE_HEADER_WORDS);
   if (nIdx < 0) throw new Error('Tab "' + sheet.getName() + '" has no column in row ' + CONFIG.HEADER_ROW +
     ' whose header contains "' + CONFIG.NAME_HEADER_WORDS.join('" and "') + '".');
 
   var rows = [];
   values.slice(1).forEach(function (r, i) {
-    var details = r.filter(function (_, c) { return c !== nIdx && c !== mIdx; });
+    var details = r.filter(function (_, c) { return c !== nIdx; });
     if (details.join('').trim() === '') return; // skip blank rows
     var speaker = r[nIdx].trim();
     rows.push({ row: CONFIG.HEADER_ROW + 1 + i, fp: fingerprint_(details), cells: r, speaker: speaker,
       speakerName: speaker.split('\n')[0].trim() }); // first line = name (mobile may follow on line 2)
   });
-  return { headers: headers, nameCol: nIdx + 1, mobileCol: mIdx + 1, rows: rows };
+  return { headers: headers, nameCol: nIdx + 1, rows: rows };
 }
 
 function buildState_(sheet) {

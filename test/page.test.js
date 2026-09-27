@@ -35,7 +35,7 @@ test('two users in real browser', { timeout: 60000 }, async () => {
 
   await a.locator('button:text("Claim")').first().click();
   await a.waitForSelector('text=Claimed');
-  assert.equal(sheet.grid[3][1], 'Priya');
+  assert.equal(sheet.grid[3][1], 'Priya\n9876543210');
   assert.equal(await a.locator('button:text("Release")').count(), 1);
 
   // Ravi's page is stale: still shows row 4 as open. His click must fail cleanly and refresh.
@@ -43,7 +43,7 @@ test('two users in real browser', { timeout: 60000 }, async () => {
   await b.waitForSelector('#status.err');
   assert.match(await b.textContent('#status'), /Already taken by Priya/);
   await b.waitForFunction(() => document.querySelectorAll('button').length === 1);
-  assert.equal(sheet.grid[3][1], 'Priya', 'sheet unchanged by loser');
+  assert.equal(sheet.grid[3][1], 'Priya\n9876543210', 'sheet unchanged by loser');
 
   await b.check('#openOnly');
   assert.equal(await b.locator('tr').count(), 2, 'header + 1 open row');

@@ -6,9 +6,8 @@ _Last updated: 2026-09-27_
 - `Code.gs` + `Index.html`: Apps Script web app that opens today's tab (named like `28-Sep`)
   of the sheet it is attached to (no sheet ID in the code), shows all columns, and lets
   volunteers claim open rows (empty cell under the header containing "speaker" + "name") by
-  writing the name there, and the mobile into a "speaker" + "mobile" column if the tab has one,
-  else on a second line under the name (27-Sep style). Release allowed only by the same name
-  (first line of the cell).
+  writing "name<newline>mobile" into that cell only; no other column is ever written. Release
+  allowed only by the same name (first line of the cell).
 - Concurrency: `LockService` script lock + re-check inside the lock; row fingerprint rejects
   claims on rows that were edited/moved since page load; 5-second shared `CacheService` read cache.
 - 13 tests green (12 logic tests against a simulated Apps Script + 1 two-user browser test).
@@ -23,7 +22,10 @@ _Last updated: 2026-09-27_
   header matching.
 - 2026-09-27: LIVE TEST PASSED on the user's own copy of the sheet (deployed web app):
   page load on 27-Sep, claim, release, two-device race, sheet→page refresh all confirmed.
-- Only the `27-Sep` and `28-Sep` layouts were seen (via screenshots). Other tabs may differ;
+- 2026-09-27: checked 28/29/30-Sep screenshots. 28-Sep's "Speaker Mobile" column C actually holds
+  local contacts, so writing the mobile there could overwrite them → claims now write only the
+  speaker cell on every tab.
+- 1-Oct tab not seen yet; must be named `1-Oct` or `01-Oct`. Other future tabs may differ;
   if not, the page errors loudly rather than guessing.
 
 ## Next step

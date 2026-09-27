@@ -25,26 +25,26 @@ test('no tab for today gives a clear error', () => {
   const gs = load([makeSheet('27-Sep', 1, screenshotGrid())], NOW);
   assert.throws(() => gs.getState(), /No tab for today \(Mon 28 Sep 2026\)/);
 });
-test('claim writes name to B and mobile to C of the right row only', () => {
+test('28-Sep layout: claim writes name + mobile into B only, never the "Speaker Mobile" column', () => {
   const { gs, today, sheets } = setup(); const r = openRow(gs.getState());
   const after = gs.claimRow(r.row, r.fp, '  Priya   Shah ', '+91 98765 43210');
-  assert.equal(today.grid[r.row-1][1], 'Priya Shah');
-  assert.equal(today.grid[r.row-1][2], '+91 98765 43210');
+  assert.equal(today.grid[r.row-1][1], 'Priya Shah\n+91 98765 43210');
+  assert.equal(today.grid[r.row-1][2], '', 'column C not written');
   assert.equal(sheets[0].writes + sheets[1].writes, 0, 'other tabs untouched');
-  assert.equal(after.rows.find(x => x.row === r.row).speaker, 'Priya Shah', 'returns fresh state (cache cleared)');
+  assert.equal(after.rows.find(x => x.row === r.row).speakerName, 'Priya Shah', 'returns fresh state (cache cleared)');
 });
 test('second person with a stale view loses the race cleanly', () => {
   const { gs, today } = setup(); const view = gs.getState(); const r = openRow(view);
   gs.claimRow(r.row, r.fp, 'Priya', '9876543210');
   assert.throws(() => gs.claimRow(r.row, r.fp, 'Ravi', '9123456789'), /Already taken by Priya/);
-  assert.equal(today.grid[r.row-1][1], 'Priya');
+  assert.equal(today.grid[r.row-1][1], 'Priya\n9876543210');
 });
 test('same person re-clicking claim is harmless; can claim several rows', () => {
   const { gs } = setup(); const s = gs.getState(); const [a, b] = s.rows.filter(r => !r.speaker);
   gs.claimRow(a.row, a.fp, 'Priya', '9876543210');
   gs.claimRow(a.row, a.fp, 'priya', '9876543210');
   const s2 = gs.claimRow(b.row, b.fp, 'Priya', '9876543210');
-  assert.equal(s2.rows.filter(r => r.speaker === 'Priya').length, 2);
+  assert.equal(s2.rows.filter(r => r.speakerName === 'Priya').length, 2);
 });
 test('pre-filled rows (from organisers) cannot be claimed', () => {
   const { gs } = setup(); const r = gs.getState().rows[0];
@@ -121,4 +121,19 @@ test('two columns matching the speaker words is an error, not a guess', () => {
   const g = sep27Grid(); g[0][2] = 'Backup Speaker Name';
   const gs = load([makeSheet('28-Sep', 6, g)], NOW);
   assert.throws(() => gs.getState(), /several columns whose header contains "speaker" and "name"/);
+});
+
+test('28-Sep: local contact already in column C of an open row survives claim and release', () => {
+  const g = screenshotGrid();
+  g[3][2] = 'Laxmi didi\n9000000055'; // row 4: speaker empty, local contact filled in C
+  const sheet = makeSheet('28-Sep', 7, g);
+  const gs = load([sheet], NOW);
+  const r = gs.getState().rows.find(x => x.row === 4);
+  assert.equal(r.speaker, '', 'row is open');
+  gs.claimRow(r.row, r.fp, 'Priya', '9876543210');
+  assert.equal(sheet.grid[3][1], 'Priya\n9876543210');
+  assert.equal(sheet.grid[3][2], 'Laxmi didi\n9000000055');
+  gs.releaseRow(r.row, r.fp, 'Priya');
+  assert.equal(sheet.grid[3][1], '');
+  assert.equal(sheet.grid[3][2], 'Laxmi didi\n9000000055');
 });
