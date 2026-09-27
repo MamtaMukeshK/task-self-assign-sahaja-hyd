@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+  :root { --fg:#1b1b1f; --muted:#666; --line:#e2e2e6; --bg:#fff; --mine:#e8f5e9; --taken:#f5f5f7; --accent:#1a73e8; --err:#b3261e; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:16px; font:14px/1.4 system-ui, sans-serif; color:var(--fg); background:var(--bg); }
+  header { display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; margin-bottom:12px; }
+  h1 { font-size:18px; margin:0; }
+  input:not([type]), input[id=name], input[id=mobile] { font:inherit; padding:6px 8px; border:1px solid var(--line); border-radius:6px; min-width:180px; }
+  button { font:inherit; padding:5px 12px; border-radius:6px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; white-space:nowrap; }
+  button.release { background:#fff; color:var(--accent); }
+  button:disabled { opacity:.5; cursor:default; }
+  #status, #updated { color:var(--muted); }
+  #status.err { color:var(--err); font-weight:600; }
+  .wrap { overflow-x:auto; border:1px solid var(--line); border-radius:8px; }
+  table { border-collapse:collapse; width:100%; }
+  th, td { padding:6px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; white-space:pre-line; }
+  th, td { min-width:7em; }
+  th:first-child, td:first-child { min-width:0; }
+  th { position:sticky; top:0; background:#fafafa; font-weight:600; }
+  tr.mine td { background:var(--mine); }
+  tr.taken td { background:var(--taken); color:var(--muted); }
+  .who { font-weight:600; color:var(--fg); }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">Loading…</h1>
+  <label>Your name <input id="name" autocomplete="name" placeholder="e.g. Priya Shah"></label>
+  <label>Mobile <input id="mobile" autocomplete="tel" inputmode="tel" placeholder="e.g. 98xxxxxxxx"></label>
+  <label><input type="checkbox" id="openOnly"> Open only</label>
+  <span id="status"></span>
+  <span id="updated"></span>
+</header>
+<div class="wrap"><table id="grid"></table></div>
+
+<script>
+  var POLL_MS = 15000;
+  var state = null;
+  var seq = 0;      // ignore responses older than the newest one already shown
+  var shownSeq = 0;
+  var busyRow = null;
+  var nameInput = document.getElementById('name');
+  var mobileInput = document.getElementById('mobile');
+  var openOnly = document.getElementById('openOnly');
+
+  // Remember name/mobile in this browser only (per-viewer convenience).
+  [[nameInput, 'selfAssignName'], [mobileInput, 'selfAssignMobile']].forEach(function (p) {
+    try { p[0].value = localStorage.getItem(p[1]) || ''; } catch (e) {}
+    p[0].addEventListener('input', function () {
+      try { localStorage.setItem(p[1], p[0].value); } catch (e) {}
+      render();
+    });
+  });
+  openOnly.addEventListener('change', render);
+
+  function myName() { return nameInput.value.replace(/\s+/g, ' ').trim(); }
+  function same(a, b) { return a.toLowerCase() === b.toLowerCase(); }
+
+  function setStatus(msg, isErr) {
+    var el = document.getElementById('status');
+    el.textContent = msg;
+    el.className = isErr ? 'err' : '';
+  }
+
+  function call(fn, args, okMsg) {
+    var mySeq = ++seq;
+    var runner = google.script.run
+      .withSuccessHandler(function (s) {
+        if (mySeq < shownSeq) return;
+        shownSeq = mySeq; state = s; busyRow = null;
+        render();
+        document.getElementById('updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+        if (okMsg) setStatus(okMsg);
+      })
+      .withFailureHandler(function (err) {
+        busyRow = null;
+        setStatus(err.message || String(err), true);
+        if (fn !== 'getState') refresh(); // show the latest truth after a failed claim
+        else render();
+      });
+    runner[fn].apply(runner, args);
+  }
+
+  function refresh() { call('getState', []); }
+
+  function act(fn, r, verb) {
+    if (!myName()) { setStatus('Please enter your name first.', true); nameInput.focus(); return; }
+    var claiming = fn === 'claimRow';
+    if (claiming && !mobileInput.value.trim()) { setStatus('Please enter your mobile number.', true); mobileInput.focus(); return; }
+    busyRow = r.row;
+    render();
+    setStatus(verb + '…');
+    var args = claiming ? [r.row, r.fp, myName(), mobileInput.value] : [r.row, r.fp, myName()];
+    call(fn, args, claiming ? 'Claimed — highlighted in green.' : 'Released.');
+  }
+
+  function render() {
+    if (!state) return;
+    document.getElementById('title').textContent = 'Today: ' + state.tab;
+    var me = myName();
+    var t = document.getElementById('grid');
+    t.textContent = '';
+    var head = t.insertRow();
+    [''].concat(state.headers).forEach(function (h) {
+      var th = document.createElement('th'); th.textContent = h; head.appendChild(th);
+    });
+    var open = 0;
+    state.rows.forEach(function (r) {
+      var mine = r.speaker && me && same(r.speaker, me);
+      if (!r.speaker) open++;
+      if (openOnly.checked && r.speaker && !mine) return;
+      var tr = t.insertRow();
+      tr.className = mine ? 'mine' : (r.speaker ? 'taken' : '');
+      var btnCell = tr.insertCell();
+      if (!r.speaker || mine) {
+        var b = document.createElement('button');
+        b.textContent = mine ? 'Release' : 'Claim';
+        if (mine) b.className = 'release';
+        b.disabled = busyRow !== null;
+        b.onclick = function () { act(mine ? 'releaseRow' : 'claimRow', r, mine ? 'Releasing' : 'Claiming'); };
+        btnCell.appendChild(b);
+      }
+      r.cells.forEach(function (c, i) {
+        var td = tr.insertCell();
+        td.textContent = c;
+        if (i === state.nameIdx && c) td.className = 'who';
+      });
+    });
+    document.title = open + ' open · ' + state.tab;
+    if (!state.rows.length) t.insertRow().insertCell().textContent = 'No rows on this tab yet.';
+  }
+
+  refresh();
+  setInterval(function () { if (!document.hidden && busyRow === null) refresh(); }, POLL_MS);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(); });
+</script>
+</body>
+</html>
