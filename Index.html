@@ -110,7 +110,7 @@
     });
     var open = 0;
     state.rows.forEach(function (r) {
-      var mine = r.speaker && me && same(r.speaker, me);
+      var mine = r.speaker && me && same(r.speakerName, me);
       if (!r.speaker) open++;
       if (openOnly.checked && r.speaker && !mine) return;
       var tr = t.insertRow();

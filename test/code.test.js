@@ -74,7 +74,7 @@ test('input validation: blank name, formula injection, bad mobile, bad row', () 
 });
 test('tab missing the speaker column errors loudly instead of guessing', () => {
   const gs = load([makeSheet('28-Sep', 1, [['S No', 'School'], ['1', 'A']])], NOW);
-  assert.throws(() => gs.getState(), /no "Sahaja Yoga Speaker Name" column/);
+  assert.throws(() => gs.getState(), /no column in row 1 whose header contains "speaker" and "name"/);
 });
 test('reads are served from the shared cache', () => {
   const { gs } = setup(); gs.getState();
@@ -86,4 +86,39 @@ test('uses the attached sheet by default, and SHEET_ID only when set', () => {
   gs.CONFIG.SHEET_ID = 'abc';
   assert.equal(gs.openSpreadsheet_().openedById, 'abc');
   assert.equal(gs.getState().tab, '28-Sep');
+});
+
+// Layout of the real 27-Sep tab: different speaker header, no speaker-mobile column,
+// organisers type "name<newline>number" in the speaker cell. (Fake people.)
+function sep27Grid() {
+  return [
+    ['S No', 'Sahaja Yoga ( IND)\nSpeaker Name', 'Local ( HYD)\nSahaja Yogi', 'School Name', 'Branch / addres', 'Phone No', 'RI', 'Phone No', 'Date', 'Time'],
+    ['1', 'Asha Rao\n9000000001', 'Local A\n9000000011', 'School X', 'Area 1', '', 'RI A', '9000000021', '27-Sep-26', '3:30'],
+    ['2', '', 'Local B\n9000000012', 'School Y', 'Area 2', '', 'RI B', '9000000022', '27-Sep-26', '11:00'],
+    ['3', '', 'Local B\n9000000012', 'School Y', 'Area 3', '', 'RI B', '9000000022', '27-Sep-26', '11:00'],
+  ];
+}
+test('27-Sep layout: finds "( IND) Speaker Name" column and writes name + mobile together', () => {
+  const sheet = makeSheet('28-Sep', 5, sep27Grid());
+  const gs = load([sheet], NOW);
+  const s = gs.getState();
+  assert.equal(s.headers.length, 10, 'all columns shown');
+  assert.equal(s.rows.filter(r => !r.speaker).length, 2);
+  const r = s.rows.find(x => !x.speaker);
+  const after = gs.claimRow(r.row, r.fp, 'Priya', '9876543210');
+  assert.equal(sheet.grid[r.row - 1][1], 'Priya\n9876543210', 'name and mobile in one cell');
+  assert.equal(sheet.grid[r.row - 1][2], 'Local B\n9000000012', 'Local Sahaja Yogi column untouched');
+  const mine = after.rows.find(x => x.row === r.row);
+  assert.equal(mine.speakerName, 'Priya');
+  assert.throws(() => gs.claimRow(r.row, r.fp, 'Ravi', '9123456789'), /Already taken by Priya\./);
+  assert.throws(() => gs.releaseRow(r.row, r.fp, 'Ravi'), /Only Priya can release/);
+  gs.releaseRow(r.row, r.fp, 'priya');
+  assert.equal(sheet.grid[r.row - 1][1], '');
+  const first = gs.getState().rows[0];
+  assert.throws(() => gs.claimRow(first.row, first.fp, 'Ravi', '9123456789'), /Already taken by Asha Rao\./);
+});
+test('two columns matching the speaker words is an error, not a guess', () => {
+  const g = sep27Grid(); g[0][2] = 'Backup Speaker Name';
+  const gs = load([makeSheet('28-Sep', 6, g)], NOW);
+  assert.throws(() => gs.getState(), /several columns whose header contains "speaker" and "name"/);
 });

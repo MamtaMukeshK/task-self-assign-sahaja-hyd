@@ -10,8 +10,10 @@
 var CONFIG = {
   SHEET_ID: '',                                   // leave empty when installed via the sheet's Extensions → Apps Script
   HEADER_ROW: 1,                                  // row that holds the column names
-  NAME_HEADER: 'Sahaja Yoga Speaker Name',        // a row is open while this cell is empty
-  MOBILE_HEADER: 'Sahaja Yoga Speaker Mobile',
+  // Columns are found by words in their header (case-insensitive), so
+  // 'Sahaja Yoga Speaker Name' and 'Sahaja Yoga ( IND) Speaker Name' both work.
+  NAME_HEADER_WORDS: ['speaker', 'name'],         // required; a row is open while this cell is empty
+  MOBILE_HEADER_WORDS: ['speaker', 'mobile'],     // optional; if absent, the mobile goes under the name
   TAB_NAME_OVERRIDE: '',                          // e.g. '28-Sep' to force a tab while testing
 
   // Tabs are named like '28-Sep'. Today's date is rendered in these formats
@@ -71,13 +73,17 @@ function mutate_(action, rowNum, fingerprint, rawName, rawMobile) {
     if (row.fp !== fingerprint) throw new Error('That row was edited or moved since you loaded it. Please check it and try again.');
 
     if (action === 'claim') {
-      if (row.speaker && !sameName_(row.speaker, name)) throw new Error('Already taken by ' + row.speaker + '.');
+      if (row.speaker && !sameName_(row.speakerName, name)) throw new Error('Already taken by ' + row.speakerName + '.');
       if (!row.speaker) {
-        writeText_(sheet, rowNum, tab.nameCol, name);
-        if (tab.mobileCol) writeText_(sheet, rowNum, tab.mobileCol, mobile);
+        if (tab.mobileCol) {
+          writeText_(sheet, rowNum, tab.nameCol, name);
+          writeText_(sheet, rowNum, tab.mobileCol, mobile);
+        } else {
+          writeText_(sheet, rowNum, tab.nameCol, name + '\n' + mobile); // same style organisers use
+        }
       }
     } else if (row.speaker) {
-      if (!sameName_(row.speaker, name)) throw new Error('Only ' + row.speaker + ' can release this row.');
+      if (!sameName_(row.speakerName, name)) throw new Error('Only ' + row.speakerName + ' can release this row.');
       sheet.getRange(rowNum, tab.nameCol).clearContent();
       if (tab.mobileCol) sheet.getRange(rowNum, tab.mobileCol).clearContent();
     }
@@ -124,15 +130,18 @@ function readTab_(sheet) {
   if (lastRow < CONFIG.HEADER_ROW || lastCol < 1) throw new Error('Tab "' + sheet.getName() + '" is empty.');
   var values = sheet.getRange(CONFIG.HEADER_ROW, 1, lastRow - CONFIG.HEADER_ROW + 1, lastCol).getDisplayValues();
   var headers = values[0];
-  var nIdx = findHeader_(headers, CONFIG.NAME_HEADER);
-  var mIdx = findHeader_(headers, CONFIG.MOBILE_HEADER);
-  if (nIdx < 0) throw new Error('Tab "' + sheet.getName() + '" has no "' + CONFIG.NAME_HEADER + '" column in row ' + CONFIG.HEADER_ROW + '.');
+  var nIdx = findHeader_(sheet, headers, CONFIG.NAME_HEADER_WORDS);
+  var mIdx = findHeader_(sheet, headers, CONFIG.MOBILE_HEADER_WORDS);
+  if (nIdx < 0) throw new Error('Tab "' + sheet.getName() + '" has no column in row ' + CONFIG.HEADER_ROW +
+    ' whose header contains "' + CONFIG.NAME_HEADER_WORDS.join('" and "') + '".');
 
   var rows = [];
   values.slice(1).forEach(function (r, i) {
     var details = r.filter(function (_, c) { return c !== nIdx && c !== mIdx; });
     if (details.join('').trim() === '') return; // skip blank rows
-    rows.push({ row: CONFIG.HEADER_ROW + 1 + i, fp: fingerprint_(details), cells: r, speaker: r[nIdx].trim() });
+    var speaker = r[nIdx].trim();
+    rows.push({ row: CONFIG.HEADER_ROW + 1 + i, fp: fingerprint_(details), cells: r, speaker: speaker,
+      speakerName: speaker.split('\n')[0].trim() }); // first line = name (mobile may follow on line 2)
   });
   return { headers: headers, nameCol: nIdx + 1, mobileCol: mIdx + 1, rows: rows };
 }
@@ -170,10 +179,16 @@ function cleanMobile_(raw) {
   return mobile;
 }
 
-function findHeader_(headers, label) {
-  var want = norm_(label);
-  for (var i = 0; i < headers.length; i++) if (norm_(headers[i]) === want) return i;
-  return -1;
+/** Index of the one header containing all the words, -1 if none; errors if several match. */
+function findHeader_(sheet, headers, words) {
+  var hits = [];
+  headers.forEach(function (h, i) {
+    var text = norm_(h);
+    if (words.every(function (w) { return text.indexOf(w) >= 0; })) hits.push(i);
+  });
+  if (hits.length > 1) throw new Error('Tab "' + sheet.getName() + '" has several columns whose header contains "' +
+    words.join('" and "') + '". Please rename all but one.');
+  return hits.length ? hits[0] : -1;
 }
 
 function sameName_(a, b) { return norm_(a) === norm_(b); }
