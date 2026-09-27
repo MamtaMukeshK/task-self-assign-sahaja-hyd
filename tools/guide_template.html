@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Speaker Self-Assign Setup</title>
+<style>
+  :root { --fg:#1b1b1f; --muted:#5f6368; --bg:#ffffff; --panel:#f6f8fa; --line:#dadce0; --accent:#1a73e8;
+          --warn-bg:#fff8e1; --warn-line:#f0c36d; --ok-bg:#e6f4ea; --ok-line:#81c995; --code-bg:#0d1117; --code-fg:#e6edf3; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --fg:#e8eaed; --muted:#9aa0a6; --bg:#16171a; --panel:#202124; --line:#3c4043; --accent:#8ab4f8;
+          --warn-bg:#3a3016; --warn-line:#7a6320; --ok-bg:#16301f; --ok-line:#2e6b3f; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:860px; margin:0 auto; padding:24px 16px 80px; }
+  h1 { font-size:28px; line-height:1.25; margin:0 0 4px; }
+  h2 { font-size:21px; margin:40px 0 8px; padding-top:16px; border-top:1px solid var(--line); }
+  h3 { font-size:17px; margin:20px 0 6px; }
+  .sub { color:var(--muted); margin:0 0 20px; }
+  ol, ul { padding-left:24px; } li { margin:6px 0; }
+  code { background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-size:.9em; }
+  kbd { border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:0 5px; font-size:.85em; background:var(--panel); }
+  .box { border:1px solid var(--line); background:var(--panel); border-radius:10px; padding:12px 16px; margin:14px 0; }
+  .warn { background:var(--warn-bg); border-color:var(--warn-line); }
+  .ok { background:var(--ok-bg); border-color:var(--ok-line); }
+  .toc a { color:var(--accent); text-decoration:none; } .toc li { margin:2px 0; }
+  table { border-collapse:collapse; width:100%; margin:10px 0; font-size:15px; }
+  th, td { border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:var(--panel); }
+  .table-wrap { overflow-x:auto; }
+  .codehead { display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:center; margin-top:14px;
+              background:var(--panel); border:1px solid var(--line); border-bottom:0; border-radius:10px 10px 0 0; padding:8px 12px; }
+  .codehead b { font-family:ui-monospace, Menlo, Consolas, monospace; }
+  button.copy { font:inherit; font-size:15px; font-weight:600; padding:6px 16px; border-radius:6px; border:0; background:#1a73e8; color:#fff; cursor:pointer; }
+  button.copy.done { background:#188038; }
+  pre { margin:0 0 8px; max-height:340px; overflow:auto; background:var(--code-bg); color:var(--code-fg);
+        border-radius:0 0 10px 10px; padding:12px; font:13px/1.45 ui-monospace, Menlo, Consolas, monospace; white-space:pre; }
+  .step-num { display:inline-block; min-width:26px; height:26px; border-radius:13px; background:var(--accent); color:var(--bg);
+              text-align:center; font-weight:700; margin-right:8px; font-size:15px; line-height:26px; }
+  @media print { pre { max-height:none; white-space:pre-wrap; } button.copy { display:none; } }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Speaker Self-Assign: complete setup guide</h1>
+<p class="sub">One page, everything included. Follow the parts in order, and use the blue <b>Copy</b> buttons for the code.
+Takes about 15 minutes on a laptop or desktop computer (not a phone).</p>
+
+<div class="box">
+  <b>What this sets up:</b> a web page where volunteers open one link, see <b>today's tab</b> of the
+  "Hyd 2026 permission" Google Sheet (every column), and tap <b>Claim</b> on a school whose speaker cell is empty.
+  Their name and mobile are written straight into that row of the sheet, so the sheet and the page always show the same
+  thing, and two people can never take the same school.
+</div>
+
+<div class="box toc">
+  <b>Contents</b>
+  <ol>
+    <li><a href="#p1">Before you start</a></li>
+    <li><a href="#p2">Check the sheet</a></li>
+    <li><a href="#p3">Open the script editor</a></li>
+    <li><a href="#p4">Paste Code.gs</a></li>
+    <li><a href="#p5">Add and paste Index.html</a></li>
+    <li><a href="#p6">Give permission (one time)</a></li>
+    <li><a href="#p7">Publish the page</a></li>
+    <li><a href="#p8">Test it</a></li>
+    <li><a href="#p9">Share it with volunteers</a></li>
+    <li><a href="#p10">Daily rules for organisers</a></li>
+    <li><a href="#p11">If something goes wrong</a></li>
+    <li><a href="#p12">Changing or switching off the page later</a></li>
+    <li><a href="#p13">Good to know</a></li>
+  </ol>
+</div>
+
+<h2 id="p1"><span class="step-num">1</span>Before you start</h2>
+<ul>
+  <li><b>You need EDIT access to the real sheet.</b> If the sheet shows a <b>"View only"</b> badge, or the
+    <b>Extensions</b> menu is grey, stop here and ask the sheet owner to make you an Editor (or to do these steps).</li>
+  <li><b>Use a personal Gmail account if you can.</b> Some company or school accounts don't allow "Anyone" to open
+    the page (Part 7).</li>
+  <li><b>The page runs under your Google account.</b> Everything volunteers claim is written into the sheet
+    <i>as you</i>, and the sheet's version history will show your name for those edits. That's normal.</li>
+  <li>Use a laptop or desktop with Chrome, Edge, Safari or Firefox.</li>
+</ul>
+
+<h2 id="p2"><span class="step-num">2</span>Check the sheet</h2>
+<ol>
+  <li><b>Time zone:</b> in the sheet, open <b>File → Settings</b>. <b>Time zone</b> must be
+    <b>(GMT+05:30) India Standard Time</b>. Change it if needed, then click <b>Save settings</b>.
+    <br><span class="sub">The page uses this to decide which tab is "today", and switches tab at midnight India time.</span></li>
+  <li><b>Tab names:</b> each day's tab must be named like <code>27-Sep</code>, <code>28-Sep</code>,
+    <code>1-Oct</code> or <code>01-Oct</code> (day, dash, 3-letter month). Other tabs like <code>Summary</code>,
+    <code>cancel</code> or <code>Dummy-26-Sep</code> are ignored. Have only one tab per date.</li>
+  <li><b>Header row:</b> on each day tab, <b>row 1</b> holds the column titles, and exactly one title contains the
+    words <b>Speaker</b> and <b>Name</b>, for example "Sahaja Yoga ( IND) Speaker Name" or "Sahaja Yoga Speaker Name".
+    That is the only column the page ever writes into.</li>
+</ol>
+
+<h2 id="p3"><span class="step-num">3</span>Open the script editor</h2>
+<ol>
+  <li>In the <b>real</b> sheet, click the menu <b>Extensions → Apps Script</b>. A new browser tab opens.</li>
+  <li>At the top left, click <b>Untitled project</b>, type <code>Speaker Self-Assign</code>, and click <b>Rename</b>.</li>
+</ol>
+<div class="box warn">Open the editor <b>from the sheet's Extensions menu</b>, not from script.google.com. That's
+  what connects the script to this sheet.</div>
+
+<h2 id="p4"><span class="step-num">4</span>Paste Code.gs</h2>
+<ol>
+  <li>On the left under <b>Files</b>, click <b>Code.gs</b>. It contains a few starter lines.</li>
+  <li>Click inside the code area, press <kbd>Ctrl</kbd>+<kbd>A</kbd> (Mac: <kbd>⌘</kbd>+<kbd>A</kbd>), then
+    <kbd>Delete</kbd>, so it's completely empty.</li>
+  <li>Click the blue <b>Copy Code.gs</b> button below, then click in the empty code area and paste with
+    <kbd>Ctrl</kbd>+<kbd>V</kbd> (Mac: <kbd>⌘</kbd>+<kbd>V</kbd>).</li>
+  <li>Save with <kbd>Ctrl</kbd>+<kbd>S</kbd> (Mac: <kbd>⌘</kbd>+<kbd>S</kbd>). The orange dot next to the file name disappears.</li>
+  <li>Check: the first line is <code>/**</code> and the last line starts with <code>function cacheKey_</code>.
+    Do not change anything in it. In particular, <code>SHEET_ID</code> and <code>TAB_NAME_OVERRIDE</code> must both stay <code>''</code>.</li>
+</ol>
+<div class="codehead"><b>Code.gs</b> <button class="copy" data-target="code-gs">Copy Code.gs</button></div>
+<pre id="code-gs">{{CODE_GS}}</pre>
+
+<h2 id="p5"><span class="step-num">5</span>Add and paste Index.html</h2>
+<ol>
+  <li>On the left, click the <b>+</b> next to <b>Files</b> and choose <b>HTML</b>.</li>
+  <li>Type the name exactly <code>Index</code> (capital I, <b>without</b> ".html", which is added automatically) and
+    press <kbd>Enter</kbd>. <span class="sub">Wrong name? Click the ⋮ next to the file → Rename.</span></li>
+  <li>The new file opens with starter lines. Select everything and delete it, as before.</li>
+  <li>Click <b>Copy Index.html</b> below, paste into the empty file, and save.</li>
+  <li>Check: <b>Files</b> now lists exactly <b>Code.gs</b> and <b>Index.html</b>.</li>
+</ol>
+<div class="codehead"><b>Index.html</b> <button class="copy" data-target="index-html">Copy Index.html</button></div>
+<pre id="index-html">{{INDEX_HTML}}</pre>
+
+<h2 id="p6"><span class="step-num">6</span>Give permission (one time)</h2>
+<ol>
+  <li>Click <b>Code.gs</b> on the left. <span class="sub">The Run button only appears while a .gs file is open.</span></li>
+  <li>In the toolbar, the dropdown next to <b>Debug</b> lists functions: choose <b>getState</b>.</li>
+  <li>Click <b>▷ Run</b>. A box says <b>Authorization required</b>: click <b>Review permissions</b> and choose your account.</li>
+  <li>Google shows <b>"Google hasn't verified this app"</b>. This is normal for your own scripts, and the
+    "developer" it names is you. Click <b>Advanced</b> (bottom left), then <b>Go to Speaker Self-Assign (unsafe)</b>.</li>
+  <li>Click <b>Allow</b>. It asks to see and edit your spreadsheets, which is how it writes names into the sheet.</li>
+  <li>The <b>Execution log</b> opens at the bottom:
+    <ul>
+      <li><b>"Execution completed"</b>: done, go to Part 7.</li>
+      <li><b>"No tab for today (…)"</b>: the code works; there's just no tab named for today yet. You can still go on.</li>
+      <li>Any other red message: see <a href="#p11">Part 11</a>.</li>
+    </ul></li>
+</ol>
+
+<h2 id="p7"><span class="step-num">7</span>Publish the page</h2>
+<ol>
+  <li>Top right: click the blue <b>Deploy</b> button → <b>New deployment</b>.</li>
+  <li>Next to <b>Select type</b>, click the <b>gear icon</b> → <b>Web app</b>.</li>
+  <li>Fill in:
+    <div class="table-wrap"><table>
+      <tr><th>Field</th><th>Set to</th></tr>
+      <tr><td>Description</td><td><code>v1</code></td></tr>
+      <tr><td>Execute as</td><td><b>Me</b> (your email)</td></tr>
+      <tr><td>Who has access</td><td><b>Anyone</b> (not "Anyone with Google account")</td></tr>
+    </table></div></li>
+  <li>Click <b>Deploy</b> (allow permission again if asked).</li>
+  <li>Copy the <b>Web app URL</b>. It's long and ends in <code>/exec</code>. <b>This is the volunteers' link.</b> Click <b>Done</b>.</li>
+</ol>
+
+<h2 id="p8"><span class="step-num">8</span>Test it</h2>
+<ol>
+  <li>Open the <code>/exec</code> link in a new browser tab. You should see <b>"Today: [date]"</b>, every column
+    of today's tab, and a blue <b>Claim</b> button on each row whose speaker cell is empty.
+    <span class="sub">A grey Google bar at the top ("created by a Google Apps Script user") is normal and can't be removed.</span></li>
+  <li>Type a test name and a 10-digit mobile, then click <b>Claim</b> on one open row. It turns green.</li>
+  <li>In the sheet, that row's Speaker Name cell now shows the name with the mobile on the line below.
+    No other cell changed.</li>
+  <li>Back on the page, click <b>Release</b>. The cell in the sheet is empty again.</li>
+  <li>Optional: open the link on your phone too, and try to claim the same row from both at the same time.
+    Only one wins; the other sees <b>"Already taken by …"</b>.</li>
+</ol>
+<div class="box ok"><b>All good?</b> Then it's live. Share the link (Part 9).</div>
+
+<h2 id="p9"><span class="step-num">9</span>Share it with volunteers</h2>
+<p>Paste your <code>/exec</code> link into this message and send it:</p>
+<div class="codehead"><b>Message for volunteers</b> <button class="copy" data-target="msg">Copy message</button></div>
+<pre id="msg" style="white-space:pre-wrap">🙏 To pick a school for today's program, open this link:
+PASTE-THE-/exec-LINK-HERE
+
+1. Type your name and mobile number at the top (only needed the first time).
+2. Tap "Claim" next to the school you'd like.
+3. Your row turns green: it's yours and it shows in the main sheet.
+4. Changed your mind? Tap "Release".
+The page refreshes every 15 seconds and always shows today's list.</pre>
+
+<h2 id="p10"><span class="step-num">10</span>Daily rules for organisers</h2>
+<div class="table-wrap"><table>
+  <tr><th>Do this</th><th>Why</th></tr>
+  <tr><td>Name each day's tab like <code>28-Sep</code> / <code>1-Oct</code> / <code>01-Oct</code>, one tab per date.</td>
+      <td>That's how the page finds today's tab.</td></tr>
+  <tr><td>Keep the titles in row 1, with exactly one title containing "Speaker" and "Name".</td>
+      <td>That's the column the page writes into.</td></tr>
+  <tr><td>A school is <b>open</b> when its Speaker Name cell is empty. To free a school, just clear that cell.</td>
+      <td>The page shows the change within about 15 seconds.</td></tr>
+  <tr><td>Keep typing in the sheet as usual (including name + number in one cell).</td>
+      <td>The page always reflects the sheet. Rows you fill by hand show as taken.</td></tr>
+  <tr><td>The <b>same link</b> works every day.</td>
+      <td>It moves to the new day's tab at midnight India time. If that tab doesn't exist yet, volunteers see "No tab for today".</td></tr>
+</table></div>
+
+<h2 id="p11"><span class="step-num">11</span>If something goes wrong</h2>
+<div class="table-wrap"><table>
+  <tr><th>What you see</th><th>What it means / what to do</th></tr>
+  <tr><td>Extensions menu is grey</td><td>You only have View access. Ask the owner for Edit access.</td></tr>
+  <tr><td>"No tab for today (…)"</td><td>No tab is named for today (e.g. <code>1-Oct</code>). Create or rename it. Also check the time zone (Part 2).</td></tr>
+  <tr><td>"Several tabs look like today"</td><td>Two tabs have today's date as their name (e.g. <code>1-Oct</code> and <code>01-Oct</code>). Rename one.</td></tr>
+  <tr><td>"…has no column in row 1 whose header contains "speaker" and "name""</td><td>Today's tab has no Speaker Name title in row 1. Add or fix the title.</td></tr>
+  <tr><td>"…has several columns whose header contains…"</td><td>Two titles contain both words. Rename one so only one does.</td></tr>
+  <tr><td>"Cannot read properties of null (reading …)"</td><td>The script was created at script.google.com instead of from the sheet. Redo Part 3 from the sheet's Extensions menu.</td></tr>
+  <tr><td>"Already taken by …"</td><td>Someone else got there first. Pick another school.</td></tr>
+  <tr><td>"That row was edited or moved…"</td><td>An organiser changed or re-ordered rows after the page loaded. The page refreshes; check and claim again.</td></tr>
+  <tr><td>"Lots of people are claiming right now"</td><td>Many claims arrived at the same second. Try again.</td></tr>
+  <tr><td>"Please enter a valid mobile number"</td><td>Use 10 digits, optionally starting with +91.</td></tr>
+  <tr><td>"Who has access" doesn't offer "Anyone"</td><td>Your account's organisation blocks it. Do the setup from a personal Gmail account that has edit access.</td></tr>
+  <tr><td>The page shows yesterday's tab</td><td>Time zone is wrong. Fix it in File → Settings (Part 2).</td></tr>
+  <tr><td>You changed the code but the page didn't change</td><td>You must publish a new version (Part 12).</td></tr>
+</table></div>
+
+<h2 id="p12"><span class="step-num">12</span>Changing or switching off the page later</h2>
+<ul>
+  <li><b>Update the code (same link):</b> paste the new code and save, then go to <b>Deploy → Manage deployments</b>,
+    click the <b>pencil</b>, set <b>Version: New version</b>, and click <b>Deploy</b>.
+    <br><span class="sub">Do <b>not</b> use "New deployment" for updates, because that creates a <b>different</b> link.</span></li>
+  <li><b>Switch the page off:</b> go to <b>Deploy → Manage deployments</b>, click <b>Archive</b>. The link stops working immediately.</li>
+  <li><b>Test on a copy first (optional):</b> use File → Make a copy of the sheet <i>after</i> Part 5. The copy has its own
+    copy of the script; publish that one to experiment without touching the real sheet.</li>
+</ul>
+
+<h2 id="p13"><span class="step-num">13</span>Good to know</h2>
+<ul>
+  <li><b>Names are on trust.</b> Anyone with the link can type any name. Only the person whose name is on a row can
+    release it through the page; organisers can always fix things in the sheet.</li>
+  <li><b>Privacy:</b> everything on today's tab, including phone numbers, is visible to anyone with the page link.
+    That's the same as the sheet's current "anyone with the link can view" sharing.</li>
+  <li><b>Capacity:</b> dozens of people can use it at the same time without problems.</li>
+  <li><b>Safety:</b> the page only ever writes the Speaker Name cell of the row being claimed. It never adds, deletes or
+    re-orders rows, and never touches other columns.</li>
+  <li><b>Source code and technical notes:</b>
+    <a href="https://github.com/MamtaMukeshK/task-self-assign-sahaja-hyd">github.com/MamtaMukeshK/task-self-assign-sahaja-hyd</a></li>
+</ul>
+
+</main>
+<script>
+  // Copy buttons: clipboard API where allowed, otherwise select-and-copy fallback.
+  document.querySelectorAll('button.copy').forEach(function (btn) {
+    var label = btn.textContent;
+    btn.addEventListener('click', function () {
+      var el = document.getElementById(btn.dataset.target);
+      var text = el.textContent;
+      function done(ok) {
+        btn.textContent = ok ? 'Copied ✓' : 'Select the text and copy manually';
+        btn.classList.toggle('done', ok);
+        setTimeout(function () { btn.textContent = label; btn.classList.remove('done'); }, 2500);
+      }
+      function fallback() {
+        var range = document.createRange(); range.selectNodeContents(el);
+        var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+        var ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+        done(ok);
+      }
+      if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(function () { done(true); }, fallback);
+      else fallback();
+    });
+  });
+</script>
+</body>
+</html>

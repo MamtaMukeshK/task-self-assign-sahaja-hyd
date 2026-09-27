@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Speaker Self-Assign Setup</title>
+<style>
+  :root { --fg:#1b1b1f; --muted:#5f6368; --bg:#ffffff; --panel:#f6f8fa; --line:#dadce0; --accent:#1a73e8;
+          --warn-bg:#fff8e1; --warn-line:#f0c36d; --ok-bg:#e6f4ea; --ok-line:#81c995; --code-bg:#0d1117; --code-fg:#e6edf3; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --fg:#e8eaed; --muted:#9aa0a6; --bg:#16171a; --panel:#202124; --line:#3c4043; --accent:#8ab4f8;
+          --warn-bg:#3a3016; --warn-line:#7a6320; --ok-bg:#16301f; --ok-line:#2e6b3f; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:860px; margin:0 auto; padding:24px 16px 80px; }
+  h1 { font-size:28px; line-height:1.25; margin:0 0 4px; }
+  h2 { font-size:21px; margin:40px 0 8px; padding-top:16px; border-top:1px solid var(--line); }
+  h3 { font-size:17px; margin:20px 0 6px; }
+  .sub { color:var(--muted); margin:0 0 20px; }
+  ol, ul { padding-left:24px; } li { margin:6px 0; }
+  code { background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-size:.9em; }
+  kbd { border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:0 5px; font-size:.85em; background:var(--panel); }
+  .box { border:1px solid var(--line); background:var(--panel); border-radius:10px; padding:12px 16px; margin:14px 0; }
+  .warn { background:var(--warn-bg); border-color:var(--warn-line); }
+  .ok { background:var(--ok-bg); border-color:var(--ok-line); }
+  .toc a { color:var(--accent); text-decoration:none; } .toc li { margin:2px 0; }
+  table { border-collapse:collapse; width:100%; margin:10px 0; font-size:15px; }
+  th, td { border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:var(--panel); }
+  .table-wrap { overflow-x:auto; }
+  .codehead { display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:center; margin-top:14px;
+              background:var(--panel); border:1px solid var(--line); border-bottom:0; border-radius:10px 10px 0 0; padding:8px 12px; }
+  .codehead b { font-family:ui-monospace, Menlo, Consolas, monospace; }
+  button.copy { font:inherit; font-size:15px; font-weight:600; padding:6px 16px; border-radius:6px; border:0; background:#1a73e8; color:#fff; cursor:pointer; }
+  button.copy.done { background:#188038; }
+  pre { margin:0 0 8px; max-height:340px; overflow:auto; background:var(--code-bg); color:var(--code-fg);
+        border-radius:0 0 10px 10px; padding:12px; font:13px/1.45 ui-monospace, Menlo, Consolas, monospace; white-space:pre; }
+  .step-num { display:inline-block; min-width:26px; height:26px; border-radius:13px; background:var(--accent); color:var(--bg);
+              text-align:center; font-weight:700; margin-right:8px; font-size:15px; line-height:26px; }
+  @media print { pre { max-height:none; white-space:pre-wrap; } button.copy { display:none; } }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Speaker Self-Assign: complete setup guide</h1>
+<p class="sub">One page, everything included. Follow the parts in order, and use the blue <b>Copy</b> buttons for the code.
+Takes about 15 minutes on a laptop or desktop computer (not a phone).</p>
+
+<div class="box">
+  <b>What this sets up:</b> a web page where volunteers open one link, see <b>today's tab</b> of the
+  "Hyd 2026 permission" Google Sheet (every column), and tap <b>Claim</b> on a school whose speaker cell is empty.
+  Their name and mobile are written straight into that row of the sheet, so the sheet and the page always show the same
+  thing, and two people can never take the same school.
+</div>
+
+<div class="box toc">
+  <b>Contents</b>
+  <ol>
+    <li><a href="#p1">Before you start</a></li>
+    <li><a href="#p2">Check the sheet</a></li>
+    <li><a href="#p3">Open the script editor</a></li>
+    <li><a href="#p4">Paste Code.gs</a></li>
+    <li><a href="#p5">Add and paste Index.html</a></li>
+    <li><a href="#p6">Give permission (one time)</a></li>
+    <li><a href="#p7">Publish the page</a></li>
+    <li><a href="#p8">Test it</a></li>
+    <li><a href="#p9">Share it with volunteers</a></li>
+    <li><a href="#p10">Daily rules for organisers</a></li>
+    <li><a href="#p11">If something goes wrong</a></li>
+    <li><a href="#p12">Changing or switching off the page later</a></li>
+    <li><a href="#p13">Good to know</a></li>
+  </ol>
+</div>
+
+<h2 id="p1"><span class="step-num">1</span>Before you start</h2>
+<ul>
+  <li><b>You need EDIT access to the real sheet.</b> If the sheet shows a <b>"View only"</b> badge, or the
+    <b>Extensions</b> menu is grey, stop here and ask the sheet owner to make you an Editor (or to do these steps).</li>
+  <li><b>Use a personal Gmail account if you can.</b> Some company or school accounts don't allow "Anyone" to open
+    the page (Part 7).</li>
+  <li><b>The page runs under your Google account.</b> Everything volunteers claim is written into the sheet
+    <i>as you</i>, and the sheet's version history will show your name for those edits. That's normal.</li>
+  <li>Use a laptop or desktop with Chrome, Edge, Safari or Firefox.</li>
+</ul>
+
+<h2 id="p2"><span class="step-num">2</span>Check the sheet</h2>
+<ol>
+  <li><b>Time zone:</b> in the sheet, open <b>File → Settings</b>. <b>Time zone</b> must be
+    <b>(GMT+05:30) India Standard Time</b>. Change it if needed, then click <b>Save settings</b>.
+    <br><span class="sub">The page uses this to decide which tab is "today", and switches tab at midnight India time.</span></li>
+  <li><b>Tab names:</b> each day's tab must be named like <code>27-Sep</code>, <code>28-Sep</code>,
+    <code>1-Oct</code> or <code>01-Oct</code> (day, dash, 3-letter month). Other tabs like <code>Summary</code>,
+    <code>cancel</code> or <code>Dummy-26-Sep</code> are ignored. Have only one tab per date.</li>
+  <li><b>Header row:</b> on each day tab, <b>row 1</b> holds the column titles, and exactly one title contains the
+    words <b>Speaker</b> and <b>Name</b>, for example "Sahaja Yoga ( IND) Speaker Name" or "Sahaja Yoga Speaker Name".
+    That is the only column the page ever writes into.</li>
+</ol>
+
+<h2 id="p3"><span class="step-num">3</span>Open the script editor</h2>
+<ol>
+  <li>In the <b>real</b> sheet, click the menu <b>Extensions → Apps Script</b>. A new browser tab opens.</li>
+  <li>At the top left, click <b>Untitled project</b>, type <code>Speaker Self-Assign</code>, and click <b>Rename</b>.</li>
+</ol>
+<div class="box warn">Open the editor <b>from the sheet's Extensions menu</b>, not from script.google.com. That's
+  what connects the script to this sheet.</div>
+
+<h2 id="p4"><span class="step-num">4</span>Paste Code.gs</h2>
+<ol>
+  <li>On the left under <b>Files</b>, click <b>Code.gs</b>. It contains a few starter lines.</li>
+  <li>Click inside the code area, press <kbd>Ctrl</kbd>+<kbd>A</kbd> (Mac: <kbd>⌘</kbd>+<kbd>A</kbd>), then
+    <kbd>Delete</kbd>, so it's completely empty.</li>
+  <li>Click the blue <b>Copy Code.gs</b> button below, then click in the empty code area and paste with
+    <kbd>Ctrl</kbd>+<kbd>V</kbd> (Mac: <kbd>⌘</kbd>+<kbd>V</kbd>).</li>
+  <li>Save with <kbd>Ctrl</kbd>+<kbd>S</kbd> (Mac: <kbd>⌘</kbd>+<kbd>S</kbd>). The orange dot next to the file name disappears.</li>
+  <li>Check: the first line is <code>/**</code> and the last line starts with <code>function cacheKey_</code>.
+    Do not change anything in it. In particular, <code>SHEET_ID</code> and <code>TAB_NAME_OVERRIDE</code> must both stay <code>''</code>.</li>
+</ol>
+<div class="codehead"><b>Code.gs</b> <button class="copy" data-target="code-gs">Copy Code.gs</button></div>
+<pre id="code-gs">/**
+ * Sheet Self-Assign — a Google Apps Script web app.
+ *
+ * Opens the tab named after today's date (e.g. '28-Sep'), shows every column,
+ * and lets anyone with the page link claim an open school (empty speaker name)
+ * or release one they claimed. Claims are written into the sheet itself, so the
+ * sheet and the page always agree. Must be deployed by someone with EDIT access.
+ */
+
+var CONFIG = {
+  SHEET_ID: '',                                   // leave empty when installed via the sheet's Extensions → Apps Script
+  HEADER_ROW: 1,                                  // row that holds the column names
+  // The speaker column is found by words in its header (case-insensitive), so
+  // 'Sahaja Yoga Speaker Name' and 'Sahaja Yoga ( IND) Speaker Name' both work.
+  // A row is open while this cell is empty. Claims write 'name&lt;newline&gt;mobile'
+  // into it, the way organisers already do; no other column is ever written.
+  NAME_HEADER_WORDS: ['speaker', 'name'],
+  TAB_NAME_OVERRIDE: '',                          // e.g. '28-Sep' to force a tab while testing
+
+  // Tabs are named like '28-Sep'. Today's date is rendered in these formats
+  // (spreadsheet time zone) and compared to tab names exactly, ignoring case.
+  TAB_DATE_FORMATS: ['dd-MMM', 'd-MMM'],
+
+  CACHE_SECONDS: 5,    // shared read cache so many viewers don't hammer the sheet
+  LOCK_WAIT_MS: 10000, // how long a claim waits for its turn
+  MAX_NAME_LENGTH: 60
+};
+
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('Index')
+    .setTitle('Pick your school')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+/** Called by the page: today's rows plus who holds each. */
+function getState() {
+  var ss = openSpreadsheet_();
+  var sheet = findTodaySheet_(ss);
+  var cache = CacheService.getScriptCache();
+  var key = cacheKey_(sheet);
+  var hit = cache.get(key);
+  if (hit) return JSON.parse(hit);
+  var state = buildState_(sheet);
+  try {
+    cache.put(key, JSON.stringify(state), CONFIG.CACHE_SECONDS);
+  } catch (e) {
+    // Value over the 100 KB cache limit: just serve uncached.
+  }
+  return state;
+}
+
+function claimRow(rowNum, fingerprint, name, mobile) {
+  return mutate_('claim', rowNum, fingerprint, name, mobile);
+}
+
+function releaseRow(rowNum, fingerprint, name) {
+  return mutate_('release', rowNum, fingerprint, name, '');
+}
+
+function mutate_(action, rowNum, fingerprint, rawName, rawMobile) {
+  var name = cleanName_(rawName);
+  var mobile = action === 'claim' ? cleanMobile_(rawMobile) : '';
+  rowNum = Number(rowNum);
+  if (!(rowNum % 1 === 0 &amp;&amp; rowNum &gt; CONFIG.HEADER_ROW)) throw new Error('Invalid row.');
+
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(CONFIG.LOCK_WAIT_MS)) throw new Error('Lots of people are claiming right now. Please try again.');
+  var sheet;
+  try {
+    sheet = findTodaySheet_(openSpreadsheet_());
+    var tab = readTab_(sheet);
+    var row = tab.rows.filter(function (r) { return r.row === rowNum; })[0];
+    if (!row) throw new Error('That row no longer exists. The list has been refreshed.');
+    if (row.fp !== fingerprint) throw new Error('That row was edited or moved since you loaded it. Please check it and try again.');
+
+    if (action === 'claim') {
+      if (row.speaker &amp;&amp; !sameName_(row.speakerName, name)) throw new Error('Already taken by ' + row.speakerName + '.');
+      if (!row.speaker) {
+        writeText_(sheet, rowNum, tab.nameCol, name + '\n' + mobile);
+      }
+    } else if (row.speaker) {
+      if (!sameName_(row.speakerName, name)) throw new Error('Only ' + row.speakerName + ' can release this row.');
+      sheet.getRange(rowNum, tab.nameCol).clearContent();
+    }
+    SpreadsheetApp.flush();
+    CacheService.getScriptCache().remove(cacheKey_(sheet));
+  } finally {
+    lock.releaseLock();
+  }
+  return buildState_(sheet);
+}
+
+/** The sheet this script is attached to, or SHEET_ID if it runs as a standalone script. */
+function openSpreadsheet_() {
+  return CONFIG.SHEET_ID ? SpreadsheetApp.openById(CONFIG.SHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
+}
+
+function findTodaySheet_(ss) {
+  if (CONFIG.TAB_NAME_OVERRIDE) {
+    var forced = ss.getSheetByName(CONFIG.TAB_NAME_OVERRIDE);
+    if (!forced) throw new Error('Tab "' + CONFIG.TAB_NAME_OVERRIDE + '" not found.');
+    return forced;
+  }
+  var tz = ss.getSpreadsheetTimeZone();
+  var now = new Date();
+  var wanted = {};
+  CONFIG.TAB_DATE_FORMATS.forEach(function (f) { wanted[norm_(Utilities.formatDate(now, tz, f))] = true; });
+  var matches = ss.getSheets().filter(function (s) { return wanted[norm_(s.getName())]; });
+  if (matches.length === 1) return matches[0];
+  var today = Utilities.formatDate(now, tz, 'EEE d MMM yyyy');
+  if (!matches.length) throw new Error('No tab for today (' + today + ') yet.');
+  throw new Error('Several tabs look like today (' + today + '): ' +
+    matches.map(function (s) { return s.getName(); }).join(', ') +
+    '. Ask the sheet owner to narrow TAB_DATE_FORMATS.');
+}
+
+/**
+ * Reads the whole tab. Every column is returned for display; the fingerprint
+ * covers everything except the speaker cell, so a claim is refused
+ * if the school details of that row changed or rows were moved.
+ */
+function readTab_(sheet) {
+  var lastRow = sheet.getLastRow();
+  var lastCol = sheet.getLastColumn();
+  if (lastRow &lt; CONFIG.HEADER_ROW || lastCol &lt; 1) throw new Error('Tab "' + sheet.getName() + '" is empty.');
+  var values = sheet.getRange(CONFIG.HEADER_ROW, 1, lastRow - CONFIG.HEADER_ROW + 1, lastCol).getDisplayValues();
+  var headers = values[0];
+  var nIdx = findHeader_(sheet, headers, CONFIG.NAME_HEADER_WORDS);
+  if (nIdx &lt; 0) throw new Error('Tab "' + sheet.getName() + '" has no column in row ' + CONFIG.HEADER_ROW +
+    ' whose header contains "' + CONFIG.NAME_HEADER_WORDS.join('" and "') + '".');
+
+  var rows = [];
+  values.slice(1).forEach(function (r, i) {
+    var details = r.filter(function (_, c) { return c !== nIdx; });
+    if (details.join('').trim() === '') return; // skip blank rows
+    var speaker = r[nIdx].trim();
+    rows.push({ row: CONFIG.HEADER_ROW + 1 + i, fp: fingerprint_(details), cells: r, speaker: speaker,
+      speakerName: speaker.split('\n')[0].trim() }); // first line = name (mobile may follow on line 2)
+  });
+  return { headers: headers, nameCol: nIdx + 1, rows: rows };
+}
+
+function buildState_(sheet) {
+  var tab = readTab_(sheet);
+  return { tab: sheet.getName(), headers: tab.headers, nameIdx: tab.nameCol - 1, rows: tab.rows };
+}
+
+/** Short hash of a row's contents, so a claim can't land on a row that was edited or moved. */
+function fingerprint_(cells) {
+  var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, cells.join('\u001f'), Utilities.Charset.UTF_8);
+  return Utilities.base64Encode(bytes);
+}
+
+/** Writes as plain text so a name is never turned into a formula, number or date. */
+function writeText_(sheet, row, col, text) {
+  sheet.getRange(row, col).setNumberFormat('@').setValue(text);
+}
+
+function cleanName_(raw) {
+  var name = String(raw == null ? '' : raw).replace(/[\u0000-\u001f\u007f]/g, '').replace(/\s+/g, ' ').trim();
+  if (!name) throw new Error('Please enter your name first.');
+  if (name.length &gt; CONFIG.MAX_NAME_LENGTH) throw new Error('Name is too long.');
+  if (/^[=+\-@]/.test(name)) throw new Error('Name cannot start with = + - or @.');
+  return name;
+}
+
+function cleanMobile_(raw) {
+  var mobile = String(raw == null ? '' : raw).replace(/[^\d+ ]/g, '').replace(/\s+/g, ' ').trim();
+  var digits = mobile.replace(/\D/g, '');
+  if (digits.length &lt; 10 || digits.length &gt; 13 || /^\+?$/.test(mobile) || mobile.indexOf('+') &gt; 0) {
+    throw new Error('Please enter a valid mobile number (10 digits, optionally with +91).');
+  }
+  return mobile;
+}
+
+/** Index of the one header containing all the words, -1 if none; errors if several match. */
+function findHeader_(sheet, headers, words) {
+  var hits = [];
+  headers.forEach(function (h, i) {
+    var text = norm_(h);
+    if (words.every(function (w) { return text.indexOf(w) &gt;= 0; })) hits.push(i);
+  });
+  if (hits.length &gt; 1) throw new Error('Tab "' + sheet.getName() + '" has several columns whose header contains "' +
+    words.join('" and "') + '". Please rename all but one.');
+  return hits.length ? hits[0] : -1;
+}
+
+function sameName_(a, b) { return norm_(a) === norm_(b); }
+function norm_(s) { return String(s).toLowerCase().replace(/\s+/g, ' ').trim(); }
+function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
+</pre>
+
+<h2 id="p5"><span class="step-num">5</span>Add and paste Index.html</h2>
+<ol>
+  <li>On the left, click the <b>+</b> next to <b>Files</b> and choose <b>HTML</b>.</li>
+  <li>Type the name exactly <code>Index</code> (capital I, <b>without</b> ".html", which is added automatically) and
+    press <kbd>Enter</kbd>. <span class="sub">Wrong name? Click the ⋮ next to the file → Rename.</span></li>
+  <li>The new file opens with starter lines. Select everything and delete it, as before.</li>
+  <li>Click <b>Copy Index.html</b> below, paste into the empty file, and save.</li>
+  <li>Check: <b>Files</b> now lists exactly <b>Code.gs</b> and <b>Index.html</b>.</li>
+</ol>
+<div class="codehead"><b>Index.html</b> <button class="copy" data-target="index-html">Copy Index.html</button></div>
+<pre id="index-html">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;base target="_top"&gt;
+&lt;meta charset="utf-8"&gt;
+&lt;style&gt;
+  :root { --fg:#1b1b1f; --muted:#666; --line:#e2e2e6; --bg:#fff; --mine:#e8f5e9; --taken:#f5f5f7; --accent:#1a73e8; --err:#b3261e; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:16px; font:14px/1.4 system-ui, sans-serif; color:var(--fg); background:var(--bg); }
+  header { display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; margin-bottom:12px; }
+  h1 { font-size:18px; margin:0; }
+  input:not([type]), input[id=name], input[id=mobile] { font:inherit; padding:6px 8px; border:1px solid var(--line); border-radius:6px; min-width:180px; }
+  button { font:inherit; padding:5px 12px; border-radius:6px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; white-space:nowrap; }
+  button.release { background:#fff; color:var(--accent); }
+  button:disabled { opacity:.5; cursor:default; }
+  #status, #updated { color:var(--muted); }
+  #status.err { color:var(--err); font-weight:600; }
+  .wrap { overflow-x:auto; border:1px solid var(--line); border-radius:8px; }
+  table { border-collapse:collapse; width:100%; }
+  th, td { padding:6px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; white-space:pre-line; }
+  th, td { min-width:7em; }
+  th:first-child, td:first-child { min-width:0; }
+  th { position:sticky; top:0; background:#fafafa; font-weight:600; }
+  tr.mine td { background:var(--mine); }
+  tr.taken td { background:var(--taken); color:var(--muted); }
+  .who { font-weight:600; color:var(--fg); }
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;header&gt;
+  &lt;h1 id="title"&gt;Loading…&lt;/h1&gt;
+  &lt;label&gt;Your name &lt;input id="name" autocomplete="name" placeholder="e.g. Priya Shah"&gt;&lt;/label&gt;
+  &lt;label&gt;Mobile &lt;input id="mobile" autocomplete="tel" inputmode="tel" placeholder="e.g. 98xxxxxxxx"&gt;&lt;/label&gt;
+  &lt;label&gt;&lt;input type="checkbox" id="openOnly"&gt; Open only&lt;/label&gt;
+  &lt;span id="status"&gt;&lt;/span&gt;
+  &lt;span id="updated"&gt;&lt;/span&gt;
+&lt;/header&gt;
+&lt;div class="wrap"&gt;&lt;table id="grid"&gt;&lt;/table&gt;&lt;/div&gt;
+
+&lt;script&gt;
+  var POLL_MS = 15000;
+  var state = null;
+  var seq = 0;      // ignore responses older than the newest one already shown
+  var shownSeq = 0;
+  var busyRow = null;
+  var nameInput = document.getElementById('name');
+  var mobileInput = document.getElementById('mobile');
+  var openOnly = document.getElementById('openOnly');
+
+  // Remember name/mobile in this browser only (per-viewer convenience).
+  [[nameInput, 'selfAssignName'], [mobileInput, 'selfAssignMobile']].forEach(function (p) {
+    try { p[0].value = localStorage.getItem(p[1]) || ''; } catch (e) {}
+    p[0].addEventListener('input', function () {
+      try { localStorage.setItem(p[1], p[0].value); } catch (e) {}
+      render();
+    });
+  });
+  openOnly.addEventListener('change', render);
+
+  function myName() { return nameInput.value.replace(/\s+/g, ' ').trim(); }
+  function same(a, b) { return a.toLowerCase() === b.toLowerCase(); }
+
+  function setStatus(msg, isErr) {
+    var el = document.getElementById('status');
+    el.textContent = msg;
+    el.className = isErr ? 'err' : '';
+  }
+
+  function call(fn, args, okMsg) {
+    var mySeq = ++seq;
+    var runner = google.script.run
+      .withSuccessHandler(function (s) {
+        if (mySeq &lt; shownSeq) return;
+        shownSeq = mySeq; state = s; busyRow = null;
+        render();
+        document.getElementById('updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+        if (okMsg) setStatus(okMsg);
+      })
+      .withFailureHandler(function (err) {
+        busyRow = null;
+        setStatus(err.message || String(err), true);
+        if (fn !== 'getState') refresh(); // show the latest truth after a failed claim
+        else render();
+      });
+    runner[fn].apply(runner, args);
+  }
+
+  function refresh() { call('getState', []); }
+
+  function act(fn, r, verb) {
+    if (!myName()) { setStatus('Please enter your name first.', true); nameInput.focus(); return; }
+    var claiming = fn === 'claimRow';
+    if (claiming &amp;&amp; !mobileInput.value.trim()) { setStatus('Please enter your mobile number.', true); mobileInput.focus(); return; }
+    busyRow = r.row;
+    render();
+    setStatus(verb + '…');
+    var args = claiming ? [r.row, r.fp, myName(), mobileInput.value] : [r.row, r.fp, myName()];
+    call(fn, args, claiming ? 'Claimed — highlighted in green.' : 'Released.');
+  }
+
+  function render() {
+    if (!state) return;
+    document.getElementById('title').textContent = 'Today: ' + state.tab;
+    var me = myName();
+    var t = document.getElementById('grid');
+    t.textContent = '';
+    var head = t.insertRow();
+    [''].concat(state.headers).forEach(function (h) {
+      var th = document.createElement('th'); th.textContent = h; head.appendChild(th);
+    });
+    var open = 0;
+    state.rows.forEach(function (r) {
+      var mine = r.speaker &amp;&amp; me &amp;&amp; same(r.speakerName, me);
+      if (!r.speaker) open++;
+      if (openOnly.checked &amp;&amp; r.speaker &amp;&amp; !mine) return;
+      var tr = t.insertRow();
+      tr.className = mine ? 'mine' : (r.speaker ? 'taken' : '');
+      var btnCell = tr.insertCell();
+      if (!r.speaker || mine) {
+        var b = document.createElement('button');
+        b.textContent = mine ? 'Release' : 'Claim';
+        if (mine) b.className = 'release';
+        b.disabled = busyRow !== null;
+        b.onclick = function () { act(mine ? 'releaseRow' : 'claimRow', r, mine ? 'Releasing' : 'Claiming'); };
+        btnCell.appendChild(b);
+      }
+      r.cells.forEach(function (c, i) {
+        var td = tr.insertCell();
+        td.textContent = c;
+        if (i === state.nameIdx &amp;&amp; c) td.className = 'who';
+      });
+    });
+    document.title = open + ' open · ' + state.tab;
+    if (!state.rows.length) t.insertRow().insertCell().textContent = 'No rows on this tab yet.';
+  }
+
+  refresh();
+  setInterval(function () { if (!document.hidden &amp;&amp; busyRow === null) refresh(); }, POLL_MS);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(); });
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+
+<h2 id="p6"><span class="step-num">6</span>Give permission (one time)</h2>
+<ol>
+  <li>Click <b>Code.gs</b> on the left. <span class="sub">The Run button only appears while a .gs file is open.</span></li>
+  <li>In the toolbar, the dropdown next to <b>Debug</b> lists functions: choose <b>getState</b>.</li>
+  <li>Click <b>▷ Run</b>. A box says <b>Authorization required</b>: click <b>Review permissions</b> and choose your account.</li>
+  <li>Google shows <b>"Google hasn't verified this app"</b>. This is normal for your own scripts, and the
+    "developer" it names is you. Click <b>Advanced</b> (bottom left), then <b>Go to Speaker Self-Assign (unsafe)</b>.</li>
+  <li>Click <b>Allow</b>. It asks to see and edit your spreadsheets, which is how it writes names into the sheet.</li>
+  <li>The <b>Execution log</b> opens at the bottom:
+    <ul>
+      <li><b>"Execution completed"</b>: done, go to Part 7.</li>
+      <li><b>"No tab for today (…)"</b>: the code works; there's just no tab named for today yet. You can still go on.</li>
+      <li>Any other red message: see <a href="#p11">Part 11</a>.</li>
+    </ul></li>
+</ol>
+
+<h2 id="p7"><span class="step-num">7</span>Publish the page</h2>
+<ol>
+  <li>Top right: click the blue <b>Deploy</b> button → <b>New deployment</b>.</li>
+  <li>Next to <b>Select type</b>, click the <b>gear icon</b> → <b>Web app</b>.</li>
+  <li>Fill in:
+    <div class="table-wrap"><table>
+      <tr><th>Field</th><th>Set to</th></tr>
+      <tr><td>Description</td><td><code>v1</code></td></tr>
+      <tr><td>Execute as</td><td><b>Me</b> (your email)</td></tr>
+      <tr><td>Who has access</td><td><b>Anyone</b> (not "Anyone with Google account")</td></tr>
+    </table></div></li>
+  <li>Click <b>Deploy</b> (allow permission again if asked).</li>
+  <li>Copy the <b>Web app URL</b>. It's long and ends in <code>/exec</code>. <b>This is the volunteers' link.</b> Click <b>Done</b>.</li>
+</ol>
+
+<h2 id="p8"><span class="step-num">8</span>Test it</h2>
+<ol>
+  <li>Open the <code>/exec</code> link in a new browser tab. You should see <b>"Today: [date]"</b>, every column
+    of today's tab, and a blue <b>Claim</b> button on each row whose speaker cell is empty.
+    <span class="sub">A grey Google bar at the top ("created by a Google Apps Script user") is normal and can't be removed.</span></li>
+  <li>Type a test name and a 10-digit mobile, then click <b>Claim</b> on one open row. It turns green.</li>
+  <li>In the sheet, that row's Speaker Name cell now shows the name with the mobile on the line below.
+    No other cell changed.</li>
+  <li>Back on the page, click <b>Release</b>. The cell in the sheet is empty again.</li>
+  <li>Optional: open the link on your phone too, and try to claim the same row from both at the same time.
+    Only one wins; the other sees <b>"Already taken by …"</b>.</li>
+</ol>
+<div class="box ok"><b>All good?</b> Then it's live. Share the link (Part 9).</div>
+
+<h2 id="p9"><span class="step-num">9</span>Share it with volunteers</h2>
+<p>Paste your <code>/exec</code> link into this message and send it:</p>
+<div class="codehead"><b>Message for volunteers</b> <button class="copy" data-target="msg">Copy message</button></div>
+<pre id="msg" style="white-space:pre-wrap">🙏 To pick a school for today's program, open this link:
+PASTE-THE-/exec-LINK-HERE
+
+1. Type your name and mobile number at the top (only needed the first time).
+2. Tap "Claim" next to the school you'd like.
+3. Your row turns green: it's yours and it shows in the main sheet.
+4. Changed your mind? Tap "Release".
+The page refreshes every 15 seconds and always shows today's list.</pre>
+
+<h2 id="p10"><span class="step-num">10</span>Daily rules for organisers</h2>
+<div class="table-wrap"><table>
+  <tr><th>Do this</th><th>Why</th></tr>
+  <tr><td>Name each day's tab like <code>28-Sep</code> / <code>1-Oct</code> / <code>01-Oct</code>, one tab per date.</td>
+      <td>That's how the page finds today's tab.</td></tr>
+  <tr><td>Keep the titles in row 1, with exactly one title containing "Speaker" and "Name".</td>
+      <td>That's the column the page writes into.</td></tr>
+  <tr><td>A school is <b>open</b> when its Speaker Name cell is empty. To free a school, just clear that cell.</td>
+      <td>The page shows the change within about 15 seconds.</td></tr>
+  <tr><td>Keep typing in the sheet as usual (including name + number in one cell).</td>
+      <td>The page always reflects the sheet. Rows you fill by hand show as taken.</td></tr>
+  <tr><td>The <b>same link</b> works every day.</td>
+      <td>It moves to the new day's tab at midnight India time. If that tab doesn't exist yet, volunteers see "No tab for today".</td></tr>
+</table></div>
+
+<h2 id="p11"><span class="step-num">11</span>If something goes wrong</h2>
+<div class="table-wrap"><table>
+  <tr><th>What you see</th><th>What it means / what to do</th></tr>
+  <tr><td>Extensions menu is grey</td><td>You only have View access. Ask the owner for Edit access.</td></tr>
+  <tr><td>"No tab for today (…)"</td><td>No tab is named for today (e.g. <code>1-Oct</code>). Create or rename it. Also check the time zone (Part 2).</td></tr>
+  <tr><td>"Several tabs look like today"</td><td>Two tabs have today's date as their name (e.g. <code>1-Oct</code> and <code>01-Oct</code>). Rename one.</td></tr>
+  <tr><td>"…has no column in row 1 whose header contains "speaker" and "name""</td><td>Today's tab has no Speaker Name title in row 1. Add or fix the title.</td></tr>
+  <tr><td>"…has several columns whose header contains…"</td><td>Two titles contain both words. Rename one so only one does.</td></tr>
+  <tr><td>"Cannot read properties of null (reading …)"</td><td>The script was created at script.google.com instead of from the sheet. Redo Part 3 from the sheet's Extensions menu.</td></tr>
+  <tr><td>"Already taken by …"</td><td>Someone else got there first. Pick another school.</td></tr>
+  <tr><td>"That row was edited or moved…"</td><td>An organiser changed or re-ordered rows after the page loaded. The page refreshes; check and claim again.</td></tr>
+  <tr><td>"Lots of people are claiming right now"</td><td>Many claims arrived at the same second. Try again.</td></tr>
+  <tr><td>"Please enter a valid mobile number"</td><td>Use 10 digits, optionally starting with +91.</td></tr>
+  <tr><td>"Who has access" doesn't offer "Anyone"</td><td>Your account's organisation blocks it. Do the setup from a personal Gmail account that has edit access.</td></tr>
+  <tr><td>The page shows yesterday's tab</td><td>Time zone is wrong. Fix it in File → Settings (Part 2).</td></tr>
+  <tr><td>You changed the code but the page didn't change</td><td>You must publish a new version (Part 12).</td></tr>
+</table></div>
+
+<h2 id="p12"><span class="step-num">12</span>Changing or switching off the page later</h2>
+<ul>
+  <li><b>Update the code (same link):</b> paste the new code and save, then go to <b>Deploy → Manage deployments</b>,
+    click the <b>pencil</b>, set <b>Version: New version</b>, and click <b>Deploy</b>.
+    <br><span class="sub">Do <b>not</b> use "New deployment" for updates, because that creates a <b>different</b> link.</span></li>
+  <li><b>Switch the page off:</b> go to <b>Deploy → Manage deployments</b>, click <b>Archive</b>. The link stops working immediately.</li>
+  <li><b>Test on a copy first (optional):</b> use File → Make a copy of the sheet <i>after</i> Part 5. The copy has its own
+    copy of the script; publish that one to experiment without touching the real sheet.</li>
+</ul>
+
+<h2 id="p13"><span class="step-num">13</span>Good to know</h2>
+<ul>
+  <li><b>Names are on trust.</b> Anyone with the link can type any name. Only the person whose name is on a row can
+    release it through the page; organisers can always fix things in the sheet.</li>
+  <li><b>Privacy:</b> everything on today's tab, including phone numbers, is visible to anyone with the page link.
+    That's the same as the sheet's current "anyone with the link can view" sharing.</li>
+  <li><b>Capacity:</b> dozens of people can use it at the same time without problems.</li>
+  <li><b>Safety:</b> the page only ever writes the Speaker Name cell of the row being claimed. It never adds, deletes or
+    re-orders rows, and never touches other columns.</li>
+  <li><b>Source code and technical notes:</b>
+    <a href="https://github.com/MamtaMukeshK/task-self-assign-sahaja-hyd">github.com/MamtaMukeshK/task-self-assign-sahaja-hyd</a></li>
+</ul>
+
+</main>
+<script>
+  // Copy buttons: clipboard API where allowed, otherwise select-and-copy fallback.
+  document.querySelectorAll('button.copy').forEach(function (btn) {
+    var label = btn.textContent;
+    btn.addEventListener('click', function () {
+      var el = document.getElementById(btn.dataset.target);
+      var text = el.textContent;
+      function done(ok) {
+        btn.textContent = ok ? 'Copied ✓' : 'Select the text and copy manually';
+        btn.classList.toggle('done', ok);
+        setTimeout(function () { btn.textContent = label; btn.classList.remove('done'); }, 2500);
+      }
+      function fallback() {
+        var range = document.createRange(); range.selectNodeContents(el);
+        var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+        var ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+        done(ok);
+      }
+      if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(function () { done(true); }, fallback);
+      else fallback();
+    });
+  });
+</script>
+</body>
+</html>

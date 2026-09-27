@@ -7,6 +7,11 @@ page always show the same thing, and two people can never grab the same row.
 
 Two files do everything: `Code.gs` (the logic) and `Index.html` (the page).
 
+
+> **One-stop guide:** open **`SETUP_GUIDE.html`** (download it and double-click). It has every step
+> below plus both code files with Copy buttons. After changing `Code.gs` or `Index.html`,
+> rebuild it with `python3 tools/build_guide.py`.
+
 ---
 
 ## Who must do this
