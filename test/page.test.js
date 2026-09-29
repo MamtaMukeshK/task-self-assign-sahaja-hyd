@@ -65,7 +65,7 @@ test('two users in real browser', { timeout: 60000 }, async () => {
 test('multi-slot school in real browser: two join, third sees it full, one leaves', { timeout: 60000 }, async () => {
   const grid = [
     ['S No', 'Sahaja Yoga ( IND)\nSpeaker Name', 'School Name', 'Total volunteers needed', 'count of Volunteers still neeeded'],
-    ['1', 'Chandrakant\n9000000001', 'School Y', '3', ''],
+    ['1', 'Ramesh\n9000000001', 'School Y', '3', ''],
     ['2', '', 'School X', '1', ''],
   ];
   const sheet = makeSheet('28-Sep', 3, grid);
@@ -87,12 +87,12 @@ test('multi-slot school in real browser: two join, third sees it full, one leave
     const a = await user('Priya', '9876543210');
     assert.match(await a.textContent('#note'), /Places per school from column "Total volunteers needed"/);
     assert.match(await row1(a).textContent(), /2 of 3/);
-    assert.match(await row1(a).textContent(), /Chandrakant · 9000000001/);
+    assert.match(await row1(a).textContent(), /Ramesh · 9000000001/);
 
     await row1(a).locator('button:text("Claim")').click(); await a.waitForSelector('text=Claimed');
     const b = await user('Ravi', '9123456789');
     await row1(b).locator('button:text("Claim")').click(); await b.waitForSelector('text=Claimed');
-    assert.equal(sheet.grid[1][1], 'Chandrakant\n9000000001\nPriya 9876543210\nRavi 9123456789');
+    assert.equal(sheet.grid[1][1], 'Ramesh\n9000000001\nPriya 9876543210\nRavi 9123456789');
     assert.match(await row1(b).textContent(), /0 of 3/);
     assert.equal(sheet.grid[1][4], 0, 'still-needed column updated');
 
@@ -100,7 +100,7 @@ test('multi-slot school in real browser: two join, third sees it full, one leave
     assert.equal(await row1(c).locator('button').count(), 0, 'full: no Claim button');
     await a.reload(); await a.waitForSelector('text=Today: 28-Sep');
     await row1(a).locator('button:text("Release")').click(); await a.waitForSelector('text=Released.');
-    assert.equal(sheet.grid[1][1], 'Chandrakant\n9000000001\nRavi 9123456789');
+    assert.equal(sheet.grid[1][1], 'Ramesh\n9000000001\nRavi 9123456789');
     await c.reload(); await c.waitForSelector('text=Today: 28-Sep');
     assert.match(await row1(c).textContent(), /1 of 3/);
     await c.screenshot({ path: path.join(__dirname, 'slots-view.png') });

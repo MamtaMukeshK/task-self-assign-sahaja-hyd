@@ -144,7 +144,7 @@ function slotsGrid() {
     // Real 30-Sep titles (including the sheet's "neeeded" typo).
     ['S No', 'Sahaja Yoga ( IND)\n Speaker Name', 'Total volunteers needed', 'count of Volunteers still neeeded', 'Institution name'],
     ['1', '', '3', '', 'School X'],
-    ['2', 'Chandrakant\n9000000001', '2', '', 'School Y'],   // organiser entry, name and phone on two lines
+    ['2', 'Ramesh\n9000000001', '2', '', 'School Y'],   // organiser entry, name and phone on two lines
     ['3', 'GOPI and Team', '3 volunteers', '', 'School Z'],   // organiser entry with no phone
     ['4', '', '', '', 'School W'],                            // blank total = 1
     ['5', '', '0', '', 'School V'],
@@ -157,7 +157,7 @@ test('slots: totals, remaining and parsed assignees come from the sheet', () => 
   const s = gs.getState();
   assert.equal(s.slotsHeader, 'Total volunteers needed');
   assert.deepEqual(s.rows.map(r => [r.total, r.remaining]), [[3, 3], [2, 1], [3, 2], [1, 1], [0, 0]]);
-  assert.deepEqual(byRow(s, 3).assignees.map(a => [a.name, a.phone]), [['Chandrakant', '9000000001']]);
+  assert.deepEqual(byRow(s, 3).assignees.map(a => [a.name, a.phone]), [['Ramesh', '9000000001']]);
 });
 test('slots: people fill a school up to its total, then it is full', () => {
   const sheet = makeSheet('28-Sep', 8, slotsGrid());
@@ -176,10 +176,10 @@ test('slots: releasing removes only that person and keeps the others exactly', (
   const gs = load([sheet], NOW);
   const r = byRow(gs.getState(), 3);
   gs.claimRow(r.row, r.fp, 'Priya', '9876543210');
-  assert.equal(sheet.grid[2][1], 'Chandrakant\n9000000001\nPriya 9876543210', 'appended under organiser entry');
+  assert.equal(sheet.grid[2][1], 'Ramesh\n9000000001\nPriya 9876543210', 'appended under organiser entry');
   assert.throws(() => gs.releaseRow(r.row, r.fp, 'Ravi'), /Your name is not on this row/);
   const s = gs.releaseRow(r.row, r.fp, 'PRIYA');
-  assert.equal(sheet.grid[2][1], 'Chandrakant\n9000000001');
+  assert.equal(sheet.grid[2][1], 'Ramesh\n9000000001');
   assert.equal(byRow(s, 3).remaining, 1);
 });
 test('slots: an organiser entry without a phone stays a separate person', () => {
@@ -245,4 +245,58 @@ test('still-needed column: a formula there is never overwritten', () => {
   const r = byRow(gs.getState(), 2);
   gs.claimRow(r.row, r.fp, 'Priya', '9876543210');
   assert.equal(sheet.grid[1][3], '=C2-1');
+});
+
+// ---- Real 30-Sep layout: all 21 column titles exactly as in the sheet export ----
+// (names, phones and schools below are fake; the patterns match the real entries)
+const SEP30_HEADERS = ["S No", "Sahaja Yoga ( IND)\n Speaker Name", "Local ( HYD) \n Sahaja Yogi", "Total volunteers needed", "count of Volunteers still neeeded", "Institution name", "Zone", "Branch / Address", "Principal Name", "Phone No", "RI", "Phone No", "Date", "Time", "Remarks", "No Student", "Distance from Ashram", "Direction ( E, W)", "Approval Obtained By Yogi/Yogini Name", "Approval Obtained By Yogi/Yogini Contact number", "Google map"];
+function sep30Grid() {
+  const row = (sno, speaker, total, school) => {
+    const r = Array(SEP30_HEADERS.length).fill('');
+    r[0] = sno; r[1] = speaker; r[3] = total; r[5] = school; r[6] = 'Zone 1'; r[12] = '30-Sep-26';
+    return r;
+  };
+  return [
+    SEP30_HEADERS,
+    row('1', '', '2', 'School A'),
+    row('2', '', '3', 'School B'),
+    row('3', 'Asha Rao\n9000000001', '', 'School C'),     // name + phone on two lines
+    row('4', 'Neha Singh 9000000002', '2', 'School D'),    // name + phone on one line
+    row('5', 'Suresh', '2', 'School E'),                  // organiser name, no phone
+    row('6', '12 sessions', '', 'School F'),               // a note typed into the speaker column
+    row('7', '', '', 'School G'),                          // no total = 1 person
+  ];
+}
+test('30-Sep layout: both volunteer columns found among the real 21 titles', () => {
+  const s = load([makeSheet('28-Sep', 30, sep30Grid())], NOW).getState();
+  assert.equal(s.headers.length, 21, 'all columns shown');
+  assert.equal(s.slotsHeader, 'Total volunteers needed');
+  assert.deepEqual(s.rows.map(r => [r.cells[0], r.assignees.length, r.total, r.remaining]),
+    [['1', 0, 2, 2], ['2', 0, 3, 3], ['3', 1, 1, 0], ['4', 1, 2, 1], ['5', 1, 2, 1], ['6', 1, 1, 0], ['7', 0, 1, 1]]);
+});
+test('30-Sep layout: a full day of claims only ever changes columns B and E', () => {
+  const original = sep30Grid();
+  const sheet = makeSheet('28-Sep', 30, sep30Grid());
+  const gs = load([sheet], NOW);
+  const v = gs.getState();                                   // everyone loads the page together
+  const r = sno => v.rows.find(x => x.cells[0] === sno);
+  gs.claimRow(r('1').row, r('1').fp, 'Vol A', '9000000011');
+  gs.claimRow(r('1').row, r('1').fp, 'Vol B', '9000000012'); // stale page, still joins
+  assert.throws(() => gs.claimRow(r('1').row, r('1').fp, 'Vol C', '9000000013'), /No slots left: taken by Vol A, Vol B\./);
+  assert.equal(sheet.grid[1][4], 0);
+  gs.releaseRow(r('1').row, r('1').fp, 'vol a');
+  assert.equal(sheet.grid[1][1], 'Vol B 9000000012');
+  assert.equal(sheet.grid[1][4], 1);
+  gs.claimRow(r('4').row, r('4').fp, 'Vol D', '9000000014');
+  assert.equal(sheet.grid[4][1], 'Neha Singh 9000000002\nVol D 9000000014');
+  gs.claimRow(r('5').row, r('5').fp, 'Vol E', '9000000015');
+  assert.equal(sheet.grid[5][1], 'Suresh\n\nVol E 9000000015');
+  assert.throws(() => gs.claimRow(r('6').row, r('6').fp, 'Vol F', '9000000016'), /No slots left: taken by 12 sessions\./);
+  gs.claimRow(r('7').row, r('7').fp, 'Vol G', '9000000017');
+  assert.equal(sheet.grid[7][4], 0);
+  original.forEach((row, i) => row.forEach((c, j) => { if (j !== 1 && j !== 4) assert.equal(sheet.grid[i][j], c, `cell ${i},${j} changed`); }));
+});
+test('a day tab with only the header row shows no schools instead of an error', () => {
+  const s = load([makeSheet('28-Sep', 31, [SEP30_HEADERS])], NOW).getState();
+  assert.equal(s.rows.length, 0);
 });

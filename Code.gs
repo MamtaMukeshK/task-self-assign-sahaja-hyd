@@ -14,7 +14,7 @@ var CONFIG = {
   // 'Sahaja Yoga Speaker Name' and 'Sahaja Yoga ( IND) Speaker Name' both work.
   // This cell lists everyone on the school, one person per line ('Priya 98xxxxxxxx').
   // A phone number on its own line belongs to the name above it, so organiser
-  // entries like 'Chandrakant<newline>98xxxxxxxx' count as one person.
+  // entries like 'Ramesh<newline>98xxxxxxxx' count as one person.
   // No other column is ever written.
   NAME_HEADER_WORDS: ['speaker', 'name'],
   // Optional column with how many people a school needs ('Total volunteers
@@ -178,7 +178,7 @@ function buildState_(sheet) {
 
 /**
  * Splits a speaker cell into people. A person ends at the line holding their
- * phone number, so 'Chandrakant<newline>98xxxxxxxx' and a wrapped
+ * phone number, so 'Ramesh<newline>98xxxxxxxx' and a wrapped
  * 'Vidhya and<newline>team<newline>70xxxxxxxx' are one person each, while
  * 'Priya 98xxxxxxxx<newline>Ravi 91xxxxxxxx' is two. A blank line also ends a
  * person (used after an entry that has no phone number).
