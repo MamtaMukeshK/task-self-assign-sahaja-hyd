@@ -13,12 +13,14 @@ Two files do everything: `Code.gs` (the logic) and `Index.html` (the page).
 > rebuild it with `python3 tools/build_guide.py`.
 
 
-> **Demo video for volunteers:** `docs/demo.mp4` (49 s): claim, release, register others from the speaker list, and
-> switching language. Recorded from this page's code with a demo copy of the 30-Sep layout (made-up names).
-> Re-record with `tools/record_demo.js`. The page's gold **"Watch the 1-minute demo"** button plays it in a pop-up
-> player (inline on phones) from jsDelivr, pinned to the commit that holds the video, with GitHub's raw link as a
-> backup. To use a Google Drive copy instead, put its link first in `DEMO_VIDEO_URLS` in Index.html. If the video
-> is re-recorded, update the commit hash in those links.
+> **Demo video for volunteers:** `docs/demo.mp4` (58 s, with an Indian English female voice-over): claim,
+> release, register others from the speaker list, and switching language. Recorded from this page's code with a
+> demo copy of the 30-Sep layout (made-up names). Re-record with `tools/record_demo.js`, then add the voice with
+> `tools/voiceover/mix.py` (the spoken lines are in `tools/voiceover/lines.json`; `make_voice.py` re-speaks them).
+> The page's gold **"Watch the 1-minute demo"** button opens the organisers' **Google Drive** copy (first link in
+> `DEMO_VIDEO_URLS` in Index.html) in Drive's own player in a new tab. To update that video, upload the new file
+> with Drive's **Manage versions** so the link stays the same. If the Drive link is removed, the button instead
+> plays the GitHub copies (jsDelivr, then GitHub's raw link, pinned to the commit holding the video) in a pop-up.
 
 ---
 

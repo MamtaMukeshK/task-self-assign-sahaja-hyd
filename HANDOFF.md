@@ -112,6 +112,14 @@ _Last updated: 2026-09-27_
   c80e7a2 (tries the next on error; "Open the video" link fallback; a Drive link opens Drive's player).
   NOT VERIFIED from the sandbox: jsDelivr/GitHub delivery to real phones (both hosts blocked here). VERSION .6. 65 tests.
 
+- 2026-09-29: Indian English female voice-over added to docs/demo.mp4 (now 58 s; each step waits for its line).
+  Voice = Kokoro "hf_alpha" (speaker 31, speed 0.95) run offline via sherpa-onnx; lines, clips, timing marks and
+  scripts in tools/voiceover/ (make_voice.py speaks, mix.py mixes; peak -1.7 dB). Video commit 7d78113.
+  DEMO_VIDEO_URLS now starts with the organisers' Google Drive link (1L1A_FmlOukDZMTnOXa73RlzQfdaHS9Zg), so the
+  button opens Drive's player in a new tab; GitHub copies re-pinned to 7d78113 as the no-Drive fallback.
+  VERSION .7. 65 tests. NOT VERIFIED: nobody has listened to the voice yet (the build machine can't play audio);
+  the Drive file must be replaced with the voiced video via Manage versions (it still holds the silent one).
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.

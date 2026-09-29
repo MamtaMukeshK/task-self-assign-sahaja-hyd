@@ -430,24 +430,43 @@ test('language switch: opens in English; Telugu and Hindi translate the page and
   } finally { await browser.close(); }
 });
 
-test('demo video button: prominent, opens a player, falls back to the second copy, closes', { timeout: 60000 }, async () => {
+test('demo video button: prominent, opens the Drive video in a new tab; without Drive, plays here with fallback', { timeout: 60000 }, async () => {
   const gs = load([makeSheet('28-Sep', 1, [['S No', 'Speaker Name', 'Institution name'], ['1', '', 'School A']])], new Date(Date.UTC(2026, 8, 28, 5)));
+  const DRIVE = /^\s*'https:\/\/drive\.google\.com\/[^']*',\n/m;
+  assert.match(html, DRIVE, 'the Google Drive link is listed first');
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
   try {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 800 } });
     const hits = [];
+    await ctx.route('https://drive.google.com/**', r => { hits.push('drive'); return r.fulfill({ contentType: 'text/html', body: 'drive player' }); });
     await ctx.route('https://cdn.jsdelivr.net/**', r => { hits.push('jsdelivr'); return r.fulfill({ status: 404, body: 'nope' }); });
     await ctx.route('https://raw.githubusercontent.com/**', r => { hits.push('raw'); return r.fulfill({ status: 404, body: 'nope' }); });
-    const p = await ctx.newPage();
-    p.setDefaultTimeout(8000);
-    await p.exposeFunction('gsCall', (fn, a) => { try { return { ok: JSON.parse(JSON.stringify(gs[fn](...a))) }; } catch (e) { return { err: e.message }; } });
-    await p.addInitScript(SHIM);
-    await p.route('http://app.test/', r => r.fulfill({ contentType: 'text/html', body: html }));
-    await p.goto('http://app.test/');
-    await p.waitForSelector('text=Day: 28-Sep');
+    const open = async body => {
+      const p = await ctx.newPage();
+      p.setDefaultTimeout(8000);
+      await p.exposeFunction('gsCall', (fn, a) => { try { return { ok: JSON.parse(JSON.stringify(gs[fn](...a))) }; } catch (e) { return { err: e.message }; } });
+      await p.addInitScript(SHIM);
+      await p.route('http://app.test/', r => r.fulfill({ contentType: 'text/html', body }));
+      await p.goto('http://app.test/');
+      await p.waitForSelector('text=Day: 28-Sep');
+      return p;
+    };
+    // As shipped: Drive first -> Drive's own player in a new tab, no in-page player.
+    let p = await open(html);
     assert.match(await p.textContent('#demoBtn'), /Watch the 1-minute demo/);
     const btn = await p.locator('#demoBtn').boundingBox();
     assert.ok(btn.width > 300 && btn.height >= 36, 'full-width, easy to tap on a phone');
+    const [tab] = await Promise.all([ctx.waitForEvent('page'), p.click('#demoBtn')]);
+    await tab.waitForLoadState();
+    assert.match(tab.url(), /^https:\/\/drive\.google\.com\/file\/d\/[\w-]+\/view/);
+    assert.equal(await p.isVisible('#demoBox'), false);
+    assert.deepEqual(hits, ['drive']);
+    await tab.close();
+    await p.selectOption('#lang', 'hi');
+    assert.match(await p.textContent('#demoBtn'), /1 मिनट का डेमो देखें/);
+    // Drive link removed: plays in the page, falling back to the second copy.
+    hits.length = 0;
+    p = await open(html.replace(DRIVE, ''));
     await p.click('#demoBtn');
     assert.equal(await p.isVisible('#demoVideo'), true);
     await p.waitForFunction(() => /raw\.githubusercontent\.com/.test(document.getElementById('demoVideo').src));
@@ -458,7 +477,5 @@ test('demo video button: prominent, opens a player, falls back to the second cop
     assert.equal(await p.isVisible('#demoBox'), false);
     await p.click('#demoBtn'); await p.click('#demoClose');
     assert.equal(await p.isVisible('#demoBox'), false);
-    await p.selectOption('#lang', 'hi');
-    assert.match(await p.textContent('#demoBtn'), /1 मिनट का डेमो देखें/);
   } finally { await browser.close(); }
 });

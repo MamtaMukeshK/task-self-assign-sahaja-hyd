@@ -147,7 +147,7 @@ Takes about 15 minutes on a laptop or desktop computer (not a phone).</p>
  */
 
 // Shown on the page so it's easy to confirm which version is deployed.
-var VERSION = '2026-09-29.6';
+var VERSION = '2026-09-29.7';
 
 var CONFIG = {
   // Time zone for "today" and "now" (which day opens, which slots have ended).
@@ -980,11 +980,12 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
     return (wd &gt;= 0 ? t('weekdays')[wd] + ' ' : '') + d.name + (d.today ? ' ' + t('todayMark') : d.past ? ' ' + t('pastMark') : '');
   }
 
-  // Demo video shown by the "Watch the 1-minute demo" button: tried in order. To use a
-  // Google Drive copy instead, put its link first (shared as "Anyone with the link").
+  // Demo video for the "Watch the 1-minute demo" button. A Google Drive link first opens Drive's
+  // own player in a new tab (share it as "Anyone with the link"); otherwise the copies play here in order.
   var DEMO_VIDEO_URLS = [
-    'https://cdn.jsdelivr.net/gh/MamtaMukeshK/task-self-assign-sahaja-hyd@c80e7a2f1c09e9e090ea29e3e2b0530c1d1b0c0d/docs/demo.mp4',
-    'https://raw.githubusercontent.com/MamtaMukeshK/task-self-assign-sahaja-hyd/c80e7a2f1c09e9e090ea29e3e2b0530c1d1b0c0d/docs/demo.mp4'
+    'https://drive.google.com/file/d/1L1A_FmlOukDZMTnOXa73RlzQfdaHS9Zg/view?usp=sharing',
+    'https://cdn.jsdelivr.net/gh/MamtaMukeshK/task-self-assign-sahaja-hyd@7d7811368c202cc24edfcbdc9cf3f8a8145aacee/docs/demo.mp4',
+    'https://raw.githubusercontent.com/MamtaMukeshK/task-self-assign-sahaja-hyd/7d7811368c202cc24edfcbdc9cf3f8a8145aacee/docs/demo.mp4'
   ];
   var POLL_MS = 15000;
   var lastUpdated = '';
