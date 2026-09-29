@@ -145,3 +145,30 @@ test('date picker and time-clash label in real browser', { timeout: 60000 }, asy
     assert.deepEqual(errs, []);
   } finally { await browser.close(); }
 });
+
+test('map and web links in cells are clickable, other text stays plain', { timeout: 60000 }, async () => {
+  const grid = [
+    ['S No', 'Speaker Name', 'Institution name', 'Google map', 'Remarks'],
+    ['1', '', 'School A', 'https://maps.app.goo.gl/dnAqPMzUPHFdHdCu6?g_st=ac', 'see https://example.org/info for details'],
+    ['2', '', 'School B', 'https://maps.google.com/maps?q=17.4652273%2C78.3084288&z=17&hl=en', 'javascript:alert(1)'],
+  ];
+  const gs = load([makeSheet('28-Sep', 3, grid)], new Date(Date.UTC(2026, 8, 28)));
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
+  try {
+    const p = await (await browser.newContext()).newPage();
+    p.setDefaultTimeout(8000);
+    await p.exposeFunction('gsCall', (fn, a) => { try { return { ok: JSON.parse(JSON.stringify(gs[fn](...a))) }; } catch (e) { return { err: e.message }; } });
+    await p.addInitScript(SHIM);
+    await p.route('http://app.test/', r => r.fulfill({ contentType: 'text/html', body: html }));
+    await p.goto('http://app.test/');
+    await p.waitForSelector('text=Day: 28-Sep');
+    const links = await p.$$eval('#grid a', as => as.map(a => [a.textContent, a.getAttribute('href'), a.target, a.rel]));
+    assert.deepEqual(links, [
+      ['Open map', 'https://maps.app.goo.gl/dnAqPMzUPHFdHdCu6?g_st=ac', '_blank', 'noopener noreferrer'],
+      ['https://example.org/info', 'https://example.org/info', '_blank', 'noopener noreferrer'],
+      ['Open map', 'https://maps.google.com/maps?q=17.4652273%2C78.3084288&z=17&hl=en', '_blank', 'noopener noreferrer'],
+    ]);
+    assert.match(await p.locator('#grid tr').nth(1).textContent(), /see https:\/\/example\.org\/info for details/);
+    assert.match(await p.locator('#grid tr').nth(2).textContent(), /javascript:alert\(1\)/, 'shown as plain text, not a link');
+  } finally { await browser.close(); }
+});

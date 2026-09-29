@@ -487,6 +487,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   button.release { background:#fff; color:var(--accent); }
   button:disabled { opacity:.5; cursor:default; }
   select { font:inherit; padding:5px 8px; border:1px solid var(--line); border-radius:6px; }
+  td a { color:var(--accent); word-break:break-all; }
   .clash { color:var(--muted); font-size:12px; }
   #status, #updated, #note { color:var(--muted); }
   #status.err { color:var(--err); font-weight:600; }
@@ -587,6 +588,24 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
     call(fn, args, claiming ? 'Claimed — highlighted in green.' : 'Released.');
   }
 
+  // Web addresses in a cell become links (map links read "Open map"); the rest stays plain text.
+  var URL_RE = /https?:\/\/[^\s"'&lt;&gt;]+/g;
+  function addText(el, text) {
+    var last = 0, m;
+    URL_RE.lastIndex = 0;
+    while ((m = URL_RE.exec(text))) {
+      el.appendChild(document.createTextNode(text.slice(last, m.index)));
+      var a = document.createElement('a');
+      a.href = m[0];
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.textContent = /maps\.google\.|google\.[a-z.]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps/i.test(m[0]) ? 'Open map' : m[0];
+      el.appendChild(a);
+      last = m.index + m[0].length;
+    }
+    el.appendChild(document.createTextNode(text.slice(last)));
+  }
+
   function render() {
     if (!state) return;
     pickedDay = state.tab;
@@ -640,7 +659,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
       who.textContent = r.assignees.map(function (a) { return a.phone ? a.name + ' · ' + a.phone : a.name; }).join('\n');
       r.cells.forEach(function (c, i) {
         var td = tr.insertCell();
-        td.textContent = c;
+        addText(td, c);
       });
     });
     document.title = open + ' with free slots · ' + state.tab;

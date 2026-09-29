@@ -39,6 +39,9 @@ _Last updated: 2026-09-27_
   '2pm to 3pm. (STRICT TIMINGS)' -> 14:00 and '3:30 to 4:30 pm - 6 sessions' -> 15:30 (S No 2 and 3
   clash for one person). Locked in as a test with fake data. 40 tests.
 
+- 2026-09-29: http(s) addresses in any cell are rendered as links (new tab, noopener); Google Maps
+  links read "Open map". Non-http text (e.g. javascript:) stays plain text. 41 tests.
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.
