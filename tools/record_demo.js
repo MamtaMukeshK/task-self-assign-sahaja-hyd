@@ -1,4 +1,5 @@
-// Re-records docs/demo.mp4. Run from tools/: npm i (see FS line), node record_demo.js. Needs Chromium at /opt/pw-browsers/chromium.
+// Re-records the demo. Run from tools/: npm i (see FS line), node record_demo.js -> demo.webm + voiceover/marks.json,
+// then add the voice with voiceover/mix.py (see voiceover/make_voice.py). Needs Chromium at /opt/pw-browsers/chromium.
 // Records a short end-user demo: the real Index.html + Code.gs logic on a demo copy of the 30-Sep layout.
 const { chromium } = require('playwright-core');
 const fs = require('fs'), path = require('path');
@@ -74,6 +75,12 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
   await ctx.route('http://app.test/', r => r.fulfill({ contentType: 'text/html', body: html }));
   await ctx.addInitScript(SHIM);
   const p = await ctx.newPage();
+  // Voice-over timing: each step lasts at least as long as its spoken line.
+  const DUR = JSON.parse(fs.readFileSync(__dirname + '/voiceover/durations.json', 'utf8'));
+  const t0 = Date.now(), marks = [];
+  let stepEnd = 0;
+  const say = async name => { const gap = stepEnd - Date.now(); if (gap > 0) await p.waitForTimeout(gap);
+    marks.push([name, (Date.now() - t0) / 1000]); stepEnd = Date.now() + DUR[name] * 1000 + 500; };
   await p.exposeFunction('gsCall', (fn, a) => { try { return { ok: JSON.parse(JSON.stringify(gs[fn](...a))) }; } catch (e) { return { err: e.message }; } });
   await p.goto('http://demo.test/');
   const app = p.frameLocator('#app');
@@ -102,27 +109,29 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
   const logo = await app.locator('#logo').getAttribute('src').catch(() => '');
   await drawSheet();
   await card(true, `<img src="${logo}"><h1>Hyderabad 2026 · Self Realization Tour</h1><p>How to pick your school in under a minute</p>`);
-  await wait(3200); await card(false); await wait(700);
+  await wait(500); await say('intro');
+  await wait(3200); await say('s1'); await card(false); await wait(700);
 
   // ---- 1. Claim ----
+  marks[marks.length - 1][1] += 0.7; stepEnd += 700;   // speak once the card has faded
   await caption('Step 1', 'Open the link: today\'s schools are listed. Type your name and mobile once.');
   await wait(1500);
   await type(app.locator('#name'), 'Priya Nair');
   await type(app.locator('#mobile'), '9000000108');
   await wait(600);
-  await caption('Step 2', 'Tap Claim next to a school. Your row turns green and the sheet updates.');
+  await say('s2'); await caption('Step 2', 'Tap Claim next to a school. Your row turns green and the sheet updates.');
   await wait(1200);
   await tap(app.locator('#grid tr').nth(3).locator('button:text-is("Claim")'));
   await settle(); await wait(2600);
 
   // ---- 2. Release ----
-  await caption('Step 3', 'Changed your mind? Tap Release. Your line is removed from the sheet.');
+  await say('s3'); await caption('Step 3', 'Changed your mind? Tap Release. Your line is removed from the sheet.');
   await wait(1000);
   await tap(app.locator('#grid tr').nth(3).locator('button:text-is("Release")'));
   await settle(); await wait(2200);
 
   // ---- 3. Register others from the list ----
-  await caption('Step 4', 'Registering a group? Tick "Register others" and choose speakers from the list.');
+  await say('s4'); await caption('Step 4', 'Registering a group? Tick "Register others" and choose speakers from the list.');
   await wait(1000);
   await tap(app.locator('#showOthers'));
   await tap(app.locator('#picker summary'));
@@ -131,24 +140,26 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
   await tap(app.locator('#pickList label', { hasText: 'Ravi Kumar' }).locator('input'));
   await tap(app.locator('#pickList label', { hasText: 'Arjun Varma' }).locator('input'));
   await wait(800);
-  await caption('Step 5', 'Tap Claim: you and everyone ticked are added together, marked "via" you.');
+  await say('s5'); await caption('Step 5', 'Tap Claim: you and everyone ticked are added together, marked "via" you.');
   await tap(app.locator('#picker summary'));
   await wait(400);
   await tap(app.locator('#grid tr').nth(3).locator('button:text-is("Claim")'));
   await settle(); await wait(3000);
 
   // ---- 4. Language ----
-  await caption('Step 6', 'Prefer Telugu or Hindi? Choose a language at the top.');
+  await say('s6'); await caption('Step 6', 'Prefer Telugu or Hindi? Choose a language at the top.');
   await wait(900);
   await tap(app.locator('#lang')); await app.locator('#lang').selectOption('te'); await wait(2600);
   await tap(app.locator('#lang')); await app.locator('#lang').selectOption('hi'); await wait(2600);
   await tap(app.locator('#lang')); await app.locator('#lang').selectOption('en'); await wait(1200);
 
   // ---- End card ----
+  await say('end');
   await card(true, `<img src="${logo}"><h1>Open the link · pick a date · tap Claim</h1><p>Your name goes straight into the sheet for the organisers</p>`);
-  await wait(3200);
+  await wait(Math.max(3200, stepEnd - Date.now()));
+  fs.writeFileSync(__dirname + '/voiceover/marks.json', JSON.stringify(marks));
   const vid = p.video();
   await ctx.close(); await browser.close();
-  fs.renameSync(await vid.path(), __dirname + '/demo.webm');  // then: ffmpeg -i tools/demo.webm -c:v libx264 -pix_fmt yuv420p -movflags +faststart docs/demo.mp4
+  fs.renameSync(await vid.path(), __dirname + '/demo.webm');
   console.log('recorded', fs.statSync(__dirname + '/demo.webm').size, 'bytes');
 })().catch(e => { console.error('FAIL', e.message); process.exit(1); });
