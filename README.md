@@ -93,7 +93,7 @@ At midnight India time the page automatically switches to the new day's tab.
 
 ## What volunteers see
 
-- A **Date** picker (today and later days), and that day's tab with **all columns**, plus **Slots left** (e.g. "1 of 3") and **Assigned**
+- A **Date** picker (today and later days), and that day's tab with **all columns**, plus **Slots left** (e.g. "1 of 3") and **SY Speaker Name**
   (everyone on the school, with phone numbers). A **Claim** button shows on each school
   with a free slot.
 - Web addresses in any cell are clickable; Google Maps links show as **Open map** and open in a new tab.

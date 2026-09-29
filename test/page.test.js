@@ -30,7 +30,10 @@ test('two users in real browser', { timeout: 60000 }, async () => {
   const b = await user('Ravi', '9123456789');
   const errs = []; for (const p of [a, b]) p.on('pageerror', e => errs.push(e.message));
 
-  assert.equal(await a.locator('th').count(), 10, 'button + Slots left + Assigned + all 7 sheet columns');
+  const heads = await a.locator('th').allTextContents();
+  assert.equal(heads.length, 9, 'button + Slots left + SY Speaker Name + the 6 other sheet columns');
+  assert.equal(heads[2], 'SY Speaker Name');
+  assert.ok(!heads.some(h => /Sahaja Yoga\s*Speaker Name/.test(h)), 'sheet speaker column not repeated');
   assert.match(await a.textContent('#note'), /No "Total volunteers needed" column/);
   assert.equal(await a.locator('button:text("Claim")').count(), 2);
 

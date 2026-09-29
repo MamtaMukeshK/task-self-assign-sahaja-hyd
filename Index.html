@@ -155,7 +155,9 @@
     document.getElementById('note').textContent = state.slotsHeader
       ? 'Places per school from column "' + state.slotsHeader.replace(/\s+/g, ' ') + '"'
       : 'No "Total volunteers needed" column on this tab, so each school takes 1 person.';
-    ['', 'Slots left', 'Assigned'].concat(state.headers).forEach(function (h) {
+    // The sheet's own speaker column is left out: "SY Speaker Name" shows the same people, one per line.
+    var shown = function (_, i) { return i !== state.nameIdx; };
+    ['', 'Slots left', 'SY Speaker Name'].concat(state.headers.filter(shown)).forEach(function (h) {
       var th = document.createElement('th'); th.textContent = h; head.appendChild(th);
     });
     var open = 0;
@@ -193,7 +195,7 @@
         line.textContent = (r.assignees.length > 1 ? (i + 1) + '. ' : '') + (a.phone ? a.name + ' · ' + a.phone : a.name);
         who.appendChild(line);
       });
-      r.cells.forEach(function (c, i) {
+      r.cells.filter(shown).forEach(function (c) {
         var td = tr.insertCell();
         addText(td, c);
       });
