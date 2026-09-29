@@ -1,6 +1,6 @@
 # Speaker Self-Assign page — setup guide
 
-A one-page website where volunteers pick a school from **today's tab** of the
+A one-page website where volunteers pick a **date** (today or later) and then schools from **that day's tab** of the
 "Hyd 2026 permission Final list" Google Sheet. Claiming a school writes the
 volunteer's name and mobile into that row of the sheet, so the sheet and the
 page always show the same thing, and two people can never grab the same row.
@@ -48,8 +48,8 @@ In the sheet: **File → Settings → Time zone** must be
 3. Google shows **"Google hasn't verified this app"**. This is normal for your own
    scripts. Click **Advanced → Go to Speaker Self-Assign (unsafe) → Allow**.
 4. The **Execution log** at the bottom should say *Execution completed*.
-   - If it says **"No tab for today (…)"**, the script works; there's just no tab
-     named like `28-Sep` for today yet.
+   - If it says **"There are no day tabs for today or later yet"**, the script works;
+     there's just no tab named like `28-Sep` for today or a later date.
    - Any other red error: send a screenshot of it.
 
 (Only you see this warning. Volunteers using the page never see it.)
@@ -83,7 +83,8 @@ Then click **Release** and check both cells are empty again.
 | Rule | Why |
 |---|---|
 | Name each day's tab like `28-Sep` (or `5-Oct` / `05-Oct`). | The page finds today's tab by this name. Tabs like `Dummy-26-Sep` or `Summary` are ignored. |
-| Only one tab per date. | Otherwise the page refuses to guess and shows an error. |
+| Past days are ignored. | The date picker lists today and later days only. |
+| Fill in a **Time** column (title containing "Time"). | The page reads each school's start time from free text and refuses a second school at the same start time on the same day for the same person. Blank/"to be confirmed" can't be checked. Without AM/PM, 1–5 o'clock = afternoon. |
 | Row 1 is the header row. Exactly one header must contain the words **Speaker** and **Name** (e.g. "Sahaja Yoga ( IND) Speaker Name"). | The page writes "name, new line, mobile" into that cell only, the same way organisers already type it. Every other column (including "Local Sahaja Yogi" / "Speaker Mobile") is never touched. |
 | A school has room while it has fewer people than its **Total volunteers needed** (1 if blank). | To remove someone, delete their line from the Speaker Name cell. Keep notes like "12 sessions" out of that column: they count as a person. |
 | You can still edit the sheet directly as usual. | The page refreshes every 15 seconds and always shows what's in the sheet. |
@@ -92,7 +93,7 @@ At midnight India time the page automatically switches to the new day's tab.
 
 ## What volunteers see
 
-- Today's tab with **all columns**, plus **Slots left** (e.g. "1 of 3") and **Assigned**
+- A **Date** picker (today and later days), and that day's tab with **all columns**, plus **Slots left** (e.g. "1 of 3") and **Assigned**
   (everyone on the school, with phone numbers). A **Claim** button shows on each school
   with a free slot.
 - They type their name and mobile once; the browser remembers both.
@@ -119,7 +120,7 @@ deployment" instead would create a **new** URL.)
   place through the page; organisers can always fix things in the sheet.
 - **Rows filled in by hand** (a name and number typed together in column B) show as
   taken and can only be changed in the sheet.
-- **Privacy:** everything on today's tab, including speakers' mobile numbers, is
+- **Privacy:** everything on today's and later days' tabs, including speakers' mobile numbers, is
   visible to anyone with the page link. That's the same as the sheet's current
   "anyone with the link can view" sharing.
 - **Capacity:** it comfortably handles dozens of people at once. Google allows

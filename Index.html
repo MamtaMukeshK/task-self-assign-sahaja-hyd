@@ -13,6 +13,8 @@
   button { font:inherit; padding:5px 12px; border-radius:6px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; white-space:nowrap; }
   button.release { background:#fff; color:var(--accent); }
   button:disabled { opacity:.5; cursor:default; }
+  select { font:inherit; padding:5px 8px; border:1px solid var(--line); border-radius:6px; }
+  .clash { color:var(--muted); font-size:12px; }
   #status, #updated, #note { color:var(--muted); }
   #status.err { color:var(--err); font-weight:600; }
   .wrap { overflow-x:auto; border:1px solid var(--line); border-radius:8px; }
@@ -29,6 +31,7 @@
 <body>
 <header>
   <h1 id="title">Loading…</h1>
+  <label>Date <select id="day"></select></label>
   <label>Your name <input id="name" autocomplete="name" placeholder="e.g. Priya Shah"></label>
   <label>Mobile <input id="mobile" autocomplete="tel" inputmode="tel" placeholder="e.g. 98xxxxxxxx"></label>
   <label><input type="checkbox" id="openOnly"> Open only</label>
@@ -86,7 +89,19 @@
     runner[fn].apply(runner, args);
   }
 
-  function refresh() { call('getState', []); }
+  var daySelect = document.getElementById('day');
+  var pickedDay = ''; // '' = today (or the next day with a tab)
+  daySelect.addEventListener('change', function () {
+    pickedDay = daySelect.value;
+    shownSeq = ++seq; // ignore answers still on their way for the previous day
+    state = null; busyRow = null;
+    document.getElementById('grid').textContent = '';
+    document.getElementById('title').textContent = 'Loading…';
+    setStatus('');
+    refresh();
+  });
+
+  function refresh() { call('getState', [pickedDay]); }
 
   function act(fn, r, verb) {
     if (!myName()) { setStatus('Please enter your name first.', true); nameInput.focus(); return; }
@@ -95,13 +110,21 @@
     busyRow = r.row;
     render();
     setStatus(verb + '…');
-    var args = claiming ? [r.row, r.fp, myName(), mobileInput.value] : [r.row, r.fp, myName()];
+    var args = claiming ? [r.row, r.fp, myName(), mobileInput.value, state.tab] : [r.row, r.fp, myName(), state.tab];
     call(fn, args, claiming ? 'Claimed — highlighted in green.' : 'Released.');
   }
 
   function render() {
     if (!state) return;
-    document.getElementById('title').textContent = 'Today: ' + state.tab;
+    pickedDay = state.tab;
+    var days = state.days || [];
+    if (daySelect.dataset.list !== JSON.stringify(days)) {
+      daySelect.dataset.list = JSON.stringify(days);
+      daySelect.textContent = '';
+      days.forEach(function (d) { daySelect.add(new Option(d.label, d.name)); });
+    }
+    daySelect.value = state.tab;
+    document.getElementById('title').textContent = 'Day: ' + state.tab;
     var me = myName();
     var t = document.getElementById('grid');
     t.textContent = '';
@@ -113,15 +136,24 @@
       var th = document.createElement('th'); th.textContent = h; head.appendChild(th);
     });
     var open = 0;
+    function isMine(r) { return !!me && r.assignees.some(function (a) { return same(a.name, me); }); }
+    var myStarts = {}; // start time -> first S No I'm on at that time
+    state.rows.forEach(function (r) { if (r.start && isMine(r) && !myStarts[r.start]) myStarts[r.start] = ((state.headers[0] || '').trim() + ' ' + r.cells[0]).trim() || ('row ' + r.row); });
     state.rows.forEach(function (r) {
-      var mine = !!me && r.assignees.some(function (a) { return same(a.name, me); });
+      var mine = isMine(r);
+      var clashWith = !mine && r.start ? myStarts[r.start] : '';
       var hasRoom = r.remaining > 0;
       if (hasRoom) open++;
       if (openOnly.checked && !hasRoom && !mine) return;
       var tr = t.insertRow();
       tr.className = mine ? 'mine' : (hasRoom ? '' : 'taken');
       var btnCell = tr.insertCell();
-      if (hasRoom || mine) {
+      if (hasRoom && clashWith) {
+        var note = document.createElement('span');
+        note.className = 'clash';
+        note.textContent = 'Clashes with ' + clashWith + ' (' + r.start + ')';
+        btnCell.appendChild(note);
+      } else if (hasRoom || mine) {
         var b = document.createElement('button');
         b.textContent = mine ? 'Release' : 'Claim';
         if (mine) b.className = 'release';

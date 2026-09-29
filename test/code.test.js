@@ -23,7 +23,7 @@ test('single-digit day tab (e.g. 5-Oct) and 05-Oct both match', () => {
 });
 test('no tab for today gives a clear error', () => {
   const gs = load([makeSheet('27-Sep', 1, screenshotGrid())], NOW);
-  assert.throws(() => gs.getState(), /No tab for today \(Mon 28 Sep 2026\)/);
+  assert.throws(() => gs.getState(), /no day tabs for today or later/);
 });
 test('28-Sep layout: claim writes name + mobile into B only, never the "Speaker Mobile" column', () => {
   const { gs, today, sheets } = setup(); const r = openRow(gs.getState());
@@ -299,4 +299,87 @@ test('30-Sep layout: a full day of claims only ever changes columns B and E', ()
 test('a day tab with only the header row shows no schools instead of an error', () => {
   const s = load([makeSheet('28-Sep', 31, [SEP30_HEADERS])], NOW).getState();
   assert.equal(s.rows.length, 0);
+});
+
+// ---- Picking a date ----
+function dayTab(name, id) { return makeSheet(name, id, screenshotGrid()); }
+test('date picker: lists today and later day tabs in date order, today first', () => {
+  const gs = load([dayTab('1-Oct', 1), dayTab('27-Sep', 2), dayTab('29-Sep', 3), dayTab('Dummy-29-Sep', 4),
+    dayTab('28-Sep', 5), makeSheet('Summary', 6, [['x']])], NOW);
+  const s = gs.getState();
+  assert.equal(s.tab, '28-Sep');
+  assert.deepEqual(s.days.map(d => d.label), ['Mon 28-Sep (today)', 'Tue 29-Sep', 'Thu 1-Oct']);
+  assert.equal(gs.getState('1-Oct').tab, '1-Oct');
+});
+test('date picker: past, unknown and non-day tabs cannot be picked', () => {
+  const gs = load([dayTab('27-Sep', 2), dayTab('28-Sep', 5), makeSheet('Summary', 6, [['x']])], NOW);
+  assert.throws(() => gs.getState('27-Sep'), /not available any more/);
+  assert.throws(() => gs.getState('Summary'), /not available any more/);
+  assert.throws(() => gs.getState('5-Nov'), /not available any more/);
+});
+test('date picker: with no tab for today, the next day is shown', () => {
+  const gs = load([dayTab('27-Sep', 2), dayTab('30-Sep', 3), dayTab('29-Sep', 4)], NOW);
+  assert.equal(gs.getState().tab, '29-Sep');
+});
+test('date picker: claims and releases go to the picked day only', () => {
+  const today = dayTab('28-Sep', 5), later = dayTab('30-Sep', 7);
+  const gs = load([today, later], NOW);
+  const r = gs.getState('30-Sep').rows.find(x => !x.speaker);
+  const s = gs.claimRow(r.row, r.fp, 'Priya', '9876543210', '30-Sep');
+  assert.equal(s.tab, '30-Sep');
+  assert.equal(later.grid[r.row - 1][1], 'Priya 9876543210');
+  assert.equal(today.grid[r.row - 1][1], '', 'today untouched');
+  gs.releaseRow(r.row, r.fp, 'Priya', '30-Sep');
+  assert.equal(later.grid[r.row - 1][1], '');
+});
+
+// ---- Time clashes on the same day ----
+function timeGrid() {
+  return [
+    ['S No', 'Sahaja Yoga ( IND)\n Speaker Name', 'Total volunteers needed', 'Institution name', 'Time'],
+    ['1', '', '2', 'School A', '10.00 A.M'],
+    ['2', '', '2', 'School B', '10:00:00'],          // same start as School A, written differently
+    ['3', '', '2', 'School C', '11:00 AM to 12:00'],
+    ['4', '', '2', 'School D', 'to be confirmed'],   // no time: never clashes
+    ['5', '', '2', 'School E', ''],
+    ['6', '', '2', 'School F', '3:30-4:30 PM'],
+    ['7', '', '2', 'School G', '15:30:00'],
+  ];
+}
+test('time clash: same person cannot take two schools starting at the same time', () => {
+  const gs = load([makeSheet('28-Sep', 40, timeGrid())], NOW);
+  const v = gs.getState(); const r = n => v.rows.find(x => x.cells[0] === String(n));
+  assert.deepEqual(v.rows.map(x => x.start), ['10:00', '10:00', '11:00', '', '', '15:30', '15:30']);
+  gs.claimRow(r(1).row, r(1).fp, 'Priya', '9876543210');
+  assert.throws(() => gs.claimRow(r(2).row, r(2).fp, 'priya', '9876543210'),
+    /Time clash: you are already on S No 1 \(School A\) at 10\.00 A\.M on 28-Sep/);
+  gs.claimRow(r(2).row, r(2).fp, 'Ravi', '9123456789');          // someone else: fine
+  gs.claimRow(r(3).row, r(3).fp, 'Priya', '9876543210');         // different time: fine
+  gs.claimRow(r(4).row, r(4).fp, 'Priya', '9876543210');         // no time: fine
+  gs.claimRow(r(5).row, r(5).fp, 'Priya', '9876543210');
+  gs.claimRow(r(6).row, r(6).fp, 'Priya', '9876543210');
+  assert.throws(() => gs.claimRow(r(7).row, r(7).fp, 'Priya', '9876543210'), /Time clash: .*S No 6 \(School F\)/);
+  gs.releaseRow(r(1).row, r(1).fp, 'Priya');                     // free the 10:00 slot...
+  const s = gs.claimRow(r(2).row, r(2).fp, 'Priya', '9876543210'); // ...then 10:00 at School B works
+  assert.deepEqual(s.rows.find(x => x.cells[0] === '2').assignees.map(a => a.name), ['Ravi', 'Priya']);
+});
+test('time clash: the same time on a different day is fine', () => {
+  const gs = load([makeSheet('28-Sep', 41, timeGrid()), makeSheet('29-Sep', 42, timeGrid())], NOW);
+  const a = gs.getState('28-Sep').rows[0], b = gs.getState('29-Sep').rows[0];
+  gs.claimRow(a.row, a.fp, 'Priya', '9876543210', '28-Sep');
+  const s = gs.claimRow(b.row, b.fp, 'Priya', '9876543210', '29-Sep');
+  assert.equal(s.rows[0].assignees[0].name, 'Priya');
+});
+test('time: tabs with two Time columns use the first one that has a value', () => {
+  const g = [['S No', 'Speaker Name', 'Time', 'School', 'Time'], ['1', '', '', 'A', '2pmto3pm'], ['2', '', '9.30 AM', 'B', '11:00']];
+  const s = load([makeSheet('28-Sep', 43, g)], NOW).getState();
+  assert.deepEqual(s.rows.map(r => [r.timeText, r.start]), [['2pmto3pm', '14:00'], ['9.30 AM', '09:30']]);
+});
+test('time: start times read from the real free-text formats in the sheet', () => {
+  const gs = load([makeSheet('28-Sep', 44, [['S No']])], NOW);
+  const cases = { '09:00:00': '09:00', '10.30 A.M': '10:30', '3:30-4:30 PM': '15:30', ' 2pmto3pm. (STRICT TIMINGS) ': '14:00',
+    '3:00:00 PM  - 12 sessions': '15:00', 'EVERYDAY 6:30 A.M': '06:30', 'to be confirmed': '', '12:30-1:30 PM': '12:30',
+    '11.00 AM to 12.00 A.M': '11:00', '03:30:00': '15:30', 'After 4:00 PM': '16:00', '1 P.M to 2.00 P.M': '13:00',
+    '06:00:00': '06:00', '13:45:00': '13:45', '8:30am-9:40am': '08:30', ' 2.40 - 3.40pm': '14:40', '': '' };
+  for (const [text, want] of Object.entries(cases)) assert.equal(gs.startTime_(text), want, text);
 });

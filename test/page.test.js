@@ -22,7 +22,7 @@ test('two users in real browser', { timeout: 60000 }, async () => {
     await p.addInitScript(SHIM);
     await p.route('http://app.test/', r => r.fulfill({ contentType: 'text/html', body: html }));
     await p.goto('http://app.test/');
-    await p.waitForSelector('text=Today: 28-Sep');
+    await p.waitForSelector('text=Day: 28-Sep');
     await p.fill('#name', name); await p.fill('#mobile', mobile);
     return p;
   };
@@ -79,7 +79,7 @@ test('multi-slot school in real browser: two join, third sees it full, one leave
       await p.addInitScript(SHIM);
       await p.route('http://app.test/', r => r.fulfill({ contentType: 'text/html', body: html }));
       await p.goto('http://app.test/');
-      await p.waitForSelector('text=Today: 28-Sep');
+      await p.waitForSelector('text=Day: 28-Sep');
       await p.fill('#name', name); await p.fill('#mobile', mobile);
       return p;
     };
@@ -98,11 +98,50 @@ test('multi-slot school in real browser: two join, third sees it full, one leave
 
     const c = await user('Neha', '9000000003');
     assert.equal(await row1(c).locator('button').count(), 0, 'full: no Claim button');
-    await a.reload(); await a.waitForSelector('text=Today: 28-Sep');
+    await a.reload(); await a.waitForSelector('text=Day: 28-Sep');
     await row1(a).locator('button:text("Release")').click(); await a.waitForSelector('text=Released.');
     assert.equal(sheet.grid[1][1], 'Ramesh\n9000000001\nRavi 9123456789');
-    await c.reload(); await c.waitForSelector('text=Today: 28-Sep');
+    await c.reload(); await c.waitForSelector('text=Day: 28-Sep');
     assert.match(await row1(c).textContent(), /1 of 3/);
     await c.screenshot({ path: path.join(__dirname, 'slots-view.png') });
+  } finally { await browser.close(); }
+});
+
+test('date picker and time-clash label in real browser', { timeout: 60000 }, async () => {
+  const grid = () => [
+    ['S No', 'Speaker Name', 'Total volunteers needed', 'Institution name', 'Time'],
+    ['1', '', '2', 'School A', '10.00 A.M'],
+    ['2', '', '2', 'School B', '10:00:00'],
+    ['3', '', '2', 'School C', '11:00'],
+  ];
+  const d28 = makeSheet('28-Sep', 3, grid()), d30 = makeSheet('30-Sep', 4, grid());
+  const gs = load([makeSheet('27-Sep', 2, grid()), d28, d30], new Date(Date.UTC(2026, 8, 28)));
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
+  try {
+    const p = await (await browser.newContext({ viewport: { width: 1000, height: 700 } })).newPage();
+    p.setDefaultTimeout(8000);
+    const errs = []; p.on('pageerror', e => errs.push(e.message));
+    await p.exposeFunction('gsCall', (fn, a) => { try { return { ok: JSON.parse(JSON.stringify(gs[fn](...a))) }; } catch (e) { return { err: e.message }; } });
+    await p.addInitScript(SHIM);
+    await p.route('http://app.test/', r => r.fulfill({ contentType: 'text/html', body: html }));
+    await p.goto('http://app.test/');
+    await p.waitForSelector('text=Day: 28-Sep');
+    assert.deepEqual(await p.$$eval('#day option', o => o.map(x => x.textContent)), ['Mon 28-Sep (today)', 'Wed 30-Sep']);
+    await p.fill('#name', 'Priya'); await p.fill('#mobile', '9876543210');
+
+    await p.selectOption('#day', '30-Sep');
+    await p.waitForSelector('text=Day: 30-Sep');
+    const row = n => p.locator('#grid tr').nth(n);
+    await row(1).locator('button:text("Claim")').click(); await p.waitForSelector('text=Claimed');
+    assert.equal(d30.grid[1][1], 'Priya 9876543210', 'written to the picked day');
+    assert.equal(d28.grid[1][1], '', 'today untouched');
+    assert.match(await row(2).textContent(), /Clashes with S No 1 \(10:00\)/);
+    assert.equal(await row(2).locator('button').count(), 0, 'no Claim button on a clashing school');
+    assert.equal(await row(3).locator('button:text("Claim")').count(), 1, 'other times still claimable');
+
+    await p.selectOption('#day', '28-Sep');
+    await p.waitForSelector('text=Day: 28-Sep');
+    assert.equal(await row(2).locator('button:text("Claim")').count(), 1, 'same time on another day is fine');
+    assert.deepEqual(errs, []);
   } finally { await browser.close(); }
 });

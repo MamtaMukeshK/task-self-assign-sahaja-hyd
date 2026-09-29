@@ -28,6 +28,12 @@ _Last updated: 2026-09-27_
 - 2026-09-29: decided to keep claiming open to anyone with the link (name + mobile typed on the
   page). Restricting to names on the sheet's "Speaker" tab was offered and declined.
 
+- 2026-09-29: date picker + time clashes. Day tabs = names like '30-Sep' (current year), today and
+  later only, sorted; page opens on today (or next). getState/claimRow/releaseRow take the tab name.
+  Start time parsed from free-text Time column(s) (first non-empty if several); a person can't hold
+  two schools with the same start time on the same tab. Checked on the real workbook: every typed
+  time parses except "to be confirmed"; many 30-Sep times are blank (no clash check possible). 39 tests.
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.

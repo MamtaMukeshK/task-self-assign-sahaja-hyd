@@ -33,6 +33,11 @@ function makeSheet(name, id, grid) {
   };
   return sheet;
 }
+// A Date whose "new Date()" is the given moment, so tests control "today".
+function fakeDate(now) {
+  if (!now) return Date;
+  return class extends Date { constructor(...a) { if (a.length) super(...a); else super(now.getTime()); } };
+}
 function load(sheets, now) {
   const store = {};
   const ss = { getSheets: () => sheets, getSheetByName: n => sheets.find(s => s.getName() === n) || null,
@@ -41,9 +46,9 @@ function load(sheets, now) {
     SpreadsheetApp: { openById: id => ({ ...ss, openedById: id }), getActiveSpreadsheet: () => ss, flush: () => {} },
     LockService: { getScriptLock: () => ({ tryLock: () => true, releaseLock: () => {} }) },
     CacheService: { getScriptCache: () => ({ get: k => store[k] || null, put: (k, v) => { store[k] = v; }, remove: k => { delete store[k]; } }) },
-    Utilities: { formatDate: (d, tz, f) => formatDate(now || d, tz, f), DigestAlgorithm: { MD5: 'md5' }, Charset: { UTF_8: 'utf8' },
+    Utilities: { formatDate: (d, tz, f) => formatDate(d, tz, f), DigestAlgorithm: { MD5: 'md5' }, Charset: { UTF_8: 'utf8' },
       computeDigest: (a, s) => crypto.createHash('md5').update(s, 'utf8').digest(), base64Encode: b => Buffer.from(b).toString('base64') },
-    HtmlService: {}, JSON, Date, String, Number, Math, Error, _cache: store
+    HtmlService: {}, JSON, Date: fakeDate(now), String, Number, Math, Error, _cache: store
   };
   vm.createContext(ctx);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'Code.gs'), 'utf8'), ctx);

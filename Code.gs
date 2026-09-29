@@ -1,9 +1,10 @@
 /**
  * Sheet Self-Assign — a Google Apps Script web app.
  *
- * Opens the tab named after today's date (e.g. '28-Sep'), shows every column,
- * and lets anyone with the page link claim a place on a school that still has
- * free slots, or release their own place. Claims are written into the sheet itself, so the
+ * Shows a day tab (e.g. '30-Sep'; today's by default, any later day can be
+ * picked) with every column, and lets anyone with the page link claim a place
+ * on a school that still has free slots, or release their own place. A person
+ * can't hold two schools that start at the same time on the same day. Claims are written into the sheet itself, so the
  * sheet and the page always agree. Must be deployed by someone with EDIT access.
  */
 
@@ -23,11 +24,10 @@ var CONFIG = {
   // Optional column the page keeps up to date with how many are still needed
   // ('count of Volunteers still needed'). Left alone if it holds a formula.
   REMAINING_HEADER_WORDS: ['still', 'volunteer'],
+  // Optional start-time column(s): any header containing 'time'. The start
+  // time is read from free text ('10.30 A.M', '3:30-4:30 PM', '14:00:00').
+  TIME_HEADER_WORDS: ['time'],
   TAB_NAME_OVERRIDE: '',                          // e.g. '28-Sep' to force a tab while testing
-
-  // Tabs are named like '28-Sep'. Today's date is rendered in these formats
-  // (spreadsheet time zone) and compared to tab names exactly, ignoring case.
-  TAB_DATE_FORMATS: ['dd-MMM', 'd-MMM'],
 
   CACHE_SECONDS: 5,    // shared read cache so many viewers don't hammer the sheet
   LOCK_WAIT_MS: 10000, // how long a claim waits for its turn
@@ -40,32 +40,33 @@ function doGet() {
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
-/** Called by the page: today's rows plus who holds each. */
-function getState() {
-  var ss = openSpreadsheet_();
-  var sheet = findTodaySheet_(ss);
+/** Called by the page: the picked day's rows (today's if none) plus who holds each. */
+function getState(tabName) {
+  var day = resolveDay_(openSpreadsheet_(), tabName);
   var cache = CacheService.getScriptCache();
-  var key = cacheKey_(sheet);
+  var key = cacheKey_(day.sheet);
   var hit = cache.get(key);
-  if (hit) return JSON.parse(hit);
-  var state = buildState_(sheet);
-  try {
-    cache.put(key, JSON.stringify(state), CONFIG.CACHE_SECONDS);
-  } catch (e) {
-    // Value over the 100 KB cache limit: just serve uncached.
+  var state = hit ? JSON.parse(hit) : buildState_(day.sheet);
+  if (!hit) {
+    try {
+      cache.put(key, JSON.stringify(state), CONFIG.CACHE_SECONDS);
+    } catch (e) {
+      // Value over the 100 KB cache limit: just serve uncached.
+    }
   }
+  state.days = day.days;
   return state;
 }
 
-function claimRow(rowNum, fingerprint, name, mobile) {
-  return mutate_('claim', rowNum, fingerprint, name, mobile);
+function claimRow(rowNum, fingerprint, name, mobile, tabName) {
+  return mutate_('claim', rowNum, fingerprint, name, mobile, tabName);
 }
 
-function releaseRow(rowNum, fingerprint, name) {
-  return mutate_('release', rowNum, fingerprint, name, '');
+function releaseRow(rowNum, fingerprint, name, tabName) {
+  return mutate_('release', rowNum, fingerprint, name, '', tabName);
 }
 
-function mutate_(action, rowNum, fingerprint, rawName, rawMobile) {
+function mutate_(action, rowNum, fingerprint, rawName, rawMobile, tabName) {
   var name = cleanName_(rawName);
   var mobile = action === 'claim' ? cleanMobile_(rawMobile) : '';
   rowNum = Number(rowNum);
@@ -73,9 +74,10 @@ function mutate_(action, rowNum, fingerprint, rawName, rawMobile) {
 
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(CONFIG.LOCK_WAIT_MS)) throw new Error('Lots of people are claiming right now. Please try again.');
-  var sheet;
+  var day;
   try {
-    sheet = findTodaySheet_(openSpreadsheet_());
+    day = resolveDay_(openSpreadsheet_(), tabName);
+    var sheet = day.sheet;
     var tab = readTab_(sheet);
     var row = tab.rows.filter(function (r) { return r.row === rowNum; })[0];
     if (!row) throw new Error('That row no longer exists. The list has been refreshed.');
@@ -87,6 +89,14 @@ function mutate_(action, rowNum, fingerprint, rawName, rawMobile) {
       if (mine < 0) { // already on it = nothing to do
         if (row.remaining <= 0) {
           throw new Error(row.assignees.length ? 'No slots left: taken by ' + names_(row.assignees) + '.' : 'This school has no slots.');
+        }
+        var clash = row.start && tab.rows.filter(function (o) {
+          return o.row !== rowNum && o.start === row.start &&
+            o.assignees.some(function (a) { return sameName_(a.name, name); });
+        })[0];
+        if (clash) {
+          throw new Error('Time clash: you are already on ' + describe_(tab, clash) + ' at ' + clash.timeText +
+            ' on ' + sheet.getName() + '. Release that first, or pick a different time.');
         }
         var texts = row.assignees.map(function (a) { return a.text; }).concat([name + ' ' + mobile]);
         writeText_(sheet, rowNum, tab.nameCol, joinPeople_(texts));
@@ -108,7 +118,9 @@ function mutate_(action, rowNum, fingerprint, rawName, rawMobile) {
   } finally {
     lock.releaseLock();
   }
-  return buildState_(sheet);
+  var state = buildState_(day.sheet);
+  state.days = day.days;
+  return state;
 }
 
 /** The sheet this script is attached to, or SHEET_ID if it runs as a standalone script. */
@@ -116,23 +128,42 @@ function openSpreadsheet_() {
   return CONFIG.SHEET_ID ? SpreadsheetApp.openById(CONFIG.SHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
 }
 
-function findTodaySheet_(ss) {
+/**
+ * Day tabs from today onwards, in date order. A day tab is named like '30-Sep'
+ * or '1-Oct' (day, dash, 3-letter month) and is taken to be in the current year.
+ */
+function listDays_(ss) {
+  var tz = ss.getSpreadsheetTimeZone();
+  var now = new Date();
+  var year = Number(Utilities.formatDate(now, tz, 'yyyy'));
+  var today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
+  var days = [];
+  ss.getSheets().forEach(function (s) {
+    var m = /^(\d{1,2})-([a-z]{3})$/i.exec(s.getName().trim());
+    var month = m ? MONTHS_.indexOf(m[2].toLowerCase()) : -1;
+    if (month < 0) return;
+    var date = new Date(Date.UTC(year, month, Number(m[1]), 12));
+    var key = Utilities.formatDate(date, 'UTC', 'yyyy-MM-dd');
+    if (key < today) return;
+    days.push({ name: s.getName(), key: key, label: Utilities.formatDate(date, 'UTC', 'EEE') + ' ' + s.getName() +
+      (key === today ? ' (today)' : ''), sheet: s });
+  });
+  return days.sort(function (x, y) { return x.key < y.key ? -1 : x.key > y.key ? 1 : 0; });
+}
+var MONTHS_ = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+
+/** The day tab the person picked, or today's (else the next one) when none was picked. */
+function resolveDay_(ss, tabName) {
   if (CONFIG.TAB_NAME_OVERRIDE) {
     var forced = ss.getSheetByName(CONFIG.TAB_NAME_OVERRIDE);
     if (!forced) throw new Error('Tab "' + CONFIG.TAB_NAME_OVERRIDE + '" not found.');
-    return forced;
+    return { sheet: forced, days: [{ name: forced.getName(), key: '', label: forced.getName() }] };
   }
-  var tz = ss.getSpreadsheetTimeZone();
-  var now = new Date();
-  var wanted = {};
-  CONFIG.TAB_DATE_FORMATS.forEach(function (f) { wanted[norm_(Utilities.formatDate(now, tz, f))] = true; });
-  var matches = ss.getSheets().filter(function (s) { return wanted[norm_(s.getName())]; });
-  if (matches.length === 1) return matches[0];
-  var today = Utilities.formatDate(now, tz, 'EEE d MMM yyyy');
-  if (!matches.length) throw new Error('No tab for today (' + today + ') yet.');
-  throw new Error('Several tabs look like today (' + today + '): ' +
-    matches.map(function (s) { return s.getName(); }).join(', ') +
-    '. Ask the sheet owner to narrow TAB_DATE_FORMATS.');
+  var days = listDays_(ss);
+  if (!days.length) throw new Error('There are no day tabs for today or later yet.');
+  var pick = tabName ? days.filter(function (d) { return d.name === tabName; })[0] : days[0];
+  if (!pick) throw new Error('"' + tabName + '" is not available any more (it may be in the past or renamed). Please pick another date.');
+  return { sheet: pick.sheet, days: days.map(function (d) { return { name: d.name, label: d.label }; }) };
 }
 
 /**
@@ -154,6 +185,12 @@ function readTab_(sheet) {
   if (sIdx === nIdx) sIdx = -1;
   var rIdx = findHeader_(sheet, headers, CONFIG.REMAINING_HEADER_WORDS);
   if (rIdx === nIdx || rIdx === sIdx) rIdx = -1;
+  // Every time column counts (some tabs have two); the first non-empty one wins.
+  var tIdxs = [];
+  headers.forEach(function (h, i) {
+    var text = norm_(h);
+    if (CONFIG.TIME_HEADER_WORDS.every(function (w) { return text.indexOf(w) >= 0; })) tIdxs.push(i);
+  });
 
   var rows = [];
   values.slice(1).forEach(function (r, i) {
@@ -164,8 +201,11 @@ function readTab_(sheet) {
     var speaker = r[nIdx].trim();
     var assignees = parseAssignees_(speaker);
     var total = slotsFrom_(sIdx >= 0 ? r[sIdx] : '');
+    var timeText = '';
+    tIdxs.forEach(function (c) { if (!timeText && r[c].trim()) timeText = r[c].trim(); });
     rows.push({ row: CONFIG.HEADER_ROW + 1 + i, fp: fingerprint_(details), cells: r, speaker: speaker,
-      assignees: assignees, total: total, remaining: Math.max(0, total - assignees.length) });
+      assignees: assignees, total: total, remaining: Math.max(0, total - assignees.length),
+      timeText: timeText, start: startTime_(timeText) });
   });
   return { headers: headers, nameCol: nIdx + 1, remainingCol: rIdx + 1,
     slotsHeader: sIdx >= 0 ? headers[sIdx] : '', rows: rows };
@@ -199,6 +239,32 @@ function parseAssignees_(text) {
     var name = joined.replace(PHONE_, '').replace(/[\s,:;\-]+$/, '').replace(/\s+/g, ' ').trim() || lines[0];
     return { name: name, phone: phone ? phone[0].trim() : '', text: lines.join('\n') };
   });
+}
+
+/**
+ * Start time as 'HH:MM' (24-hour) from free text, or '' if there's no time.
+ * '10.30 A.M' -> 10:30, '3:30-4:30 PM' -> 15:30, '2pmto3pm' -> 14:00,
+ * '14:00:00' -> 14:00. Without AM/PM, 1 to 5 o'clock is taken as afternoon.
+ */
+function startTime_(text) {
+  var s = String(text || '').toLowerCase();
+  var m = /(\d{1,2})(?:\s*[:.]\s*(\d{2}))?/.exec(s);
+  if (!m) return '';
+  var h = Number(m[1]), min = Number(m[2] || 0);
+  if (h > 23 || min > 59) return '';
+  var mark = /\d\s*([ap])\.?\s?m/.exec(s.slice(m.index));
+  if (mark && mark[1] === 'p' && h < 12) h += 12;
+  else if (mark && mark[1] === 'a' && h === 12) h = 0;
+  else if (!mark && h >= 1 && h <= 5) h += 12;
+  return (h < 10 ? '0' : '') + h + ':' + (min < 10 ? '0' : '') + min;
+}
+
+/** 'S No 5 (Sri Chaitanya School)' for messages. */
+function describe_(tab, row) {
+  var label = tab.headers[0] ? tab.headers[0].replace(/\s+/g, ' ').trim() + ' ' + row.cells[0] : 'row ' + row.row;
+  var school = '';
+  tab.headers.forEach(function (h, i) { if (!school && /school|institution/i.test(h) && row.cells[i].trim()) school = row.cells[i].trim(); });
+  return school ? label + ' (' + school + ')' : label;
 }
 
 /** Number of people a school needs, from its slots cell; blank or non-numeric means 1. */
