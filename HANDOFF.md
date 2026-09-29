@@ -34,6 +34,11 @@ _Last updated: 2026-09-27_
   two schools with the same start time on the same tab. Checked on the real workbook: every typed
   time parses except "to be confirmed"; many 30-Sep times are blank (no clash check possible). 39 tests.
 
+- 2026-09-29: checked the UPDATED 30-Sep tab (20 columns, pasted as text): capacity read from
+  D "Total volunteers needed" (20/6/12), not F "Total No of Students"; E updated on claim; times
+  '2pm to 3pm. (STRICT TIMINGS)' -> 14:00 and '3:30 to 4:30 pm - 6 sessions' -> 15:30 (S No 2 and 3
+  clash for one person). Locked in as a test with fake data. 40 tests.
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.

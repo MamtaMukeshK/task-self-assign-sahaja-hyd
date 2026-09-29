@@ -383,3 +383,37 @@ test('time: start times read from the real free-text formats in the sheet', () =
     '06:00:00': '06:00', '13:45:00': '13:45', '8:30am-9:40am': '08:30', ' 2.40 - 3.40pm': '14:40', '': '' };
   for (const [text, want] of Object.entries(cases)) assert.equal(gs.startTime_(text), want, text);
 });
+
+// ---- Updated 30-Sep layout (29 Sep): the 20 column titles exactly as pasted from the sheet ----
+const SEP30_V2_HEADERS = ["S No", "Sahaja Yoga ( IND)\n Speaker Name", "Local ( HYD) \n Sahaja Yogi", "Total volunteers needed", "count of Volunteers still neeeded", "Total No of Students", "Institution name", "Date", "Time", "Branch / Address", "Google map", "Principal Name", "RI", "Phone No", "Remarks", "Approval Obtained By Yogi/Yogini Name", "Approval Obtained By Yogi/Yogini Contact number", "Zone", "Distance from Ashram", "Direction ( E, W)"];
+function sep30v2Grid() {
+  const row = (sno, total, school, time) => {
+    const r = Array(SEP30_V2_HEADERS.length).fill('');
+    r[0] = sno; r[3] = total; r[6] = school; r[7] = '30-Sep-26'; r[8] = time; r[13] = '9000000099';
+    return r;
+  };
+  return [
+    SEP30_V2_HEADERS,
+    row('1', '20', 'School A', ' 2pm to 3pm. (STRICT TIMINGS) '),
+    row('2', '6', 'School B', '3:30 to 4:30 pm - 6 sessions'),
+    row('3', '12', 'School C', '3:30 to 4:30 pm - 6 sessions'),
+  ];
+}
+test('updated 30-Sep layout: capacity, times and clashes from the real column titles', () => {
+  const sheet = makeSheet('28-Sep', 50, sep30v2Grid());
+  const gs = load([sheet], NOW);
+  const s = gs.getState();
+  assert.equal(s.headers.length, 20);
+  assert.equal(s.slotsHeader, 'Total volunteers needed', 'not "Total No of Students"');
+  assert.deepEqual(s.rows.map(r => [r.total, r.remaining, r.start]), [[20, 20, '14:00'], [6, 6, '15:30'], [12, 12, '15:30']]);
+  const [a, b, c] = s.rows;
+  gs.claimRow(b.row, b.fp, 'Vol A', '9000000001');
+  assert.equal(sheet.grid[2][1], 'Vol A 9000000001');
+  assert.equal(sheet.grid[2][4], 5, 'still-needed column E');
+  assert.throws(() => gs.claimRow(c.row, c.fp, 'Vol A', '9000000001'), /Time clash: you are already on S No 2 \(School B\)/);
+  gs.claimRow(a.row, a.fp, 'Vol A', '9000000001');              // 2pm: no clash
+  gs.claimRow(c.row, c.fp, 'Vol B', '9000000002');              // someone else at 3:30: fine
+  assert.equal(sheet.grid[3][4], 11);
+  const original = sep30v2Grid();
+  original.forEach((r, i) => r.forEach((v, j) => { if (j !== 1 && j !== 4) assert.equal(sheet.grid[i][j], v, `cell ${i},${j}`); }));
+});
