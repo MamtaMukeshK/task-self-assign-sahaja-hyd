@@ -83,7 +83,7 @@ Then click **Release** and check both cells are empty again.
 | Rule | Why |
 |---|---|
 | Name each day's tab like `28-Sep` (or `5-Oct` / `05-Oct`). | The page finds today's tab by this name. Tabs like `Dummy-26-Sep` or `Summary` are ignored. |
-| Past days are ignored. | The date picker lists today and later days only. |
+| Past days are view-only. | They stay in the date list marked "(past)" but show greyed out with no Claim/Register. Today's slots turn grey ("Ended") once their end time passes (end = time after "to"/dash, else start + 1 hour; blank or "to be confirmed" never ends). The script refuses changes to both, and "Open only" hides them. |
 | Fill in a **Time** column (title containing "Time"). | The page reads each school's start time from free text and refuses a second school at the same start time on the same day for the same person. Blank/"to be confirmed" can't be checked. Without AM/PM, 1–5 o'clock = afternoon. |
 | Row 1 is the header row. Exactly one header must contain the words **Speaker** and **Name** (e.g. "Sahaja Yoga ( IND) Speaker Name"). | The page writes "name, new line, mobile" into that cell only, the same way organisers already type it. Every other column (including "Local Sahaja Yogi" / "Speaker Mobile") is never touched. |
 | A school has room while it has fewer people than its **Total volunteers needed** (1 if blank). | To remove someone, delete their line from the Speaker Name cell. Keep notes like "12 sessions" out of that column: they count as a person. |

@@ -103,7 +103,9 @@ Takes about 15 minutes on a laptop or desktop computer (not a phone).</p>
   <li><b>Time (for clash checks):</b> a column whose title contains <b>Time</b>. The page reads the <b>start time</b> from
     whatever is typed (<code>10.30 A.M</code>, <code>3:30-4:30 PM</code>, <code>14:00</code>…). If a volunteer tries to take two
     schools that start at the same time on the same day, the second is refused. A blank Time, or text like "to be confirmed",
-    can't be checked, so fill in times where you can. Without AM/PM, 1 to 5 o'clock counts as afternoon.</li>
+    can't be checked, so fill in times where you can. Without AM/PM, 1 to 5 o'clock counts as afternoon.
+    The <b>end time</b> (after "to" or a dash, e.g. "2pm to 3pm") is used to grey out slots once they're over; with no end time,
+    a slot is taken to last 1 hour.</li>
   <li><b>Header row:</b> on each day tab, <b>row 1</b> holds the column titles, and exactly one title contains the
     words <b>Speaker</b> and <b>Name</b>, for example "Sahaja Yoga ( IND) Speaker Name" or "Sahaja Yoga Speaker Name".
     That is the only column the page ever writes into, listing everyone on the school, one person per line.</li>
@@ -200,7 +202,7 @@ function getState(tabName) {
   }
   state.days = day.days;
   state.speakers = speakerList_(ss);
-  return state;
+  return markPast_(state, day);
 }
 
 /**
@@ -241,6 +243,10 @@ function mutate_(o) {
     var row = tab.rows.filter(function (r) { return r.row === rowNum; })[0];
     if (!row) throw new Error('That row no longer exists. The list has been refreshed.');
     if (row.fp !== o.fingerprint) throw new Error('That row was edited or moved since you loaded it. Please check it and try again.');
+    if (day.past) throw new Error(sheet.getName() + ' is over, so it can only be viewed now.');
+    if (day.isToday &amp;&amp; row.end &amp;&amp; day.now &gt;= row.end) {
+      throw new Error('This slot has already ended (' + row.timeText + '), so it can only be viewed now.');
+    }
     var onRow = function (n) { return row.assignees.some(function (a) { return sameName_(a.name, n); }); };
 
     var people = row.assignees.map(function (a) { return a.text; });
@@ -282,7 +288,7 @@ function mutate_(o) {
   var state = buildState_(day.sheet);
   state.days = day.days;
   state.speakers = speakerList_(ss);
-  return state;
+  return markPast_(state, day);
 }
 
 /** Everyone a claim should add, each checked: [{name, mobile, self}]. */
@@ -400,8 +406,9 @@ function openSpreadsheet_() {
 }
 
 /**
- * Day tabs from today onwards, in date order. A day tab is named like '30-Sep'
- * or '1-Oct' (day, dash, 3-letter month) and is taken to be in the current year.
+ * All day tabs, in date order. A day tab is named like '30-Sep' or '1-Oct'
+ * (day, dash, 3-letter month) and is taken to be in the current year. Days
+ * before today are marked past: they can be viewed but not changed.
  */
 function listDays_(ss) {
   var tz = ss.getSpreadsheetTimeZone();
@@ -415,26 +422,39 @@ function listDays_(ss) {
     if (month &lt; 0) return;
     var date = new Date(Date.UTC(year, month, Number(m[1]), 12));
     var key = Utilities.formatDate(date, 'UTC', 'yyyy-MM-dd');
-    if (key &lt; today) return;
-    days.push({ name: s.getName(), key: key, label: Utilities.formatDate(date, 'UTC', 'EEE') + ' ' + s.getName() +
-      (key === today ? ' (today)' : ''), sheet: s });
+    days.push({ name: s.getName(), key: key, past: key &lt; today, isToday: key === today, sheet: s,
+      label: Utilities.formatDate(date, 'UTC', 'EEE') + ' ' + s.getName() + (key === today ? ' (today)' : key &lt; today ? ' (past)' : '') });
   });
   return days.sort(function (x, y) { return x.key &lt; y.key ? -1 : x.key &gt; y.key ? 1 : 0; });
 }
 var MONTHS_ = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 
-/** The day tab the person picked, or today's (else the next one) when none was picked. */
+/**
+ * The day tab the person picked, or today's (else the next one; else the
+ * latest past one) when none was picked, plus what "now" is for greying out
+ * slots that have ended.
+ */
 function resolveDay_(ss, tabName) {
+  var now = Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'HH:mm');
   if (CONFIG.TAB_NAME_OVERRIDE) {
     var forced = ss.getSheetByName(CONFIG.TAB_NAME_OVERRIDE);
     if (!forced) throw new Error('Tab "' + CONFIG.TAB_NAME_OVERRIDE + '" not found.');
-    return { sheet: forced, days: [{ name: forced.getName(), key: '', label: forced.getName() }] };
+    return { sheet: forced, past: false, isToday: false, now: now, days: [{ name: forced.getName(), label: forced.getName(), past: false }] };
   }
   var days = listDays_(ss);
-  if (!days.length) throw new Error('There are no day tabs for today or later yet.');
-  var pick = tabName ? days.filter(function (d) { return d.name === tabName; })[0] : days[0];
-  if (!pick) throw new Error('"' + tabName + '" is not available any more (it may be in the past or renamed). Please pick another date.');
-  return { sheet: pick.sheet, days: days.map(function (d) { return { name: d.name, label: d.label }; }) };
+  if (!days.length) throw new Error('There are no day tabs (named like 30-Sep) yet.');
+  var upcoming = days.filter(function (d) { return !d.past; });
+  var pick = tabName ? days.filter(function (d) { return d.name === tabName; })[0] : (upcoming[0] || days[days.length - 1]);
+  if (!pick) throw new Error('"' + tabName + '" is not available any more (it may have been renamed). Please pick another date.');
+  return { sheet: pick.sheet, past: pick.past, isToday: pick.isToday, now: now,
+    days: days.map(function (d) { return { name: d.name, label: d.label, past: d.past }; }) };
+}
+
+/** Marks a past day, and today's slots whose end time has passed, as view-only. */
+function markPast_(state, day) {
+  state.pastDay = !!day.past;
+  state.rows.forEach(function (r) { r.past = state.pastDay || !!(day.isToday &amp;&amp; r.end &amp;&amp; day.now &gt;= r.end); });
+  return state;
 }
 
 /**
@@ -477,7 +497,7 @@ function readTab_(sheet) {
     rows.push({ row: CONFIG.HEADER_ROW + 1 + i, fp: fingerprint_(details), cells: r, speaker: speaker,
       assignees: assignees, total: total, remaining: Math.max(0, total - assignees.length),
       over: Math.max(0, assignees.length - total),
-      timeText: timeText, start: startTime_(timeText) });
+      timeText: timeText, start: startTime_(timeText), end: endTime_(timeText) });
   });
   return { headers: headers, nameCol: nIdx + 1, remainingCol: rIdx + 1,
     slotsHeader: sIdx &gt;= 0 ? headers[sIdx] : '', rows: rows };
@@ -531,6 +551,33 @@ function startTime_(text) {
   else if (mark &amp;&amp; mark[1] === 'a' &amp;&amp; h === 12) h = 0;
   else if (!mark &amp;&amp; h &gt;= 1 &amp;&amp; h &lt;= 5) h += 12;
   return (h &lt; 10 ? '0' : '') + h + ':' + (min &lt; 10 ? '0' : '') + min;
+}
+
+/**
+ * End time as 'HH:MM' from free text: the time after 'to' or a dash
+ * ('2pm to 3pm' -&gt; 15:00, '3:30 to 4:30 pm' -&gt; 16:30). Without an end, or with
+ * an end that doesn't make sense (e.g. '3:00 PM - 12 sessions'), the slot is
+ * taken to last 1 hour. '' when there's no start time.
+ */
+function endTime_(text) {
+  var start = startTime_(text);
+  if (!start) return '';
+  var startMin = Number(start.slice(0, 2)) * 60 + Number(start.slice(3));
+  var s = String(text).toLowerCase();
+  var first = /(\d{1,2})(?:\s*[:.]\s*(\d{2}))?(?::\d{2})?/.exec(s);
+  var rest = s.slice(first.index + first[0].length);
+  var m = /^\s*(?:[ap]\.?\s?m\.?)?\s*(?:to|till|until|-|–)\s*(\d{1,2})(?:\s*[:.]\s*(\d{2}))?(?::\d{2})?\s*(?:([ap])\.?\s?m)?/.exec(rest);
+  var endMin = startMin + 60;
+  if (m &amp;&amp; Number(m[1]) &lt;= 23 &amp;&amp; Number(m[2] || 0) &lt;= 59) {
+    var h = Number(m[1]) % 12 + (m[3] === 'p' || (!m[3] &amp;&amp; startMin &gt;= 12 * 60 &amp;&amp; Number(m[1]) &lt; 12) ? 12 : 0);
+    if (!m[3] &amp;&amp; Number(m[1]) &gt; 12) h = Number(m[1]);
+    var e = h * 60 + Number(m[2] || 0);
+    if (e &lt;= startMin) e += 12 * 60;
+    if (e &gt; startMin &amp;&amp; e - startMin &lt;= 6 * 60) endMin = e;
+  }
+  if (endMin &gt;= 24 * 60) endMin = 24 * 60 - 1;
+  var hh = Math.floor(endMin / 60), mm = endMin % 60;
+  return (hh &lt; 10 ? '0' : '') + hh + ':' + (mm &lt; 10 ? '0' : '') + mm;
 }
 
 /** 'S No 5 (Sri Chaitanya School)' for messages. */
@@ -647,6 +694,9 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   .person.extra { color:var(--err); }                      /* people beyond the school's total */
   .overcount { color:var(--err); font-weight:700; }
   tr.overrow td { background:#fdecea; }
+  tr.past td, tr.past td * { background:#eeeeee !important; color:#9aa0a6 !important; border-color:#d5d5d5; }
+  #pastNote { flex-basis:100%; padding:6px 10px; border-radius:6px; background:#eeeeee; color:#5f6368; font-weight:600; }
+  #pastNote[hidden] { display:none; }
   .via { color:var(--muted); font-weight:400; }
   button.warn { background:#fff; color:var(--err); border-color:var(--err); }
   button.x { padding:0 7px; margin-left:8px; background:#fff; color:var(--err); border-color:var(--err); font-size:12px; }
@@ -668,7 +718,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   &lt;label&gt;Date &lt;select id="day"&gt;&lt;/select&gt;&lt;/label&gt;
   &lt;label&gt;Your name &lt;input id="name" autocomplete="off" list="speakerNames" placeholder="type or pick your name"&gt;&lt;datalist id="speakerNames"&gt;&lt;/datalist&gt;&lt;/label&gt;
   &lt;label&gt;Mobile &lt;input id="mobile" autocomplete="tel" inputmode="tel" placeholder="10 digits" maxlength="16"&gt;&lt;/label&gt;
-  &lt;label&gt;&lt;input type="checkbox" id="showOthers"&gt; Register others&lt;/label&gt;
+  &lt;label id="showOthersLabel"&gt;&lt;input type="checkbox" id="showOthers"&gt; Register others&lt;/label&gt;
   &lt;label&gt;&lt;input type="checkbox" id="openOnly"&gt; Open only&lt;/label&gt;
   &lt;div id="othersBox" hidden&gt;
     &lt;details id="picker"&gt;
@@ -679,6 +729,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
     &lt;textarea id="others" placeholder="One person per line: name, then 10-digit mobile&amp;#10;Ravi Kumar 9123456789&amp;#10;Asha 9000000002"&gt;&lt;/textarea&gt;
     &lt;label&gt;&lt;input type="checkbox" id="includeMe" checked&gt; Include me too&lt;/label&gt;
   &lt;/div&gt;
+  &lt;div id="pastNote" hidden&gt;This day is over: view only. Pick today or a later date to claim.&lt;/div&gt;
   &lt;span id="status"&gt;&lt;/span&gt;
   &lt;span id="updated"&gt;&lt;/span&gt;
   &lt;span id="note"&gt;&lt;/span&gt;
@@ -909,6 +960,10 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
     }
     daySelect.value = state.tab;
     document.getElementById('title').textContent = 'Day: ' + state.tab;
+    // A past day is view-only: no claiming and no registering others.
+    document.getElementById('pastNote').hidden = !state.pastDay;
+    document.getElementById('showOthersLabel').hidden = !!state.pastDay;
+    othersBox.hidden = !!state.pastDay || !showOthers.checked;
     drawPicker(false);
     var me = myName();
     var t = document.getElementById('grid');
@@ -934,10 +989,10 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
       var justMe = meIncluded() &amp;&amp; !othersText().trim();
       var clashWith = justMe &amp;&amp; !mine &amp;&amp; r.start ? myStarts[r.start] : '';
       var hasRoom = r.remaining &gt; 0;
-      if (hasRoom) open++;
-      if (openOnly.checked &amp;&amp; !hasRoom &amp;&amp; !mine) return;
+      if (hasRoom &amp;&amp; !r.past) open++;
+      if (openOnly.checked &amp;&amp; (r.past || (!hasRoom &amp;&amp; !mine))) return; // "Open only" never shows ended slots
       var tr = t.insertRow();
-      tr.className = mine ? 'mine' : r.over ? 'overrow' : (hasRoom ? '' : 'taken');
+      tr.className = r.past ? 'past' : mine ? 'mine' : r.over ? 'overrow' : (hasRoom ? '' : 'taken');
       if (snoIdx &gt;= 0) tr.insertCell().textContent = r.cells[snoIdx];
       var btnCell = tr.insertCell();
       var addButton = function (label, cls, handler) {
@@ -948,7 +1003,9 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
         b.onclick = handler;
         btnCell.appendChild(b);
       };
-      if (r.total &lt;= 0) {
+      if (r.past) {
+        btnCell.textContent = state.pastDay ? 'Past' : 'Ended';
+      } else if (r.total &lt;= 0) {
         btnCell.textContent = 'Closed';
       } else if (clashWith) {
         var note = document.createElement('span');
@@ -959,7 +1016,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
         // A full school can still take more; the extra people show in red.
         addButton(hasRoom ? 'Claim' : 'Claim (full)', hasRoom ? '' : 'warn', function () { act('claimRow', r, 'Registering'); });
       }
-      if (mine) addButton('Release', 'release', function () { act('releaseRow', r, 'Releasing'); });
+      if (mine &amp;&amp; !r.past) addButton('Release', 'release', function () { act('releaseRow', r, 'Releasing'); });
       var slots = tr.insertCell();
       if (r.over) { slots.className = 'overcount'; slots.textContent = 'Over by ' + r.over + ' (needs ' + r.total + ')'; }
       else slots.textContent = r.remaining + ' of ' + r.total;
@@ -978,7 +1035,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
           via.textContent = ' · via ' + a.by;
           line.appendChild(via);
         }
-        if (me &amp;&amp; a.by &amp;&amp; same(a.by, me) &amp;&amp; !same(a.name, me)) {
+        if (!r.past &amp;&amp; me &amp;&amp; a.by &amp;&amp; same(a.by, me) &amp;&amp; !same(a.name, me)) {
           var x = document.createElement('button');
           x.className = 'x';
           x.textContent = '✕';
@@ -1082,7 +1139,7 @@ The page refreshes every 15 seconds.</pre>
   <tr><td>Keep typing in the sheet as usual (including name + number in one cell).</td>
       <td>The page always reflects the sheet. Rows you fill by hand show as taken.</td></tr>
   <tr><td>The <b>same link</b> works every day.</td>
-      <td>It opens on today's tab (or the next day that has a tab). Past days drop out of the date picker automatically.</td></tr>
+      <td>It opens on today's tab (or the next day that has a tab). Past days stay in the date list, marked "(past)", but are grey and view-only; slots whose end time has passed today are grey too.</td></tr>
   <tr><td>Fill in the <b>Time</b> column.</td>
       <td>That's what stops one volunteer being booked at two schools at the same time.</td></tr>
 </table></div>
@@ -1091,8 +1148,10 @@ The page refreshes every 15 seconds.</pre>
 <div class="table-wrap"><table>
   <tr><th>What you see</th><th>What it means / what to do</th></tr>
   <tr><td>Extensions menu is grey</td><td>You only have View access. Ask the owner for Edit access.</td></tr>
-  <tr><td>"There are no day tabs for today or later yet"</td><td>No tab is named like <code>1-Oct</code> for today or later. Create or rename one. Also check the time zone (Part 2).</td></tr>
-  <tr><td>"… is not available any more"</td><td>That day has passed or its tab was renamed. Pick another date.</td></tr>
+  <tr><td>"There are no day tabs (named like 30-Sep) yet"</td><td>No tab is named like <code>1-Oct</code>. Create or rename one. Also check the time zone (Part 2).</td></tr>
+  <tr><td>"… is not available any more"</td><td>That day's tab was renamed or removed. Pick another date.</td></tr>
+  <tr><td>A grey page: "This day is over: view only"</td><td>You picked a past date (marked "(past)" in the list). It can be looked at but not changed.</td></tr>
+  <tr><td>A grey row marked "Ended"</td><td>That slot's end time today has passed, so it can't be claimed or changed. "Open only" hides these.</td></tr>
   <tr><td>"Time clash: you are already on …"</td><td>You already have a school starting at the same time that day. Release it first, or pick another time.</td></tr>
   <tr><td>"Clashes with S No …" instead of a Claim button</td><td>Same as above, shown before you click.</td></tr>
   <tr><td>"…has no column in row 1 whose header contains "speaker" and "name""</td><td>That day's tab has no Speaker Name title in row 1. Add or fix the title.</td></tr>

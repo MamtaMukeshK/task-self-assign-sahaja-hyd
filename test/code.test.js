@@ -21,9 +21,11 @@ test('single-digit day tab (e.g. 5-Oct) and 05-Oct both match', () => {
     assert.equal(gs.getState().tab, name);
   }
 });
-test('no tab for today gives a clear error', () => {
-  const gs = load([makeSheet('27-Sep', 1, screenshotGrid())], NOW);
-  assert.throws(() => gs.getState(), /no day tabs for today or later/);
+test('only past tabs: the latest one is shown, view-only; no day tabs at all is a clear error', () => {
+  const gs = load([makeSheet('26-Sep', 1, screenshotGrid()), makeSheet('27-Sep', 2, screenshotGrid())], NOW);
+  const s = gs.getState();
+  assert.deepEqual([s.tab, s.pastDay], ['27-Sep', true]);
+  assert.throws(() => load([makeSheet('Summary', 3, [['x']])], NOW).getState(), /no day tabs \(named like 30-Sep\)/);
 });
 test('28-Sep layout: claim writes name + mobile into B only, never the "Speaker Mobile" column', () => {
   const { gs, today, sheets } = setup(); const r = openRow(gs.getState());
@@ -308,17 +310,25 @@ test('a day tab with only the header row shows no schools instead of an error', 
 
 // ---- Picking a date ----
 function dayTab(name, id) { return makeSheet(name, id, screenshotGrid()); }
-test('date picker: lists today and later day tabs in date order, today first', () => {
+test('date picker: lists all day tabs in date order (past ones marked), opening on today', () => {
   const gs = load([dayTab('1-Oct', 1), dayTab('27-Sep', 2), dayTab('29-Sep', 3), dayTab('Dummy-29-Sep', 4),
     dayTab('28-Sep', 5), makeSheet('Summary', 6, [['x']])], NOW);
   const s = gs.getState();
   assert.equal(s.tab, '28-Sep');
-  assert.deepEqual(s.days.map(d => d.label), ['Mon 28-Sep (today)', 'Tue 29-Sep', 'Thu 1-Oct']);
+  assert.deepEqual(s.days.map(d => d.label), ['Sun 27-Sep (past)', 'Mon 28-Sep (today)', 'Tue 29-Sep', 'Thu 1-Oct']);
+  assert.deepEqual(s.days.map(d => d.past), [true, false, false, false]);
   assert.equal(gs.getState('1-Oct').tab, '1-Oct');
 });
-test('date picker: past, unknown and non-day tabs cannot be picked', () => {
-  const gs = load([dayTab('27-Sep', 2), dayTab('28-Sep', 5), makeSheet('Summary', 6, [['x']])], NOW);
-  assert.throws(() => gs.getState('27-Sep'), /not available any more/);
+test('date picker: past days can be viewed but not changed; unknown and non-day tabs cannot be picked', () => {
+  const past = dayTab('27-Sep', 2);
+  const gs = load([past, dayTab('28-Sep', 5), makeSheet('Summary', 6, [['x']])], NOW);
+  const s = gs.getState('27-Sep');
+  assert.equal(s.pastDay, true);
+  assert.ok(s.rows.every(r => r.past), 'every row view-only');
+  const open = s.rows.find(r => !r.speaker), taken = s.rows.find(r => r.speaker);
+  assert.throws(() => gs.claimRow(open.row, open.fp, 'Priya', '9876543210', '27-Sep'), /27-Sep is over, so it can only be viewed now/);
+  assert.throws(() => gs.releaseRow(taken.row, taken.fp, 'Asha Rao', '27-Sep'), /27-Sep is over/);
+  assert.equal(past.grid[open.row - 1][1], '', 'nothing written');
   assert.throws(() => gs.getState('Summary'), /not available any more/);
   assert.throws(() => gs.getState('5-Nov'), /not available any more/);
 });
@@ -568,4 +578,37 @@ test('testing-sheet layout: "Sl.No" serial title and an existing Speaker "Mobile
   assert.deepEqual([0, 1, 2, 3].map(j => sp.grid[3][j] ?? ''), [43, 'New Person', '9000000012', ''], 'next Sr. No. after 42');
   assert.equal(sp.grid[2][4], 'school', 'date columns untouched');
   assert.equal(day.grid[2][4], 3, 'still-needed for Sl.No 2 = 6 - 3');
+});
+
+// ---- Slots whose end time has passed today are view-only ----
+test('ended slots today: greyed out and refused once their end time has passed', () => {
+  // NOW is 28 Sep 05:00 (test clock); times chosen around it.
+  const g = [
+    ['S No', 'Speaker Name', 'Total volunteers needed', 'Institution name', 'Time'],
+    ['1', '', '2', 'Early', '3:00 to 4:30 AM'],        // ended 04:30
+    ['2', '', '2', 'Just now', '4 AM to 5 AM'],        // ends 05:00 = now -> ended
+    ['3', '', '2', 'Running', '4:30 AM to 6 AM'],      // still running -> open
+    ['4', '', '2', 'Start only', '04:00 AM'],          // no end: 1 hour -> 05:00 -> ended
+    ['5', '', '2', 'Later', '10.00 A.M'],
+    ['6', '', '2', 'No time', 'to be confirmed'],      // unknown: never ended
+  ];
+  const sheet = makeSheet('28-Sep', 95, g);
+  const gs = load([sheet], NOW);
+  const s = gs.getState();
+  assert.deepEqual(s.rows.map(r => [r.end, r.past]),
+    [['04:30', true], ['05:00', true], ['06:00', false], ['05:00', true], ['11:00', false], ['', false]]);
+  assert.equal(s.pastDay, false);
+  assert.throws(() => gs.claimRow(s.rows[0].row, s.rows[0].fp, 'Priya', '9876543210'), /This slot has already ended \(3:00 to 4:30 AM\)/);
+  gs.claimRow(s.rows[2].row, s.rows[2].fp, 'Priya', '9876543210');
+  assert.equal(sheet.grid[3][1], 'Priya 9876543210');
+  const later = load([makeSheet('29-Sep', 96, g)], NOW).getState();
+  assert.ok(later.rows.every(r => !r.past), 'a later day is never greyed out');
+});
+test('end times read from the real free-text formats in the sheet', () => {
+  const gs = load([makeSheet('28-Sep', 97, [['S No']])], NOW);
+  const cases = { ' 2pm to 3pm. (STRICT TIMINGS) ': '15:00', '3:30 to 4:30 pm - 12 sessions': '16:30', '12:30-1:30 PM': '13:30',
+    '11.00 AM to 12.00 A.M': '12:00', '10.00 AM to10.45 AM': '10:45', '9.15 to 9.45 AM ': '09:45', '12 to 1 pm': '13:00',
+    '4:30 PM to 6:30 PM': '18:30', '3:00:00 PM  - 12 sessions': '16:00', '08:30:00': '09:30', 'After 4:00 PM': '17:00',
+    '2pmto3pm': '15:00', '8:30am-9:40am': '09:40', '1.30 - 2.30pm': '14:30', 'to be confirmed': '', '': '' };
+  for (const [text, want] of Object.entries(cases)) assert.equal(gs.endTime_(text), want, text);
 });

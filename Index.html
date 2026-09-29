@@ -32,6 +32,9 @@
   .person.extra { color:var(--err); }                      /* people beyond the school's total */
   .overcount { color:var(--err); font-weight:700; }
   tr.overrow td { background:#fdecea; }
+  tr.past td, tr.past td * { background:#eeeeee !important; color:#9aa0a6 !important; border-color:#d5d5d5; }
+  #pastNote { flex-basis:100%; padding:6px 10px; border-radius:6px; background:#eeeeee; color:#5f6368; font-weight:600; }
+  #pastNote[hidden] { display:none; }
   .via { color:var(--muted); font-weight:400; }
   button.warn { background:#fff; color:var(--err); border-color:var(--err); }
   button.x { padding:0 7px; margin-left:8px; background:#fff; color:var(--err); border-color:var(--err); font-size:12px; }
@@ -53,7 +56,7 @@
   <label>Date <select id="day"></select></label>
   <label>Your name <input id="name" autocomplete="off" list="speakerNames" placeholder="type or pick your name"><datalist id="speakerNames"></datalist></label>
   <label>Mobile <input id="mobile" autocomplete="tel" inputmode="tel" placeholder="10 digits" maxlength="16"></label>
-  <label><input type="checkbox" id="showOthers"> Register others</label>
+  <label id="showOthersLabel"><input type="checkbox" id="showOthers"> Register others</label>
   <label><input type="checkbox" id="openOnly"> Open only</label>
   <div id="othersBox" hidden>
     <details id="picker">
@@ -64,6 +67,7 @@
     <textarea id="others" placeholder="One person per line: name, then 10-digit mobile&#10;Ravi Kumar 9123456789&#10;Asha 9000000002"></textarea>
     <label><input type="checkbox" id="includeMe" checked> Include me too</label>
   </div>
+  <div id="pastNote" hidden>This day is over: view only. Pick today or a later date to claim.</div>
   <span id="status"></span>
   <span id="updated"></span>
   <span id="note"></span>
@@ -294,6 +298,10 @@
     }
     daySelect.value = state.tab;
     document.getElementById('title').textContent = 'Day: ' + state.tab;
+    // A past day is view-only: no claiming and no registering others.
+    document.getElementById('pastNote').hidden = !state.pastDay;
+    document.getElementById('showOthersLabel').hidden = !!state.pastDay;
+    othersBox.hidden = !!state.pastDay || !showOthers.checked;
     drawPicker(false);
     var me = myName();
     var t = document.getElementById('grid');
@@ -319,10 +327,10 @@
       var justMe = meIncluded() && !othersText().trim();
       var clashWith = justMe && !mine && r.start ? myStarts[r.start] : '';
       var hasRoom = r.remaining > 0;
-      if (hasRoom) open++;
-      if (openOnly.checked && !hasRoom && !mine) return;
+      if (hasRoom && !r.past) open++;
+      if (openOnly.checked && (r.past || (!hasRoom && !mine))) return; // "Open only" never shows ended slots
       var tr = t.insertRow();
-      tr.className = mine ? 'mine' : r.over ? 'overrow' : (hasRoom ? '' : 'taken');
+      tr.className = r.past ? 'past' : mine ? 'mine' : r.over ? 'overrow' : (hasRoom ? '' : 'taken');
       if (snoIdx >= 0) tr.insertCell().textContent = r.cells[snoIdx];
       var btnCell = tr.insertCell();
       var addButton = function (label, cls, handler) {
@@ -333,7 +341,9 @@
         b.onclick = handler;
         btnCell.appendChild(b);
       };
-      if (r.total <= 0) {
+      if (r.past) {
+        btnCell.textContent = state.pastDay ? 'Past' : 'Ended';
+      } else if (r.total <= 0) {
         btnCell.textContent = 'Closed';
       } else if (clashWith) {
         var note = document.createElement('span');
@@ -344,7 +354,7 @@
         // A full school can still take more; the extra people show in red.
         addButton(hasRoom ? 'Claim' : 'Claim (full)', hasRoom ? '' : 'warn', function () { act('claimRow', r, 'Registering'); });
       }
-      if (mine) addButton('Release', 'release', function () { act('releaseRow', r, 'Releasing'); });
+      if (mine && !r.past) addButton('Release', 'release', function () { act('releaseRow', r, 'Releasing'); });
       var slots = tr.insertCell();
       if (r.over) { slots.className = 'overcount'; slots.textContent = 'Over by ' + r.over + ' (needs ' + r.total + ')'; }
       else slots.textContent = r.remaining + ' of ' + r.total;
@@ -363,7 +373,7 @@
           via.textContent = ' · via ' + a.by;
           line.appendChild(via);
         }
-        if (me && a.by && same(a.by, me) && !same(a.name, me)) {
+        if (!r.past && me && a.by && same(a.by, me) && !same(a.name, me)) {
           var x = document.createElement('button');
           x.className = 'x';
           x.textContent = '✕';

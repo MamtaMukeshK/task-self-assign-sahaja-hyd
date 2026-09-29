@@ -64,7 +64,7 @@ function getState(tabName) {
   }
   state.days = day.days;
   state.speakers = speakerList_(ss);
-  return state;
+  return markPast_(state, day);
 }
 
 /**
@@ -105,6 +105,10 @@ function mutate_(o) {
     var row = tab.rows.filter(function (r) { return r.row === rowNum; })[0];
     if (!row) throw new Error('That row no longer exists. The list has been refreshed.');
     if (row.fp !== o.fingerprint) throw new Error('That row was edited or moved since you loaded it. Please check it and try again.');
+    if (day.past) throw new Error(sheet.getName() + ' is over, so it can only be viewed now.');
+    if (day.isToday && row.end && day.now >= row.end) {
+      throw new Error('This slot has already ended (' + row.timeText + '), so it can only be viewed now.');
+    }
     var onRow = function (n) { return row.assignees.some(function (a) { return sameName_(a.name, n); }); };
 
     var people = row.assignees.map(function (a) { return a.text; });
@@ -146,7 +150,7 @@ function mutate_(o) {
   var state = buildState_(day.sheet);
   state.days = day.days;
   state.speakers = speakerList_(ss);
-  return state;
+  return markPast_(state, day);
 }
 
 /** Everyone a claim should add, each checked: [{name, mobile, self}]. */
@@ -264,8 +268,9 @@ function openSpreadsheet_() {
 }
 
 /**
- * Day tabs from today onwards, in date order. A day tab is named like '30-Sep'
- * or '1-Oct' (day, dash, 3-letter month) and is taken to be in the current year.
+ * All day tabs, in date order. A day tab is named like '30-Sep' or '1-Oct'
+ * (day, dash, 3-letter month) and is taken to be in the current year. Days
+ * before today are marked past: they can be viewed but not changed.
  */
 function listDays_(ss) {
   var tz = ss.getSpreadsheetTimeZone();
@@ -279,26 +284,39 @@ function listDays_(ss) {
     if (month < 0) return;
     var date = new Date(Date.UTC(year, month, Number(m[1]), 12));
     var key = Utilities.formatDate(date, 'UTC', 'yyyy-MM-dd');
-    if (key < today) return;
-    days.push({ name: s.getName(), key: key, label: Utilities.formatDate(date, 'UTC', 'EEE') + ' ' + s.getName() +
-      (key === today ? ' (today)' : ''), sheet: s });
+    days.push({ name: s.getName(), key: key, past: key < today, isToday: key === today, sheet: s,
+      label: Utilities.formatDate(date, 'UTC', 'EEE') + ' ' + s.getName() + (key === today ? ' (today)' : key < today ? ' (past)' : '') });
   });
   return days.sort(function (x, y) { return x.key < y.key ? -1 : x.key > y.key ? 1 : 0; });
 }
 var MONTHS_ = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 
-/** The day tab the person picked, or today's (else the next one) when none was picked. */
+/**
+ * The day tab the person picked, or today's (else the next one; else the
+ * latest past one) when none was picked, plus what "now" is for greying out
+ * slots that have ended.
+ */
 function resolveDay_(ss, tabName) {
+  var now = Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'HH:mm');
   if (CONFIG.TAB_NAME_OVERRIDE) {
     var forced = ss.getSheetByName(CONFIG.TAB_NAME_OVERRIDE);
     if (!forced) throw new Error('Tab "' + CONFIG.TAB_NAME_OVERRIDE + '" not found.');
-    return { sheet: forced, days: [{ name: forced.getName(), key: '', label: forced.getName() }] };
+    return { sheet: forced, past: false, isToday: false, now: now, days: [{ name: forced.getName(), label: forced.getName(), past: false }] };
   }
   var days = listDays_(ss);
-  if (!days.length) throw new Error('There are no day tabs for today or later yet.');
-  var pick = tabName ? days.filter(function (d) { return d.name === tabName; })[0] : days[0];
-  if (!pick) throw new Error('"' + tabName + '" is not available any more (it may be in the past or renamed). Please pick another date.');
-  return { sheet: pick.sheet, days: days.map(function (d) { return { name: d.name, label: d.label }; }) };
+  if (!days.length) throw new Error('There are no day tabs (named like 30-Sep) yet.');
+  var upcoming = days.filter(function (d) { return !d.past; });
+  var pick = tabName ? days.filter(function (d) { return d.name === tabName; })[0] : (upcoming[0] || days[days.length - 1]);
+  if (!pick) throw new Error('"' + tabName + '" is not available any more (it may have been renamed). Please pick another date.');
+  return { sheet: pick.sheet, past: pick.past, isToday: pick.isToday, now: now,
+    days: days.map(function (d) { return { name: d.name, label: d.label, past: d.past }; }) };
+}
+
+/** Marks a past day, and today's slots whose end time has passed, as view-only. */
+function markPast_(state, day) {
+  state.pastDay = !!day.past;
+  state.rows.forEach(function (r) { r.past = state.pastDay || !!(day.isToday && r.end && day.now >= r.end); });
+  return state;
 }
 
 /**
@@ -341,7 +359,7 @@ function readTab_(sheet) {
     rows.push({ row: CONFIG.HEADER_ROW + 1 + i, fp: fingerprint_(details), cells: r, speaker: speaker,
       assignees: assignees, total: total, remaining: Math.max(0, total - assignees.length),
       over: Math.max(0, assignees.length - total),
-      timeText: timeText, start: startTime_(timeText) });
+      timeText: timeText, start: startTime_(timeText), end: endTime_(timeText) });
   });
   return { headers: headers, nameCol: nIdx + 1, remainingCol: rIdx + 1,
     slotsHeader: sIdx >= 0 ? headers[sIdx] : '', rows: rows };
@@ -395,6 +413,33 @@ function startTime_(text) {
   else if (mark && mark[1] === 'a' && h === 12) h = 0;
   else if (!mark && h >= 1 && h <= 5) h += 12;
   return (h < 10 ? '0' : '') + h + ':' + (min < 10 ? '0' : '') + min;
+}
+
+/**
+ * End time as 'HH:MM' from free text: the time after 'to' or a dash
+ * ('2pm to 3pm' -> 15:00, '3:30 to 4:30 pm' -> 16:30). Without an end, or with
+ * an end that doesn't make sense (e.g. '3:00 PM - 12 sessions'), the slot is
+ * taken to last 1 hour. '' when there's no start time.
+ */
+function endTime_(text) {
+  var start = startTime_(text);
+  if (!start) return '';
+  var startMin = Number(start.slice(0, 2)) * 60 + Number(start.slice(3));
+  var s = String(text).toLowerCase();
+  var first = /(\d{1,2})(?:\s*[:.]\s*(\d{2}))?(?::\d{2})?/.exec(s);
+  var rest = s.slice(first.index + first[0].length);
+  var m = /^\s*(?:[ap]\.?\s?m\.?)?\s*(?:to|till|until|-|–)\s*(\d{1,2})(?:\s*[:.]\s*(\d{2}))?(?::\d{2})?\s*(?:([ap])\.?\s?m)?/.exec(rest);
+  var endMin = startMin + 60;
+  if (m && Number(m[1]) <= 23 && Number(m[2] || 0) <= 59) {
+    var h = Number(m[1]) % 12 + (m[3] === 'p' || (!m[3] && startMin >= 12 * 60 && Number(m[1]) < 12) ? 12 : 0);
+    if (!m[3] && Number(m[1]) > 12) h = Number(m[1]);
+    var e = h * 60 + Number(m[2] || 0);
+    if (e <= startMin) e += 12 * 60;
+    if (e > startMin && e - startMin <= 6 * 60) endMin = e;
+  }
+  if (endMin >= 24 * 60) endMin = 24 * 60 - 1;
+  var hh = Math.floor(endMin / 60), mm = endMin % 60;
+  return (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
 }
 
 /** 'S No 5 (Sri Chaitanya School)' for messages. */

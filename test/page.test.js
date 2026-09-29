@@ -143,7 +143,7 @@ test('date picker and time-clash label in real browser', { timeout: 60000 }, asy
     await p.route('http://app.test/', r => r.fulfill({ contentType: 'text/html', body: html }));
     await p.goto('http://app.test/');
     await p.waitForSelector('text=Day: 28-Sep');
-    assert.deepEqual(await p.$$eval('#day option', o => o.map(x => x.textContent)), ['Mon 28-Sep (today)', 'Wed 30-Sep']);
+    assert.deepEqual(await p.$$eval('#day option', o => o.map(x => x.textContent)), ['Sun 27-Sep (past)', 'Mon 28-Sep (today)', 'Wed 30-Sep']);
     await p.fill('#name', 'Priya'); await p.fill('#mobile', '9876543210');
 
     await p.selectOption('#day', '30-Sep');
@@ -284,5 +284,45 @@ test('speaker picker in real browser: alphabetical, multi-select, and own name f
     assert.equal(await p.textContent('#pickCount'), '3', 'still ticked under the saved entry');
     assert.deepEqual(errs, []);
     await p.screenshot({ path: path.join(__dirname, 'picker-view.png') });
+  } finally { await browser.close(); }
+});
+
+test('past day and ended slots in real browser: greyed out, no buttons, hidden by "Open only"', { timeout: 60000 }, async () => {
+  const grid = () => [
+    ['S No', 'Speaker Name', 'Total volunteers needed', 'Institution name', 'Time'],
+    ['1', '', '2', 'Early', '3:00 to 4:30 AM'],
+    ['2', 'Vol A 9000000001', '2', 'Later', '10.00 A.M'],
+  ];
+  const gs = load([makeSheet('27-Sep', 2, grid()), makeSheet('28-Sep', 3, grid())], new Date(Date.UTC(2026, 8, 28, 5)));
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
+  try {
+    const p = await (await browser.newContext({ viewport: { width: 1000, height: 700 } })).newPage();
+    p.setDefaultTimeout(8000);
+    const errs = []; p.on('pageerror', e => errs.push(e.message));
+    await p.exposeFunction('gsCall', (fn, a) => { try { return { ok: JSON.parse(JSON.stringify(gs[fn](...a))) }; } catch (e) { return { err: e.message }; } });
+    await p.addInitScript(SHIM);
+    await p.route('http://app.test/', r => r.fulfill({ contentType: 'text/html', body: html }));
+    await p.goto('http://app.test/');
+    await p.waitForSelector('text=Day: 28-Sep');
+    await p.fill('#name', 'Vol A'); await p.fill('#mobile', '9000000001');
+    const rows = () => p.locator('#grid tr');
+    assert.match(await rows().nth(1).getAttribute('class'), /past/);
+    assert.equal(await rows().nth(1).locator('button').count(), 0, 'ended slot: no buttons');
+    assert.match(await rows().nth(1).textContent(), /Ended/);
+    assert.equal(await rows().nth(2).locator('button:text-is("Release")').count(), 1, 'later slot still usable');
+    await p.check('#openOnly');
+    assert.deepEqual(await rows().evaluateAll(tr => tr.slice(1).map(r => r.cells[0].textContent)), ['2'], 'Open only hides the ended slot');
+    await p.uncheck('#openOnly');
+
+    await p.selectOption('#day', '27-Sep');
+    await p.waitForSelector('text=Day: 27-Sep');
+    assert.equal(await p.isVisible('#pastNote'), true);
+    assert.equal(await p.isVisible('#showOthers'), false, 'no Register others on a past day');
+    assert.equal(await p.locator('#grid button').count(), 0, 'no buttons at all');
+    assert.equal(await p.locator('#grid tr.past').count(), 2);
+    await p.screenshot({ path: path.join(__dirname, 'past-view.png') });
+    await p.check('#openOnly');
+    assert.equal(await rows().count(), 1, 'Open only shows nothing from a past day');
+    assert.deepEqual(errs, []);
   } finally { await browser.close(); }
 });

@@ -103,7 +103,9 @@ Takes about 15 minutes on a laptop or desktop computer (not a phone).</p>
   <li><b>Time (for clash checks):</b> a column whose title contains <b>Time</b>. The page reads the <b>start time</b> from
     whatever is typed (<code>10.30 A.M</code>, <code>3:30-4:30 PM</code>, <code>14:00</code>…). If a volunteer tries to take two
     schools that start at the same time on the same day, the second is refused. A blank Time, or text like "to be confirmed",
-    can't be checked, so fill in times where you can. Without AM/PM, 1 to 5 o'clock counts as afternoon.</li>
+    can't be checked, so fill in times where you can. Without AM/PM, 1 to 5 o'clock counts as afternoon.
+    The <b>end time</b> (after "to" or a dash, e.g. "2pm to 3pm") is used to grey out slots once they're over; with no end time,
+    a slot is taken to last 1 hour.</li>
   <li><b>Header row:</b> on each day tab, <b>row 1</b> holds the column titles, and exactly one title contains the
     words <b>Speaker</b> and <b>Name</b>, for example "Sahaja Yoga ( IND) Speaker Name" or "Sahaja Yoga Speaker Name".
     That is the only column the page ever writes into, listing everyone on the school, one person per line.</li>
@@ -224,7 +226,7 @@ The page refreshes every 15 seconds.</pre>
   <tr><td>Keep typing in the sheet as usual (including name + number in one cell).</td>
       <td>The page always reflects the sheet. Rows you fill by hand show as taken.</td></tr>
   <tr><td>The <b>same link</b> works every day.</td>
-      <td>It opens on today's tab (or the next day that has a tab). Past days drop out of the date picker automatically.</td></tr>
+      <td>It opens on today's tab (or the next day that has a tab). Past days stay in the date list, marked "(past)", but are grey and view-only; slots whose end time has passed today are grey too.</td></tr>
   <tr><td>Fill in the <b>Time</b> column.</td>
       <td>That's what stops one volunteer being booked at two schools at the same time.</td></tr>
 </table></div>
@@ -233,8 +235,10 @@ The page refreshes every 15 seconds.</pre>
 <div class="table-wrap"><table>
   <tr><th>What you see</th><th>What it means / what to do</th></tr>
   <tr><td>Extensions menu is grey</td><td>You only have View access. Ask the owner for Edit access.</td></tr>
-  <tr><td>"There are no day tabs for today or later yet"</td><td>No tab is named like <code>1-Oct</code> for today or later. Create or rename one. Also check the time zone (Part 2).</td></tr>
-  <tr><td>"… is not available any more"</td><td>That day has passed or its tab was renamed. Pick another date.</td></tr>
+  <tr><td>"There are no day tabs (named like 30-Sep) yet"</td><td>No tab is named like <code>1-Oct</code>. Create or rename one. Also check the time zone (Part 2).</td></tr>
+  <tr><td>"… is not available any more"</td><td>That day's tab was renamed or removed. Pick another date.</td></tr>
+  <tr><td>A grey page: "This day is over: view only"</td><td>You picked a past date (marked "(past)" in the list). It can be looked at but not changed.</td></tr>
+  <tr><td>A grey row marked "Ended"</td><td>That slot's end time today has passed, so it can't be claimed or changed. "Open only" hides these.</td></tr>
   <tr><td>"Time clash: you are already on …"</td><td>You already have a school starting at the same time that day. Release it first, or pick another time.</td></tr>
   <tr><td>"Clashes with S No …" instead of a Claim button</td><td>Same as above, shown before you click.</td></tr>
   <tr><td>"…has no column in row 1 whose header contains "speaker" and "name""</td><td>That day's tab has no Speaker Name title in row 1. Add or fix the title.</td></tr>

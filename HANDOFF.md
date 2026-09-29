@@ -73,6 +73,12 @@ _Last updated: 2026-09-27_
   visible: page-format entries in 30-Sep B. Speaker tab has no page-added rows yet => the deployed page
   predates the speaker-list version. Test added for this layout. 55 tests.
 
+- 2026-09-29: past handling. listDays_ now includes past day tabs (past:true, label "(past)"); default
+  day = first non-past else latest. endTime_ parses the end after "to"/dash (else start + 1h; blank =
+  never ends). markPast_ sets state.pastDay and row.past (today: now >= end, spreadsheet time zone).
+  mutate_ refuses any change on a past day or ended slot. Page greys them out ("Past"/"Ended"), hides
+  Register others on past days, and "Open only" hides past rows. 58 tests.
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.
