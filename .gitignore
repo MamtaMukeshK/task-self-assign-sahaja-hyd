@@ -1,5 +1,5 @@
 node_modules/
 package-lock.json
-test/phone-view.png
+test/*.png
 tools/demo.webm
 tools/raw/
