@@ -31,7 +31,7 @@ test('two users in real browser', { timeout: 60000 }, async () => {
   const errs = []; for (const p of [a, b]) p.on('pageerror', e => errs.push(e.message));
 
   assert.equal(await a.locator('th').count(), 10, 'button + Slots left + Assigned + all 7 sheet columns');
-  assert.match(await a.textContent('#note'), /No "slots" column/);
+  assert.match(await a.textContent('#note'), /No "Total volunteers needed" column/);
   assert.equal(await a.locator('button:text("Claim")').count(), 2);
 
   await a.locator('button:text("Claim")').first().click();
@@ -64,9 +64,9 @@ test('two users in real browser', { timeout: 60000 }, async () => {
 
 test('multi-slot school in real browser: two join, third sees it full, one leaves', { timeout: 60000 }, async () => {
   const grid = [
-    ['S No', 'Sahaja Yoga ( IND)\nSpeaker Name', 'School Name', 'Total Slots'],
-    ['1', 'Chandrakant\n9000000001', 'School Y', '3'],
-    ['2', '', 'School X', '1'],
+    ['S No', 'Sahaja Yoga ( IND)\nSpeaker Name', 'School Name', 'Total volunteers needed', 'count of Volunteers still neeeded'],
+    ['1', 'Chandrakant\n9000000001', 'School Y', '3', ''],
+    ['2', '', 'School X', '1', ''],
   ];
   const sheet = makeSheet('28-Sep', 3, grid);
   const gs = load([sheet], new Date(Date.UTC(2026, 8, 28)));
@@ -85,7 +85,7 @@ test('multi-slot school in real browser: two join, third sees it full, one leave
     };
     const row1 = p => p.locator('#grid tr').nth(1);
     const a = await user('Priya', '9876543210');
-    assert.match(await a.textContent('#note'), /Slots from column "Total Slots"/);
+    assert.match(await a.textContent('#note'), /Places per school from column "Total volunteers needed"/);
     assert.match(await row1(a).textContent(), /2 of 3/);
     assert.match(await row1(a).textContent(), /Chandrakant · 9000000001/);
 
@@ -94,6 +94,7 @@ test('multi-slot school in real browser: two join, third sees it full, one leave
     await row1(b).locator('button:text("Claim")').click(); await b.waitForSelector('text=Claimed');
     assert.equal(sheet.grid[1][1], 'Chandrakant\n9000000001\nPriya 9876543210\nRavi 9123456789');
     assert.match(await row1(b).textContent(), /0 of 3/);
+    assert.equal(sheet.grid[1][4], 0, 'still-needed column updated');
 
     const c = await user('Neha', '9000000003');
     assert.equal(await row1(c).locator('button').count(), 0, 'full: no Claim button');

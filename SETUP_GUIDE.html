@@ -51,7 +51,7 @@ Takes about 15 minutes on a laptop or desktop computer (not a phone).</p>
 <div class="box">
   <b>What this sets up:</b> a web page where volunteers open one link, see <b>today's tab</b> of the
   "Hyd 2026 permission" Google Sheet (every column), and tap <b>Claim</b> on a school that still has free slots.
-  A school can take several people, up to its slot count, and the page shows how many slots are left and who is already on it.
+  A school can take several people, up to its "Total volunteers needed", and the page shows how many places are left and who is already on it.
   Their name and mobile are written straight into that row of the sheet, so the sheet and the page always show the same
   thing, and two people can never take the same school.
 </div>
@@ -97,9 +97,11 @@ Takes about 15 minutes on a laptop or desktop computer (not a phone).</p>
   <li><b>Header row:</b> on each day tab, <b>row 1</b> holds the column titles, and exactly one title contains the
     words <b>Speaker</b> and <b>Name</b>, for example "Sahaja Yoga ( IND) Speaker Name" or "Sahaja Yoga Speaker Name".
     That is the only column the page ever writes into, listing everyone on the school, one person per line.</li>
-  <li><b>Slots (optional):</b> to let a school take more than one person, add a column whose title contains the word
-    <b>Slot</b> (for example "Total Slots") and put the number of people needed in each row. A blank cell, or no such
-    column at all, means <b>1 person</b>. <code>0</code> closes a school.</li>
+  <li><b>Volunteers per school (optional):</b> to let a school take more than one person, have a column titled
+    <b>Total volunteers needed</b> (any title containing "total" and "volunteer" works) and put the number in each row.
+    A blank cell, or no such column, means <b>1 person</b>. <code>0</code> closes a school.</li>
+  <li><b>Still needed (optional):</b> a column titled like <b>count of Volunteers still needed</b> (containing "still" and
+    "volunteer") is updated by the page on every claim and release. If you put your own formula in it, the page leaves it alone.</li>
 </ol>
 
 <h2 id="p3"><span class="step-num">3</span>Open the script editor</h2>
@@ -141,9 +143,12 @@ var CONFIG = {
   // entries like 'Chandrakant&lt;newline&gt;98xxxxxxxx' count as one person.
   // No other column is ever written.
   NAME_HEADER_WORDS: ['speaker', 'name'],
-  // Optional column with how many people a school needs. Blank, missing or
-  // non-numeric means 1.
-  SLOTS_HEADER_WORDS: ['slot'],
+  // Optional column with how many people a school needs ('Total volunteers
+  // needed'). Blank, missing or non-numeric means 1.
+  SLOTS_HEADER_WORDS: ['total', 'volunteer'],
+  // Optional column the page keeps up to date with how many are still needed
+  // ('count of Volunteers still needed'). Left alone if it holds a formula.
+  REMAINING_HEADER_WORDS: ['still', 'volunteer'],
   TAB_NAME_OVERRIDE: '',                          // e.g. '28-Sep' to force a tab while testing
 
   // Tabs are named like '28-Sep'. Today's date is rendered in these formats
@@ -219,6 +224,11 @@ function mutate_(action, rowNum, fingerprint, rawName, rawMobile) {
       if (rest) writeText_(sheet, rowNum, tab.nameCol, rest);
       else sheet.getRange(rowNum, tab.nameCol).clearContent();
     }
+    if (tab.remainingCol) {
+      var count = row.assignees.length + (action === 'claim' ? (mine &lt; 0 ? 1 : 0) : -1);
+      var cell = sheet.getRange(rowNum, tab.remainingCol);
+      if (!cell.getFormula()) cell.setValue(Math.max(0, row.total - count));
+    }
     SpreadsheetApp.flush();
     CacheService.getScriptCache().remove(cacheKey_(sheet));
   } finally {
@@ -253,8 +263,8 @@ function findTodaySheet_(ss) {
 
 /**
  * Reads the whole tab. Every column is returned for display; the fingerprint
- * covers everything except the speaker cell, so a claim is refused
- * if the school details of that row changed or rows were moved.
+ * lets a claim be refused if the school details of that row changed or rows
+ * were moved.
  */
 function readTab_(sheet) {
   var lastRow = sheet.getLastRow();
@@ -268,10 +278,14 @@ function readTab_(sheet) {
 
   var sIdx = findHeader_(sheet, headers, CONFIG.SLOTS_HEADER_WORDS);
   if (sIdx === nIdx) sIdx = -1;
+  var rIdx = findHeader_(sheet, headers, CONFIG.REMAINING_HEADER_WORDS);
+  if (rIdx === nIdx || rIdx === sIdx) rIdx = -1;
 
   var rows = [];
   values.slice(1).forEach(function (r, i) {
-    var details = r.filter(function (_, c) { return c !== nIdx; });
+    // The page itself changes the speaker and "still needed" cells, so they are
+    // left out of the fingerprint; everything else must be unchanged.
+    var details = r.filter(function (_, c) { return c !== nIdx &amp;&amp; c !== rIdx; });
     if (details.join('').trim() === '') return; // skip blank rows
     var speaker = r[nIdx].trim();
     var assignees = parseAssignees_(speaker);
@@ -279,7 +293,8 @@ function readTab_(sheet) {
     rows.push({ row: CONFIG.HEADER_ROW + 1 + i, fp: fingerprint_(details), cells: r, speaker: speaker,
       assignees: assignees, total: total, remaining: Math.max(0, total - assignees.length) });
   });
-  return { headers: headers, nameCol: nIdx + 1, slotsHeader: sIdx &gt;= 0 ? headers[sIdx] : '', rows: rows };
+  return { headers: headers, nameCol: nIdx + 1, remainingCol: rIdx + 1,
+    slotsHeader: sIdx &gt;= 0 ? headers[sIdx] : '', rows: rows };
 }
 
 function buildState_(sheet) {
@@ -494,8 +509,8 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
     t.textContent = '';
     var head = t.insertRow();
     document.getElementById('note').textContent = state.slotsHeader
-      ? 'Slots from column "' + state.slotsHeader.replace(/\s+/g, ' ') + '"'
-      : 'No "slots" column on this tab, so each school takes 1 person.';
+      ? 'Places per school from column "' + state.slotsHeader.replace(/\s+/g, ' ') + '"'
+      : 'No "Total volunteers needed" column on this tab, so each school takes 1 person.';
     ['', 'Slots left', 'Assigned'].concat(state.headers).forEach(function (h) {
       var th = document.createElement('th'); th.textContent = h; head.appendChild(th);
     });
@@ -602,7 +617,7 @@ The page refreshes every 15 seconds and always shows today's list.</pre>
       <td>That's how the page finds today's tab.</td></tr>
   <tr><td>Keep the titles in row 1, with exactly one title containing "Speaker" and "Name".</td>
       <td>That's the column the page writes into.</td></tr>
-  <tr><td>A school has room while it has fewer people than its slot count (1 if there's no slots column). To remove someone, delete their line from the Speaker Name cell.</td>
+  <tr><td>A school has room while it has fewer people than its "Total volunteers needed" (1 if blank). To remove someone, delete their line from the Speaker Name cell. Keep notes like "12 sessions" out of the Speaker Name column: they count as a person.</td>
       <td>The page shows the change within about 15 seconds.</td></tr>
   <tr><td>Keep typing in the sheet as usual (including name + number in one cell).</td>
       <td>The page always reflects the sheet. Rows you fill by hand show as taken.</td></tr>
@@ -620,9 +635,9 @@ The page refreshes every 15 seconds and always shows today's list.</pre>
   <tr><td>"…has several columns whose header contains…"</td><td>Two titles contain both words. Rename one so only one does.</td></tr>
   <tr><td>"Cannot read properties of null (reading …)"</td><td>The script was created at script.google.com instead of from the sheet. Redo Part 3 from the sheet's Extensions menu.</td></tr>
   <tr><td>"No slots left: taken by …"</td><td>The school is full. Pick another one.</td></tr>
-  <tr><td>"This school has no slots"</td><td>Its slot count is 0. Organisers can raise it in the sheet.</td></tr>
+  <tr><td>"This school has no slots"</td><td>Its "Total volunteers needed" is 0. Organisers can raise it in the sheet.</td></tr>
   <tr><td>"Your name is not on this row"</td><td>Release only works with the same name used to claim (capitals don't matter).</td></tr>
-  <tr><td>"That row was edited or moved…"</td><td>An organiser changed that school's details (including its slot count) or re-ordered rows after the page loaded. The page refreshes; check and claim again.</td></tr>
+  <tr><td>"That row was edited or moved…"</td><td>An organiser changed that school's details (including "Total volunteers needed") or re-ordered rows after the page loaded. The page refreshes; check and claim again.</td></tr>
   <tr><td>"Lots of people are claiming right now"</td><td>Many claims arrived at the same second. Try again.</td></tr>
   <tr><td>"Please enter a valid mobile number"</td><td>Use 10 digits, optionally starting with +91.</td></tr>
   <tr><td>"Who has access" doesn't offer "Anyone"</td><td>Your account's organisation blocks it. Do the setup from a personal Gmail account that has edit access.</td></tr>

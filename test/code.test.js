@@ -141,12 +141,13 @@ test('28-Sep: local contact already in column C of an open row survives claim an
 // ---- Multiple people per school, up to the row's slot count ----
 function slotsGrid() {
   return [
-    ['S No', 'Sahaja Yoga ( IND)\nSpeaker Name', 'School Name', 'Total Slots'],
-    ['1', '', 'School X', '3'],
-    ['2', 'Chandrakant\n9000000001', 'School Y', '2'],   // organiser entry, name and phone on two lines
-    ['3', 'GOPI and Team', 'School Z', '3 slots'],        // organiser entry with no phone
-    ['4', '', 'School W', ''],                            // blank slots = 1
-    ['5', '', 'School V', '0'],
+    // Real 30-Sep titles (including the sheet's "neeeded" typo).
+    ['S No', 'Sahaja Yoga ( IND)\n Speaker Name', 'Total volunteers needed', 'count of Volunteers still neeeded', 'Institution name'],
+    ['1', '', '3', '', 'School X'],
+    ['2', 'Chandrakant\n9000000001', '2', '', 'School Y'],   // organiser entry, name and phone on two lines
+    ['3', 'GOPI and Team', '3 volunteers', '', 'School Z'],   // organiser entry with no phone
+    ['4', '', '', '', 'School W'],                            // blank total = 1
+    ['5', '', '0', '', 'School V'],
   ];
 }
 const byRow = (s, n) => s.rows.find(r => r.row === n);
@@ -154,7 +155,7 @@ const byRow = (s, n) => s.rows.find(r => r.row === n);
 test('slots: totals, remaining and parsed assignees come from the sheet', () => {
   const gs = load([makeSheet('28-Sep', 8, slotsGrid())], NOW);
   const s = gs.getState();
-  assert.equal(s.slotsHeader, 'Total Slots');
+  assert.equal(s.slotsHeader, 'Total volunteers needed');
   assert.deepEqual(s.rows.map(r => [r.total, r.remaining]), [[3, 3], [2, 1], [3, 2], [1, 1], [0, 0]]);
   assert.deepEqual(byRow(s, 3).assignees.map(a => [a.name, a.phone]), [['Chandrakant', '9000000001']]);
 });
@@ -209,6 +210,39 @@ test('slots: an edited slot count refuses the stale claim instead of overfilling
   const sheet = makeSheet('28-Sep', 8, slotsGrid());
   const gs = load([sheet], NOW);
   const r = byRow(gs.getState(), 2);
-  sheet.grid[1][3] = '1'; gs._cache && Object.keys(gs._cache).forEach(k => delete gs._cache[k]);
+  sheet.grid[1][2] = '1'; gs._cache && Object.keys(gs._cache).forEach(k => delete gs._cache[k]);
   assert.throws(() => gs.claimRow(r.row, r.fp, 'Priya', '9876543210'), /edited or moved/);
+});
+
+test('still-needed column: kept up to date on claim and release', () => {
+  const sheet = makeSheet('28-Sep', 8, slotsGrid());
+  const gs = load([sheet], NOW);
+  const r = byRow(gs.getState(), 2);
+  gs.claimRow(r.row, r.fp, 'Priya', '9876543210');
+  assert.equal(sheet.grid[1][3], 2);
+  gs.claimRow(r.row, r.fp, 'Ravi', '9123456789');
+  assert.equal(sheet.grid[1][3], 1);
+  gs.claimRow(r.row, r.fp, 'Ravi', '9123456789'); // repeat claim: no change
+  assert.equal(sheet.grid[1][3], 1);
+  gs.releaseRow(r.row, r.fp, 'Priya');
+  assert.equal(sheet.grid[1][3], 2);
+  const w = byRow(gs.getState(), 5);
+  gs.claimRow(w.row, w.fp, 'Asha', '9000000002');
+  assert.equal(sheet.grid[4][3], 0, 'blank total counts as 1');
+});
+test('still-needed column: a second person with a stale page can still join', () => {
+  const sheet = makeSheet('28-Sep', 8, slotsGrid());
+  const gs = load([sheet], NOW);
+  const r = byRow(gs.getState(), 2); // both load the page now
+  gs.claimRow(r.row, r.fp, 'Priya', '9876543210'); // changes column B and the still-needed cell
+  const s = gs.claimRow(r.row, r.fp, 'Ravi', '9123456789'); // same, older fingerprint
+  assert.deepEqual(byRow(s, 2).assignees.map(a => a.name), ['Priya', 'Ravi']);
+});
+test('still-needed column: a formula there is never overwritten', () => {
+  const g = slotsGrid(); g[1][3] = '=C2-1';
+  const sheet = makeSheet('28-Sep', 8, g);
+  const gs = load([sheet], NOW);
+  const r = byRow(gs.getState(), 2);
+  gs.claimRow(r.row, r.fp, 'Priya', '9876543210');
+  assert.equal(sheet.grid[1][3], '=C2-1');
 });

@@ -107,8 +107,8 @@
     t.textContent = '';
     var head = t.insertRow();
     document.getElementById('note').textContent = state.slotsHeader
-      ? 'Slots from column "' + state.slotsHeader.replace(/\s+/g, ' ') + '"'
-      : 'No "slots" column on this tab, so each school takes 1 person.';
+      ? 'Places per school from column "' + state.slotsHeader.replace(/\s+/g, ' ') + '"'
+      : 'No "Total volunteers needed" column on this tab, so each school takes 1 person.';
     ['', 'Slots left', 'Assigned'].concat(state.headers).forEach(function (h) {
       var th = document.createElement('th'); th.textContent = h; head.appendChild(th);
     });

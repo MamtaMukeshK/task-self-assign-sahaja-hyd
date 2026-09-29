@@ -24,6 +24,7 @@ function makeSheet(name, id, grid) {
       const rng = {
         getDisplayValues: () => Array.from({length: nr}, (_, i) => Array.from({length: nc}, (_, j) => cell(r+i, c+j))),
         setNumberFormat: f => { rng.fmt = f; return rng; },
+        getFormula: () => { const v = cell(r, c); return v.startsWith('=') ? v : ''; },
         setValue: v => { if (rng.fmt !== '@' && /^=/.test(v)) throw new Error('formula written'); set(v); return rng; },
         clearContent: () => { set(''); return rng; }
       };

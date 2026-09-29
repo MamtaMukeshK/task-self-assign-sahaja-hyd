@@ -18,7 +18,12 @@ _Last updated: 2026-09-27_
 - 2026-09-29: multi-slot schools. Optional column whose header contains "slot" gives each row's
   capacity (blank/missing = 1, 0 = closed). The speaker cell lists everyone, one per line
   ("Name mobile"); a person ends at the line holding their phone, and a blank line separates an
-  entry with no phone. Page adds "Slots left" + "Assigned" (name · phone) columns. 24 tests.
+  entry with no phone. Page adds "Slots left" + "Assigned" (name · phone) columns.
+- 2026-09-29: matched the real 30-Sep titles: capacity = header with "total"+"volunteer"
+  ("Total volunteers needed"); the page keeps "count of Volunteers still neeeded" ("still"+"volunteer")
+  up to date on claim/release (skipped if it holds a formula) and leaves it out of the row
+  fingerprint so concurrent joiners aren't refused. Verified against the real 30-Sep/01-Oct data
+  from an .xlsx export (not committed: contains phone numbers). 27 tests.
 
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
@@ -36,7 +41,7 @@ _Last updated: 2026-09-27_
   if not, the page errors loudly rather than guessing.
 
 ## Next step
-- Confirm the real slots column title (assumed to contain "slot"); re-test on a copy, then update the live deployment (Manage deployments → New version).
+- Organisers fill "Total volunteers needed" on 30-Sep (all blank as of 2026-09-29) and add the two columns to the Oct tabs if wanted; move "12 sessions"/"6 sessions" notes (30-Sep S No 32, 34) out of the Speaker Name column. Re-test on a copy, then update the live deployment (Manage deployments → New version).
 0. Check the 29-Sep, 30-Sep and 1-Oct tab layouts (user sending screenshots).
 Sheet editor follows README Steps 1–5 and sends back the `/exec` link. Then fix anything the
 live run reveals (most likely: header text or tab-name differences).

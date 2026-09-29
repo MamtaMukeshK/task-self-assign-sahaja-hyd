@@ -17,9 +17,12 @@ var CONFIG = {
   // entries like 'Chandrakant<newline>98xxxxxxxx' count as one person.
   // No other column is ever written.
   NAME_HEADER_WORDS: ['speaker', 'name'],
-  // Optional column with how many people a school needs. Blank, missing or
-  // non-numeric means 1.
-  SLOTS_HEADER_WORDS: ['slot'],
+  // Optional column with how many people a school needs ('Total volunteers
+  // needed'). Blank, missing or non-numeric means 1.
+  SLOTS_HEADER_WORDS: ['total', 'volunteer'],
+  // Optional column the page keeps up to date with how many are still needed
+  // ('count of Volunteers still needed'). Left alone if it holds a formula.
+  REMAINING_HEADER_WORDS: ['still', 'volunteer'],
   TAB_NAME_OVERRIDE: '',                          // e.g. '28-Sep' to force a tab while testing
 
   // Tabs are named like '28-Sep'. Today's date is rendered in these formats
@@ -95,6 +98,11 @@ function mutate_(action, rowNum, fingerprint, rawName, rawMobile) {
       if (rest) writeText_(sheet, rowNum, tab.nameCol, rest);
       else sheet.getRange(rowNum, tab.nameCol).clearContent();
     }
+    if (tab.remainingCol) {
+      var count = row.assignees.length + (action === 'claim' ? (mine < 0 ? 1 : 0) : -1);
+      var cell = sheet.getRange(rowNum, tab.remainingCol);
+      if (!cell.getFormula()) cell.setValue(Math.max(0, row.total - count));
+    }
     SpreadsheetApp.flush();
     CacheService.getScriptCache().remove(cacheKey_(sheet));
   } finally {
@@ -129,8 +137,8 @@ function findTodaySheet_(ss) {
 
 /**
  * Reads the whole tab. Every column is returned for display; the fingerprint
- * covers everything except the speaker cell, so a claim is refused
- * if the school details of that row changed or rows were moved.
+ * lets a claim be refused if the school details of that row changed or rows
+ * were moved.
  */
 function readTab_(sheet) {
   var lastRow = sheet.getLastRow();
@@ -144,10 +152,14 @@ function readTab_(sheet) {
 
   var sIdx = findHeader_(sheet, headers, CONFIG.SLOTS_HEADER_WORDS);
   if (sIdx === nIdx) sIdx = -1;
+  var rIdx = findHeader_(sheet, headers, CONFIG.REMAINING_HEADER_WORDS);
+  if (rIdx === nIdx || rIdx === sIdx) rIdx = -1;
 
   var rows = [];
   values.slice(1).forEach(function (r, i) {
-    var details = r.filter(function (_, c) { return c !== nIdx; });
+    // The page itself changes the speaker and "still needed" cells, so they are
+    // left out of the fingerprint; everything else must be unchanged.
+    var details = r.filter(function (_, c) { return c !== nIdx && c !== rIdx; });
     if (details.join('').trim() === '') return; // skip blank rows
     var speaker = r[nIdx].trim();
     var assignees = parseAssignees_(speaker);
@@ -155,7 +167,8 @@ function readTab_(sheet) {
     rows.push({ row: CONFIG.HEADER_ROW + 1 + i, fp: fingerprint_(details), cells: r, speaker: speaker,
       assignees: assignees, total: total, remaining: Math.max(0, total - assignees.length) });
   });
-  return { headers: headers, nameCol: nIdx + 1, slotsHeader: sIdx >= 0 ? headers[sIdx] : '', rows: rows };
+  return { headers: headers, nameCol: nIdx + 1, remainingCol: rIdx + 1,
+    slotsHeader: sIdx >= 0 ? headers[sIdx] : '', rows: rows };
 }
 
 function buildState_(sheet) {

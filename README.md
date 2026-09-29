@@ -85,7 +85,7 @@ Then click **Release** and check both cells are empty again.
 | Name each day's tab like `28-Sep` (or `5-Oct` / `05-Oct`). | The page finds today's tab by this name. Tabs like `Dummy-26-Sep` or `Summary` are ignored. |
 | Only one tab per date. | Otherwise the page refuses to guess and shows an error. |
 | Row 1 is the header row. Exactly one header must contain the words **Speaker** and **Name** (e.g. "Sahaja Yoga ( IND) Speaker Name"). | The page writes "name, new line, mobile" into that cell only, the same way organisers already type it. Every other column (including "Local Sahaja Yogi" / "Speaker Mobile") is never touched. |
-| A row is "open" when its **Speaker Name** cell is empty. | To free a slot yourself, just clear that cell in the sheet. |
+| A school has room while it has fewer people than its **Total volunteers needed** (1 if blank). | To remove someone, delete their line from the Speaker Name cell. Keep notes like "12 sessions" out of that column: they count as a person. |
 | You can still edit the sheet directly as usual. | The page refreshes every 15 seconds and always shows what's in the sheet. |
 
 At midnight India time the page automatically switches to the new day's tab.
@@ -98,8 +98,10 @@ At midnight India time the page automatically switches to the new day's tab.
 - They type their name and mobile once; the browser remembers both.
 - **Open only** tick box hides full schools.
 - Their own rows are green with a **Release** button, which removes only their line.
-- A school takes people up to its slot count: add a column whose title contains
-  "Slot" (e.g. "Total Slots"). Blank or no such column = 1 person; 0 = closed.
+- A school takes people up to its **Total volunteers needed** (any column title
+  containing "total" and "volunteer"). Blank or no such column = 1 person; 0 = closed.
+  A column titled like **count of Volunteers still needed** ("still" + "volunteer")
+  is kept up to date by the page, unless it holds a formula.
 - If people claim the last slot at the same moment, one wins and the other sees
   "No slots left: taken by …".
 - A person can claim as many rows as they like.
