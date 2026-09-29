@@ -103,6 +103,10 @@ _Last updated: 2026-09-27_
   Telugu/Devanagari) via Google Fonts; deck colours. VERSION 2026-09-29.5. 64 tests. Real fonts not seen
   in test screenshots (Google Fonts blocked in the build sandbox).
 
+- 2026-09-29: docs/demo.mp4 (49 s, 1280x720, H.264): the real Index.html + Code.gs logic on a demo copy of the
+  30-Sep layout (real school names/times/map links, made-up volunteers), with captions, a cursor and a live
+  sheet panel. Not recorded from the deployed page (Google blocked in the build sandbox). tools/record_demo.js.
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.

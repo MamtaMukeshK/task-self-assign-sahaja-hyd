@@ -12,6 +12,11 @@ Two files do everything: `Code.gs` (the logic) and `Index.html` (the page).
 > below plus both code files with Copy buttons. After changing `Code.gs` or `Index.html`,
 > rebuild it with `python3 tools/build_guide.py`.
 
+
+> **Demo video for volunteers:** `docs/demo.mp4` (49 s): claim, release, register others from the speaker list, and
+> switching language. Recorded from this page's code with a demo copy of the 30-Sep layout (made-up names).
+> Re-record with `tools/record_demo.js`.
+
 ---
 
 ## Who must do this
