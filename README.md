@@ -15,7 +15,10 @@ Two files do everything: `Code.gs` (the logic) and `Index.html` (the page).
 
 > **Demo video for volunteers:** `docs/demo.mp4` (49 s): claim, release, register others from the speaker list, and
 > switching language. Recorded from this page's code with a demo copy of the 30-Sep layout (made-up names).
-> Re-record with `tools/record_demo.js`.
+> Re-record with `tools/record_demo.js`. The page's gold **"Watch the 1-minute demo"** button plays it in a pop-up
+> player (inline on phones) from jsDelivr, pinned to the commit that holds the video, with GitHub's raw link as a
+> backup. To use a Google Drive copy instead, put its link first in `DEMO_VIDEO_URLS` in Index.html. If the video
+> is re-recorded, update the commit hash in those links.
 
 ---
 

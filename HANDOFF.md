@@ -107,6 +107,11 @@ _Last updated: 2026-09-27_
   30-Sep layout (real school names/times/map links, made-up volunteers), with captions, a cursor and a live
   sheet panel. Not recorded from the deployed page (Google blocked in the build sandbox). tools/record_demo.js.
 
+- 2026-09-29: gold "Watch the 1-minute demo" button in the header (full width on phones) opens a pop-up
+  <video playsinline> player; sources DEMO_VIDEO_URLS = jsDelivr + raw.githubusercontent pinned to commit
+  c80e7a2 (tries the next on error; "Open the video" link fallback; a Drive link opens Drive's player).
+  NOT VERIFIED from the sandbox: jsDelivr/GitHub delivery to real phones (both hosts blocked here). VERSION .6. 65 tests.
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.

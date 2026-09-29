@@ -429,3 +429,36 @@ test('language switch: opens in English; Telugu and Hindi translate the page and
     assert.deepEqual(errs, []);
   } finally { await browser.close(); }
 });
+
+test('demo video button: prominent, opens a player, falls back to the second copy, closes', { timeout: 60000 }, async () => {
+  const gs = load([makeSheet('28-Sep', 1, [['S No', 'Speaker Name', 'Institution name'], ['1', '', 'School A']])], new Date(Date.UTC(2026, 8, 28, 5)));
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
+  try {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 800 } });
+    const hits = [];
+    await ctx.route('https://cdn.jsdelivr.net/**', r => { hits.push('jsdelivr'); return r.fulfill({ status: 404, body: 'nope' }); });
+    await ctx.route('https://raw.githubusercontent.com/**', r => { hits.push('raw'); return r.fulfill({ status: 404, body: 'nope' }); });
+    const p = await ctx.newPage();
+    p.setDefaultTimeout(8000);
+    await p.exposeFunction('gsCall', (fn, a) => { try { return { ok: JSON.parse(JSON.stringify(gs[fn](...a))) }; } catch (e) { return { err: e.message }; } });
+    await p.addInitScript(SHIM);
+    await p.route('http://app.test/', r => r.fulfill({ contentType: 'text/html', body: html }));
+    await p.goto('http://app.test/');
+    await p.waitForSelector('text=Day: 28-Sep');
+    assert.match(await p.textContent('#demoBtn'), /Watch the 1-minute demo/);
+    const btn = await p.locator('#demoBtn').boundingBox();
+    assert.ok(btn.width > 300 && btn.height >= 36, 'full-width, easy to tap on a phone');
+    await p.click('#demoBtn');
+    assert.equal(await p.isVisible('#demoVideo'), true);
+    await p.waitForFunction(() => /raw\.githubusercontent\.com/.test(document.getElementById('demoVideo').src));
+    assert.deepEqual([...new Set(hits)], ['jsdelivr', 'raw'], 'tried the first copy, then the second');
+    assert.match(await p.getAttribute('#demoLink', 'href'), /^https:\/\/cdn\.jsdelivr\.net\/gh\/MamtaMukeshK\/task-self-assign-sahaja-hyd@[0-9a-f]{40}\/docs\/demo\.mp4$/);
+    assert.equal(await p.getAttribute('#demoVideo', 'playsinline'), '', 'plays inline on iPhones');
+    await p.keyboard.press('Escape');
+    assert.equal(await p.isVisible('#demoBox'), false);
+    await p.click('#demoBtn'); await p.click('#demoClose');
+    assert.equal(await p.isVisible('#demoBox'), false);
+    await p.selectOption('#lang', 'hi');
+    assert.match(await p.textContent('#demoBtn'), /1 मिनट का डेमो देखें/);
+  } finally { await browser.close(); }
+});
