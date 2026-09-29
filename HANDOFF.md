@@ -25,6 +25,9 @@ _Last updated: 2026-09-27_
   fingerprint so concurrent joiners aren't refused. Verified against the real 30-Sep/01-Oct data
   from an .xlsx export (not committed: contains phone numbers). 27 tests.
 
+- 2026-09-29: decided to keep claiming open to anyone with the link (name + mobile typed on the
+  page). Restricting to names on the sheet's "Speaker" tab was offered and declined.
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.
