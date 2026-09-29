@@ -8,7 +8,13 @@
  * sheet and the page always agree. Must be deployed by someone with EDIT access.
  */
 
+// Shown on the page so it's easy to confirm which version is deployed.
+var VERSION = '2026-09-29.4';
+
 var CONFIG = {
+  // Time zone for "today" and "now" (which day opens, which slots have ended).
+  // Fixed to India so it doesn't depend on the sheet's own setting; '' = use the sheet's.
+  TIME_ZONE: 'Asia/Kolkata',
   SHEET_ID: '',                                   // leave empty when installed via the sheet's Extensions → Apps Script
   HEADER_ROW: 1,                                  // row that holds the column names
   // The speaker column is found by words in its header (case-insensitive), so
@@ -269,6 +275,11 @@ function saveSpeakers_(ss, people) {
   });
 }
 
+/** Time zone for today/now: CONFIG.TIME_ZONE, else the sheet's own setting. */
+function timeZone_(ss) {
+  return CONFIG.TIME_ZONE || ss.getSpreadsheetTimeZone();
+}
+
 /** The sheet this script is attached to, or SHEET_ID if it runs as a standalone script. */
 function openSpreadsheet_() {
   return CONFIG.SHEET_ID ? SpreadsheetApp.openById(CONFIG.SHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
@@ -280,7 +291,7 @@ function openSpreadsheet_() {
  * before today are marked past: they can be viewed but not changed.
  */
 function listDays_(ss) {
-  var tz = ss.getSpreadsheetTimeZone();
+  var tz = timeZone_(ss);
   var now = new Date();
   var year = Number(Utilities.formatDate(now, tz, 'yyyy'));
   var today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
@@ -305,11 +316,13 @@ var MONTHS_ = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'o
  * returns what "now" is, for greying out slots that have ended.
  */
 function resolveDay_(ss, tabName) {
-  var now = Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'HH:mm');
+  var at = new Date();
+  var now = Utilities.formatDate(at, timeZone_(ss), 'HH:mm');
+  var clock = Utilities.formatDate(at, timeZone_(ss), 'EEE d MMM HH:mm');
   if (CONFIG.TAB_NAME_OVERRIDE) {
     var forced = ss.getSheetByName(CONFIG.TAB_NAME_OVERRIDE);
     if (!forced) throw new Error('Tab "' + CONFIG.TAB_NAME_OVERRIDE + '" not found.');
-    return { sheet: forced, past: false, isToday: false, now: now, defaultDay: forced.getName(), days: [{ name: forced.getName(), label: forced.getName(), past: false }] };
+    return { sheet: forced, past: false, isToday: false, now: now, clock: clock, defaultDay: forced.getName(), days: [{ name: forced.getName(), label: forced.getName(), past: false }] };
   }
   var days = listDays_(ss);
   if (!days.length) throw new Error('There are no day tabs (named like 30-Sep) yet.');
@@ -318,7 +331,7 @@ function resolveDay_(ss, tabName) {
   if (def.isToday && upcoming[1] && dayIsOver_(def.sheet, now)) def = upcoming[1];
   var pick = tabName ? days.filter(function (d) { return d.name === tabName; })[0] : def;
   if (!pick) throw new Error('"' + tabName + '" is not available any more (it may have been renamed). Please pick another date.');
-  return { sheet: pick.sheet, past: pick.past, isToday: pick.isToday, now: now, defaultDay: def.name,
+  return { sheet: pick.sheet, past: pick.past, isToday: pick.isToday, now: now, clock: clock, defaultDay: def.name,
     days: days.map(function (d) { return { name: d.name, label: d.label, past: d.past, today: d.isToday }; }) };
 }
 
@@ -330,6 +343,8 @@ function dayIsOver_(sheet, now) {
 
 /** Marks a past day, and today's slots whose end time has passed, as view-only. */
 function markPast_(state, day) {
+  state.clock = day.clock;
+  state.version = VERSION;
   state.pastDay = !!day.past;
   state.rows.forEach(function (r) { r.past = state.pastDay || !!(day.isToday && r.end && day.now >= r.end); });
   return state;

@@ -399,6 +399,7 @@ test('language switch: opens in English; Telugu and Hindi translate the page and
     await p.goto('http://app.test/');
     await p.waitForSelector('text=Day: 28-Sep');
     assert.equal(await p.inputValue('#lang'), 'en', 'opens in English');
+    assert.match(await p.textContent('#clock'), /^Sheet time: Mon 28 Sep 05:00 · v\d{4}-\d\d-\d\d\.\d+$/);
 
     await p.selectOption('#lang', 'te');
     assert.equal(await p.textContent('#title'), 'రోజు: 28-Sep');

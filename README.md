@@ -111,6 +111,8 @@ At midnight India time the page automatically switches to the new day's tab.
   `Name mobile (via Registrar)`; the registrar (or the person) can remove them with ✕.
   Every person is validated and time-clash checked; if any fails, nobody is added.
 - A person can claim as many rows as they like, but not two with the same start time on a day.
+- **Time zone:** "today"/"now" always use India time (`TIME_ZONE: 'Asia/Kolkata'` in Code.gs), not the
+  sheet's setting. The page shows "Sheet time: … · v<VERSION>" so you can check the time and deployed version.
 - **Language:** English (default on every open), Telugu or Hindi, from the dropdown at the top. All page
   text and the script's messages switch; sheet contents stay as typed. Translations live in the `TEXT`
   table in `Index.html` (have a native speaker review them).

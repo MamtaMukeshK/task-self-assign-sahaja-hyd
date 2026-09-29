@@ -628,3 +628,23 @@ test('default day: next day once all of today\'s timed slots are over; untimed o
   const noNext = [makeSheet('28-Sep', 2, g(today))];
   assert.equal(load(noNext, at(23, 0)).getState().tab, '28-Sep', 'no later day: stay on today');
 });
+
+// ---- Real 29-Sep pattern: last slot "4:30 PM to 6:30 PM" -> next day opens from 18:30 India time ----
+test('29-Sep pattern: opens on the next day once the last slot (4:30-6:30 PM) is over', () => {
+  const g = [['S No', 'Speaker Name', 'Institution name', 'Time'],
+    ['1', 'Vol A 9000000001', 'School A', '13:45:00'], ['2', '', 'School B', '3 PM to 4 PM\n4 PM to 5 PM'],
+    ['3', '', 'School C', '3:00pm-5:00pm'], ['4', '', 'School D', '4:30 PM to 6:30 PM'], ['5', '', 'School E', 'EVERYDAY 6:30 A.M']];
+  const at = (hh, mm) => load([makeSheet('29-Sep', 1, g), makeSheet('30-Sep', 2, g)], new Date(Date.UTC(2026, 8, 29, hh, mm))).getState();
+  assert.equal(at(18, 29).tab, '29-Sep');
+  assert.equal(at(18, 30).tab, '30-Sep');
+  const late = at(23, 19);
+  assert.deepEqual([late.tab, late.clock, late.version], ['30-Sep', 'Tue 29 Sep 23:19', '2026-09-29.4']);
+});
+test('time zone: India by default, the sheet\'s own setting only if TIME_ZONE is emptied', () => {
+  const gs = load([makeSheet('28-Sep', 3, [['S No']])], NOW);
+  assert.equal(gs.CONFIG.TIME_ZONE, 'Asia/Kolkata');
+  const ss = { getSpreadsheetTimeZone: () => 'America/New_York' };
+  assert.equal(gs.timeZone_(ss), 'Asia/Kolkata');
+  gs.CONFIG.TIME_ZONE = '';
+  assert.equal(gs.timeZone_(ss), 'America/New_York');
+});

@@ -16,7 +16,8 @@
   select { font:inherit; padding:5px 8px; border:1px solid var(--line); border-radius:6px; }
   td a { color:var(--accent); word-break:break-all; }
   .clash { color:var(--muted); font-size:12px; }
-  #status, #updated, #note { color:var(--muted); }
+  #status, #updated, #note, #clock { color:var(--muted); }
+  #clock { font-size:12px; }
   #status.err { color:var(--err); font-weight:600; }
   .wrap { overflow-x:auto; border:1px solid var(--line); border-radius:8px; }
   table { border-collapse:collapse; width:100%; }
@@ -74,6 +75,7 @@
   <span id="status"></span>
   <span id="updated"></span>
   <span id="note"></span>
+  <span id="clock"></span>
 </header>
 <div class="wrap"><table id="grid"></table></div>
 
@@ -85,7 +87,7 @@
   var LANG = 'en'; // the page always opens in English
   var TEXT = {
     en: {
-      language: 'Language', loading: 'Loading…', day: 'Day: {0}', date: 'Date', yourName: 'Your name',
+      sheetTime: 'Sheet time: {0}', language: 'Language', loading: 'Loading…', day: 'Day: {0}', date: 'Date', yourName: 'Your name',
       namePh: 'type or pick your name', mobile: 'Mobile', mobilePh: '10 digits', registerOthers: 'Register others',
       openOnly: 'Open only', chooseSpeakers: 'Choose speakers ({0} selected)', searchNames: 'Search names',
       othersPh: 'One person per line: name, then 10-digit mobile\nRavi Kumar 9123456789\nAsha 9000000002',
@@ -122,7 +124,7 @@
       srvNameStart: 'Name cannot start with = + - or @.'
     },
     te: {
-      language: 'భాష', loading: 'లోడ్ అవుతోంది…', day: 'రోజు: {0}', date: 'తేదీ', yourName: 'మీ పేరు',
+      sheetTime: 'షీట్ సమయం: {0}', language: 'భాష', loading: 'లోడ్ అవుతోంది…', day: 'రోజు: {0}', date: 'తేదీ', yourName: 'మీ పేరు',
       namePh: 'మీ పేరు టైప్ చేయండి లేదా ఎంచుకోండి', mobile: 'మొబైల్', mobilePh: '10 అంకెలు', registerOthers: 'ఇతరులను నమోదు చేయండి',
       openOnly: 'ఖాళీలు ఉన్నవి మాత్రమే', chooseSpeakers: 'వక్తలను ఎంచుకోండి ({0} ఎంచుకున్నారు)', searchNames: 'పేర్లు వెతకండి',
       othersPh: 'ప్రతి లైన్‌లో ఒకరు: పేరు, తర్వాత 10 అంకెల మొబైల్\nRavi Kumar 9123456789\nAsha 9000000002',
@@ -159,7 +161,7 @@
       srvNameStart: 'పేరు = + - లేదా @ తో మొదలవకూడదు.'
     },
     hi: {
-      language: 'भाषा', loading: 'लोड हो रहा है…', day: 'दिन: {0}', date: 'तारीख', yourName: 'आपका नाम',
+      sheetTime: 'शीट का समय: {0}', language: 'भाषा', loading: 'लोड हो रहा है…', day: 'दिन: {0}', date: 'तारीख', yourName: 'आपका नाम',
       namePh: 'अपना नाम लिखें या चुनें', mobile: 'मोबाइल', mobilePh: '10 अंक', registerOthers: 'दूसरों का पंजीकरण करें',
       openOnly: 'केवल खाली स्थान वाले', chooseSpeakers: 'वक्ता चुनें ({0} चुने गए)', searchNames: 'नाम खोजें',
       othersPh: 'हर पंक्ति में एक व्यक्ति: नाम, फिर 10 अंकों का मोबाइल\nRavi Kumar 9123456789\nAsha 9000000002',
@@ -480,6 +482,8 @@
     }
     daySelect.value = state.tab;
     document.getElementById('title').textContent = t('day', state.tab);
+    // What the script thinks "now" is (India time) and which version is deployed, to make checks easy.
+    document.getElementById('clock').textContent = state.clock ? t('sheetTime', state.clock) + ' · v' + state.version : '';
     // A past day is view-only: no claiming and no registering others.
     document.getElementById('pastNote').hidden = !state.pastDay;
     document.getElementById('showOthersLabel').hidden = !!state.pastDay;

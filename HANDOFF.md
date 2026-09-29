@@ -92,6 +92,11 @@ _Last updated: 2026-09-27_
   NOT VERIFIED: Telugu/Hindi wording by a native speaker; Telugu glyph rendering (test browser lacks a
   Telugu font, so screenshots show unjoined letters; real phones should render correctly).
 
+- 2026-09-29: user saw today (29-Sep) open instead of 30-Sep after all slots ended. Replaying the real
+  29-Sep tab through the code gives 30-Sep from 18:30 IST (last slot 4:30-6:30 PM), so the cause was on the
+  deployed side: an older Code.gs, or the testing sheet's time zone not being India. Fix: CONFIG.TIME_ZONE
+  = 'Asia/Kolkata' (used for today/now), VERSION constant, page shows "Sheet time: … · v…". 64 tests.
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.

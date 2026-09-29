@@ -146,7 +146,13 @@ Takes about 15 minutes on a laptop or desktop computer (not a phone).</p>
  * sheet and the page always agree. Must be deployed by someone with EDIT access.
  */
 
+// Shown on the page so it's easy to confirm which version is deployed.
+var VERSION = '2026-09-29.4';
+
 var CONFIG = {
+  // Time zone for "today" and "now" (which day opens, which slots have ended).
+  // Fixed to India so it doesn't depend on the sheet's own setting; '' = use the sheet's.
+  TIME_ZONE: 'Asia/Kolkata',
   SHEET_ID: '',                                   // leave empty when installed via the sheet's Extensions → Apps Script
   HEADER_ROW: 1,                                  // row that holds the column names
   // The speaker column is found by words in its header (case-insensitive), so
@@ -407,6 +413,11 @@ function saveSpeakers_(ss, people) {
   });
 }
 
+/** Time zone for today/now: CONFIG.TIME_ZONE, else the sheet's own setting. */
+function timeZone_(ss) {
+  return CONFIG.TIME_ZONE || ss.getSpreadsheetTimeZone();
+}
+
 /** The sheet this script is attached to, or SHEET_ID if it runs as a standalone script. */
 function openSpreadsheet_() {
   return CONFIG.SHEET_ID ? SpreadsheetApp.openById(CONFIG.SHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
@@ -418,7 +429,7 @@ function openSpreadsheet_() {
  * before today are marked past: they can be viewed but not changed.
  */
 function listDays_(ss) {
-  var tz = ss.getSpreadsheetTimeZone();
+  var tz = timeZone_(ss);
   var now = new Date();
   var year = Number(Utilities.formatDate(now, tz, 'yyyy'));
   var today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
@@ -443,11 +454,13 @@ var MONTHS_ = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'o
  * returns what "now" is, for greying out slots that have ended.
  */
 function resolveDay_(ss, tabName) {
-  var now = Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'HH:mm');
+  var at = new Date();
+  var now = Utilities.formatDate(at, timeZone_(ss), 'HH:mm');
+  var clock = Utilities.formatDate(at, timeZone_(ss), 'EEE d MMM HH:mm');
   if (CONFIG.TAB_NAME_OVERRIDE) {
     var forced = ss.getSheetByName(CONFIG.TAB_NAME_OVERRIDE);
     if (!forced) throw new Error('Tab "' + CONFIG.TAB_NAME_OVERRIDE + '" not found.');
-    return { sheet: forced, past: false, isToday: false, now: now, defaultDay: forced.getName(), days: [{ name: forced.getName(), label: forced.getName(), past: false }] };
+    return { sheet: forced, past: false, isToday: false, now: now, clock: clock, defaultDay: forced.getName(), days: [{ name: forced.getName(), label: forced.getName(), past: false }] };
   }
   var days = listDays_(ss);
   if (!days.length) throw new Error('There are no day tabs (named like 30-Sep) yet.');
@@ -456,7 +469,7 @@ function resolveDay_(ss, tabName) {
   if (def.isToday &amp;&amp; upcoming[1] &amp;&amp; dayIsOver_(def.sheet, now)) def = upcoming[1];
   var pick = tabName ? days.filter(function (d) { return d.name === tabName; })[0] : def;
   if (!pick) throw new Error('"' + tabName + '" is not available any more (it may have been renamed). Please pick another date.');
-  return { sheet: pick.sheet, past: pick.past, isToday: pick.isToday, now: now, defaultDay: def.name,
+  return { sheet: pick.sheet, past: pick.past, isToday: pick.isToday, now: now, clock: clock, defaultDay: def.name,
     days: days.map(function (d) { return { name: d.name, label: d.label, past: d.past, today: d.isToday }; }) };
 }
 
@@ -468,6 +481,8 @@ function dayIsOver_(sheet, now) {
 
 /** Marks a past day, and today's slots whose end time has passed, as view-only. */
 function markPast_(state, day) {
+  state.clock = day.clock;
+  state.version = VERSION;
   state.pastDay = !!day.past;
   state.rows.forEach(function (r) { r.past = state.pastDay || !!(day.isToday &amp;&amp; r.end &amp;&amp; day.now &gt;= r.end); });
   return state;
@@ -694,7 +709,8 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   select { font:inherit; padding:5px 8px; border:1px solid var(--line); border-radius:6px; }
   td a { color:var(--accent); word-break:break-all; }
   .clash { color:var(--muted); font-size:12px; }
-  #status, #updated, #note { color:var(--muted); }
+  #status, #updated, #note, #clock { color:var(--muted); }
+  #clock { font-size:12px; }
   #status.err { color:var(--err); font-weight:600; }
   .wrap { overflow-x:auto; border:1px solid var(--line); border-radius:8px; }
   table { border-collapse:collapse; width:100%; }
@@ -752,6 +768,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   &lt;span id="status"&gt;&lt;/span&gt;
   &lt;span id="updated"&gt;&lt;/span&gt;
   &lt;span id="note"&gt;&lt;/span&gt;
+  &lt;span id="clock"&gt;&lt;/span&gt;
 &lt;/header&gt;
 &lt;div class="wrap"&gt;&lt;table id="grid"&gt;&lt;/table&gt;&lt;/div&gt;
 
@@ -763,7 +780,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   var LANG = 'en'; // the page always opens in English
   var TEXT = {
     en: {
-      language: 'Language', loading: 'Loading…', day: 'Day: {0}', date: 'Date', yourName: 'Your name',
+      sheetTime: 'Sheet time: {0}', language: 'Language', loading: 'Loading…', day: 'Day: {0}', date: 'Date', yourName: 'Your name',
       namePh: 'type or pick your name', mobile: 'Mobile', mobilePh: '10 digits', registerOthers: 'Register others',
       openOnly: 'Open only', chooseSpeakers: 'Choose speakers ({0} selected)', searchNames: 'Search names',
       othersPh: 'One person per line: name, then 10-digit mobile\nRavi Kumar 9123456789\nAsha 9000000002',
@@ -800,7 +817,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
       srvNameStart: 'Name cannot start with = + - or @.'
     },
     te: {
-      language: 'భాష', loading: 'లోడ్ అవుతోంది…', day: 'రోజు: {0}', date: 'తేదీ', yourName: 'మీ పేరు',
+      sheetTime: 'షీట్ సమయం: {0}', language: 'భాష', loading: 'లోడ్ అవుతోంది…', day: 'రోజు: {0}', date: 'తేదీ', yourName: 'మీ పేరు',
       namePh: 'మీ పేరు టైప్ చేయండి లేదా ఎంచుకోండి', mobile: 'మొబైల్', mobilePh: '10 అంకెలు', registerOthers: 'ఇతరులను నమోదు చేయండి',
       openOnly: 'ఖాళీలు ఉన్నవి మాత్రమే', chooseSpeakers: 'వక్తలను ఎంచుకోండి ({0} ఎంచుకున్నారు)', searchNames: 'పేర్లు వెతకండి',
       othersPh: 'ప్రతి లైన్‌లో ఒకరు: పేరు, తర్వాత 10 అంకెల మొబైల్\nRavi Kumar 9123456789\nAsha 9000000002',
@@ -837,7 +854,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
       srvNameStart: 'పేరు = + - లేదా @ తో మొదలవకూడదు.'
     },
     hi: {
-      language: 'भाषा', loading: 'लोड हो रहा है…', day: 'दिन: {0}', date: 'तारीख', yourName: 'आपका नाम',
+      sheetTime: 'शीट का समय: {0}', language: 'भाषा', loading: 'लोड हो रहा है…', day: 'दिन: {0}', date: 'तारीख', yourName: 'आपका नाम',
       namePh: 'अपना नाम लिखें या चुनें', mobile: 'मोबाइल', mobilePh: '10 अंक', registerOthers: 'दूसरों का पंजीकरण करें',
       openOnly: 'केवल खाली स्थान वाले', chooseSpeakers: 'वक्ता चुनें ({0} चुने गए)', searchNames: 'नाम खोजें',
       othersPh: 'हर पंक्ति में एक व्यक्ति: नाम, फिर 10 अंकों का मोबाइल\nRavi Kumar 9123456789\nAsha 9000000002',
@@ -1158,6 +1175,8 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
     }
     daySelect.value = state.tab;
     document.getElementById('title').textContent = t('day', state.tab);
+    // What the script thinks "now" is (India time) and which version is deployed, to make checks easy.
+    document.getElementById('clock').textContent = state.clock ? t('sheetTime', state.clock) + ' · v' + state.version : '';
     // A past day is view-only: no claiming and no registering others.
     document.getElementById('pastNote').hidden = !state.pastDay;
     document.getElementById('showOthersLabel').hidden = !!state.pastDay;
@@ -1380,7 +1399,7 @@ The page refreshes every 15 seconds.</pre>
   <tr><td>"Lots of people are claiming right now"</td><td>Many claims arrived at the same second. Try again.</td></tr>
   <tr><td>"Please enter a 10-digit mobile number"</td><td>Type exactly 10 digits. Spaces are fine, and a leading +91 or 0 is accepted and removed.</td></tr>
   <tr><td>"Who has access" doesn't offer "Anyone"</td><td>Your account's organisation blocks it. Do the setup from a personal Gmail account that has edit access.</td></tr>
-  <tr><td>The page shows yesterday's tab</td><td>Time zone is wrong. Fix it in File → Settings (Part 2).</td></tr>
+  <tr><td>The page opens on the wrong day, or slots aren't greyed out when they should be</td><td>Look at the small grey line at the top: "Sheet time: … · v…". The time should be India time now, and the version should match the one in the latest <code>Code.gs</code> (<code>VERSION</code> near the top). If the version is older, paste the latest <b>Code.gs and Index.html</b> and publish a new version (Part 12). The script always uses India time (<code>TIME_ZONE</code> in Code.gs), whatever the sheet's setting.</td></tr>
   <tr><td>You changed the code but the page didn't change</td><td>You must publish a new version (Part 12).</td></tr>
 </table></div>
 

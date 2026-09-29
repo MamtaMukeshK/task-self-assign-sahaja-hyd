@@ -257,7 +257,7 @@ The page refreshes every 15 seconds.</pre>
   <tr><td>"Lots of people are claiming right now"</td><td>Many claims arrived at the same second. Try again.</td></tr>
   <tr><td>"Please enter a 10-digit mobile number"</td><td>Type exactly 10 digits. Spaces are fine, and a leading +91 or 0 is accepted and removed.</td></tr>
   <tr><td>"Who has access" doesn't offer "Anyone"</td><td>Your account's organisation blocks it. Do the setup from a personal Gmail account that has edit access.</td></tr>
-  <tr><td>The page shows yesterday's tab</td><td>Time zone is wrong. Fix it in File → Settings (Part 2).</td></tr>
+  <tr><td>The page opens on the wrong day, or slots aren't greyed out when they should be</td><td>Look at the small grey line at the top: "Sheet time: … · v…". The time should be India time now, and the version should match the one in the latest <code>Code.gs</code> (<code>VERSION</code> near the top). If the version is older, paste the latest <b>Code.gs and Index.html</b> and publish a new version (Part 12). The script always uses India time (<code>TIME_ZONE</code> in Code.gs), whatever the sheet's setting.</td></tr>
   <tr><td>You changed the code but the page didn't change</td><td>You must publish a new version (Part 12).</td></tr>
 </table></div>
 
