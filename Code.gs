@@ -2,8 +2,8 @@
  * Sheet Self-Assign — a Google Apps Script web app.
  *
  * Opens the tab named after today's date (e.g. '28-Sep'), shows every column,
- * and lets anyone with the page link claim an open school (empty speaker name)
- * or release one they claimed. Claims are written into the sheet itself, so the
+ * and lets anyone with the page link claim a place on a school that still has
+ * free slots, or release their own place. Claims are written into the sheet itself, so the
  * sheet and the page always agree. Must be deployed by someone with EDIT access.
  */
 
@@ -12,9 +12,14 @@ var CONFIG = {
   HEADER_ROW: 1,                                  // row that holds the column names
   // The speaker column is found by words in its header (case-insensitive), so
   // 'Sahaja Yoga Speaker Name' and 'Sahaja Yoga ( IND) Speaker Name' both work.
-  // A row is open while this cell is empty. Claims write 'name<newline>mobile'
-  // into it, the way organisers already do; no other column is ever written.
+  // This cell lists everyone on the school, one person per line ('Priya 98xxxxxxxx').
+  // A phone number on its own line belongs to the name above it, so organiser
+  // entries like 'Chandrakant<newline>98xxxxxxxx' count as one person.
+  // No other column is ever written.
   NAME_HEADER_WORDS: ['speaker', 'name'],
+  // Optional column with how many people a school needs. Blank, missing or
+  // non-numeric means 1.
+  SLOTS_HEADER_WORDS: ['slot'],
   TAB_NAME_OVERRIDE: '',                          // e.g. '28-Sep' to force a tab while testing
 
   // Tabs are named like '28-Sep'. Today's date is rendered in these formats
@@ -73,14 +78,22 @@ function mutate_(action, rowNum, fingerprint, rawName, rawMobile) {
     if (!row) throw new Error('That row no longer exists. The list has been refreshed.');
     if (row.fp !== fingerprint) throw new Error('That row was edited or moved since you loaded it. Please check it and try again.');
 
+    var mine = -1;
+    row.assignees.forEach(function (a, i) { if (mine < 0 && sameName_(a.name, name)) mine = i; });
     if (action === 'claim') {
-      if (row.speaker && !sameName_(row.speakerName, name)) throw new Error('Already taken by ' + row.speakerName + '.');
-      if (!row.speaker) {
-        writeText_(sheet, rowNum, tab.nameCol, name + '\n' + mobile);
+      if (mine < 0) { // already on it = nothing to do
+        if (row.remaining <= 0) {
+          throw new Error(row.assignees.length ? 'No slots left: taken by ' + names_(row.assignees) + '.' : 'This school has no slots.');
+        }
+        var texts = row.assignees.map(function (a) { return a.text; }).concat([name + ' ' + mobile]);
+        writeText_(sheet, rowNum, tab.nameCol, joinPeople_(texts));
       }
-    } else if (row.speaker) {
-      if (!sameName_(row.speakerName, name)) throw new Error('Only ' + row.speakerName + ' can release this row.');
-      sheet.getRange(rowNum, tab.nameCol).clearContent();
+    } else {
+      if (mine < 0) throw new Error('Your name is not on this row.');
+      var rest = joinPeople_(row.assignees.filter(function (_, i) { return i !== mine; })
+        .map(function (a) { return a.text; }));
+      if (rest) writeText_(sheet, rowNum, tab.nameCol, rest);
+      else sheet.getRange(rowNum, tab.nameCol).clearContent();
     }
     SpreadsheetApp.flush();
     CacheService.getScriptCache().remove(cacheKey_(sheet));
@@ -129,20 +142,68 @@ function readTab_(sheet) {
   if (nIdx < 0) throw new Error('Tab "' + sheet.getName() + '" has no column in row ' + CONFIG.HEADER_ROW +
     ' whose header contains "' + CONFIG.NAME_HEADER_WORDS.join('" and "') + '".');
 
+  var sIdx = findHeader_(sheet, headers, CONFIG.SLOTS_HEADER_WORDS);
+  if (sIdx === nIdx) sIdx = -1;
+
   var rows = [];
   values.slice(1).forEach(function (r, i) {
     var details = r.filter(function (_, c) { return c !== nIdx; });
     if (details.join('').trim() === '') return; // skip blank rows
     var speaker = r[nIdx].trim();
+    var assignees = parseAssignees_(speaker);
+    var total = slotsFrom_(sIdx >= 0 ? r[sIdx] : '');
     rows.push({ row: CONFIG.HEADER_ROW + 1 + i, fp: fingerprint_(details), cells: r, speaker: speaker,
-      speakerName: speaker.split('\n')[0].trim() }); // first line = name (mobile may follow on line 2)
+      assignees: assignees, total: total, remaining: Math.max(0, total - assignees.length) });
   });
-  return { headers: headers, nameCol: nIdx + 1, rows: rows };
+  return { headers: headers, nameCol: nIdx + 1, slotsHeader: sIdx >= 0 ? headers[sIdx] : '', rows: rows };
 }
 
 function buildState_(sheet) {
   var tab = readTab_(sheet);
-  return { tab: sheet.getName(), headers: tab.headers, nameIdx: tab.nameCol - 1, rows: tab.rows };
+  return { tab: sheet.getName(), headers: tab.headers, nameIdx: tab.nameCol - 1, slotsHeader: tab.slotsHeader, rows: tab.rows };
+}
+
+/**
+ * Splits a speaker cell into people. A person ends at the line holding their
+ * phone number, so 'Chandrakant<newline>98xxxxxxxx' and a wrapped
+ * 'Vidhya and<newline>team<newline>70xxxxxxxx' are one person each, while
+ * 'Priya 98xxxxxxxx<newline>Ravi 91xxxxxxxx' is two. A blank line also ends a
+ * person (used after an entry that has no phone number).
+ */
+var PHONE_ = /\+?\d[\d\s\-]{6,}\d/;
+
+function parseAssignees_(text) {
+  var people = [], cur = [];
+  String(text || '').split('\n').forEach(function (line) {
+    line = line.trim();
+    if (line) cur.push(line);
+    if (cur.length && (!line || PHONE_.test(line))) { people.push(cur); cur = []; }
+  });
+  if (cur.length) people.push(cur);
+  return people.map(function (lines) {
+    var joined = lines.join(' ');
+    var phone = joined.match(PHONE_);
+    var name = joined.replace(PHONE_, '').replace(/[\s,:;\-]+$/, '').replace(/\s+/g, ' ').trim() || lines[0];
+    return { name: name, phone: phone ? phone[0].trim() : '', text: lines.join('\n') };
+  });
+}
+
+/** Number of people a school needs, from its slots cell; blank or non-numeric means 1. */
+function slotsFrom_(value) {
+  var m = String(value).match(/\d+/);
+  return m ? parseInt(m[0], 10) : 1;
+}
+
+/** One person per line; a blank line after a person with no phone keeps the next one separate. */
+function joinPeople_(texts) {
+  return texts.reduce(function (out, t, i) {
+    if (!i) return t;
+    return out + (PHONE_.test(texts[i - 1]) ? '\n' : '\n\n') + t;
+  }, '');
+}
+
+function names_(assignees) {
+  return assignees.map(function (a) { return a.name; }).join(', ');
 }
 
 /** Short hash of a row's contents, so a claim can't land on a row that was edited or moved. */

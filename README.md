@@ -92,13 +92,16 @@ At midnight India time the page automatically switches to the new day's tab.
 
 ## What volunteers see
 
-- Today's tab with **all columns**, and a **Claim** button on each open row.
+- Today's tab with **all columns**, plus **Slots left** (e.g. "1 of 3") and **Assigned**
+  (everyone on the school, with phone numbers). A **Claim** button shows on each school
+  with a free slot.
 - They type their name and mobile once; the browser remembers both.
-- **Open only** tick box hides rows that are taken.
-- Their own rows are green with a **Release** button. Anyone else's rows show
-  who took them.
-- If two people click the same row at the same moment, one wins and the other
-  sees "Already taken by …".
+- **Open only** tick box hides full schools.
+- Their own rows are green with a **Release** button, which removes only their line.
+- A school takes people up to its slot count: add a column whose title contains
+  "Slot" (e.g. "Total Slots"). Blank or no such column = 1 person; 0 = closed.
+- If people claim the last slot at the same moment, one wins and the other sees
+  "No slots left: taken by …".
 - A person can claim as many rows as they like.
 
 ## Updating the code later
@@ -110,8 +113,8 @@ deployment" instead would create a **new** URL.)
 ## Good to know
 
 - **Names aren't verified.** Anyone with the link can type any name. It's the same
-  trust level as letting people edit the sheet. Only the person whose name is on a
-  row can release it through the page; organisers can always fix things in the sheet.
+  trust level as letting people edit the sheet. People can only release their own
+  place through the page; organisers can always fix things in the sheet.
 - **Rows filled in by hand** (a name and number typed together in column B) show as
   taken and can only be changed in the sheet.
 - **Privacy:** everything on today's tab, including speakers' mobile numbers, is

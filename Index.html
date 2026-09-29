@@ -13,7 +13,7 @@
   button { font:inherit; padding:5px 12px; border-radius:6px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; white-space:nowrap; }
   button.release { background:#fff; color:var(--accent); }
   button:disabled { opacity:.5; cursor:default; }
-  #status, #updated { color:var(--muted); }
+  #status, #updated, #note { color:var(--muted); }
   #status.err { color:var(--err); font-weight:600; }
   .wrap { overflow-x:auto; border:1px solid var(--line); border-radius:8px; }
   table { border-collapse:collapse; width:100%; }
@@ -34,6 +34,7 @@
   <label><input type="checkbox" id="openOnly"> Open only</label>
   <span id="status"></span>
   <span id="updated"></span>
+  <span id="note"></span>
 </header>
 <div class="wrap"><table id="grid"></table></div>
 
@@ -105,18 +106,22 @@
     var t = document.getElementById('grid');
     t.textContent = '';
     var head = t.insertRow();
-    [''].concat(state.headers).forEach(function (h) {
+    document.getElementById('note').textContent = state.slotsHeader
+      ? 'Slots from column "' + state.slotsHeader.replace(/\s+/g, ' ') + '"'
+      : 'No "slots" column on this tab, so each school takes 1 person.';
+    ['', 'Slots left', 'Assigned'].concat(state.headers).forEach(function (h) {
       var th = document.createElement('th'); th.textContent = h; head.appendChild(th);
     });
     var open = 0;
     state.rows.forEach(function (r) {
-      var mine = r.speaker && me && same(r.speakerName, me);
-      if (!r.speaker) open++;
-      if (openOnly.checked && r.speaker && !mine) return;
+      var mine = !!me && r.assignees.some(function (a) { return same(a.name, me); });
+      var hasRoom = r.remaining > 0;
+      if (hasRoom) open++;
+      if (openOnly.checked && !hasRoom && !mine) return;
       var tr = t.insertRow();
-      tr.className = mine ? 'mine' : (r.speaker ? 'taken' : '');
+      tr.className = mine ? 'mine' : (hasRoom ? '' : 'taken');
       var btnCell = tr.insertCell();
-      if (!r.speaker || mine) {
+      if (hasRoom || mine) {
         var b = document.createElement('button');
         b.textContent = mine ? 'Release' : 'Claim';
         if (mine) b.className = 'release';
@@ -124,13 +129,16 @@
         b.onclick = function () { act(mine ? 'releaseRow' : 'claimRow', r, mine ? 'Releasing' : 'Claiming'); };
         btnCell.appendChild(b);
       }
+      tr.insertCell().textContent = r.remaining + ' of ' + r.total;
+      var who = tr.insertCell();
+      who.className = 'who';
+      who.textContent = r.assignees.map(function (a) { return a.phone ? a.name + ' · ' + a.phone : a.name; }).join('\n');
       r.cells.forEach(function (c, i) {
         var td = tr.insertCell();
         td.textContent = c;
-        if (i === state.nameIdx && c) td.className = 'who';
       });
     });
-    document.title = open + ' open · ' + state.tab;
+    document.title = open + ' with free slots · ' + state.tab;
     if (!state.rows.length) t.insertRow().insertCell().textContent = 'No rows on this tab yet.';
   }
 

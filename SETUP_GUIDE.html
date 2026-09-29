@@ -50,7 +50,8 @@ Takes about 15 minutes on a laptop or desktop computer (not a phone).</p>
 
 <div class="box">
   <b>What this sets up:</b> a web page where volunteers open one link, see <b>today's tab</b> of the
-  "Hyd 2026 permission" Google Sheet (every column), and tap <b>Claim</b> on a school whose speaker cell is empty.
+  "Hyd 2026 permission" Google Sheet (every column), and tap <b>Claim</b> on a school that still has free slots.
+  A school can take several people, up to its slot count, and the page shows how many slots are left and who is already on it.
   Their name and mobile are written straight into that row of the sheet, so the sheet and the page always show the same
   thing, and two people can never take the same school.
 </div>
@@ -95,7 +96,10 @@ Takes about 15 minutes on a laptop or desktop computer (not a phone).</p>
     <code>cancel</code> or <code>Dummy-26-Sep</code> are ignored. Have only one tab per date.</li>
   <li><b>Header row:</b> on each day tab, <b>row 1</b> holds the column titles, and exactly one title contains the
     words <b>Speaker</b> and <b>Name</b>, for example "Sahaja Yoga ( IND) Speaker Name" or "Sahaja Yoga Speaker Name".
-    That is the only column the page ever writes into.</li>
+    That is the only column the page ever writes into, listing everyone on the school, one person per line.</li>
+  <li><b>Slots (optional):</b> to let a school take more than one person, add a column whose title contains the word
+    <b>Slot</b> (for example "Total Slots") and put the number of people needed in each row. A blank cell, or no such
+    column at all, means <b>1 person</b>. <code>0</code> closes a school.</li>
 </ol>
 
 <h2 id="p3"><span class="step-num">3</span>Open the script editor</h2>
@@ -122,8 +126,8 @@ Takes about 15 minutes on a laptop or desktop computer (not a phone).</p>
  * Sheet Self-Assign — a Google Apps Script web app.
  *
  * Opens the tab named after today's date (e.g. '28-Sep'), shows every column,
- * and lets anyone with the page link claim an open school (empty speaker name)
- * or release one they claimed. Claims are written into the sheet itself, so the
+ * and lets anyone with the page link claim a place on a school that still has
+ * free slots, or release their own place. Claims are written into the sheet itself, so the
  * sheet and the page always agree. Must be deployed by someone with EDIT access.
  */
 
@@ -132,9 +136,14 @@ var CONFIG = {
   HEADER_ROW: 1,                                  // row that holds the column names
   // The speaker column is found by words in its header (case-insensitive), so
   // 'Sahaja Yoga Speaker Name' and 'Sahaja Yoga ( IND) Speaker Name' both work.
-  // A row is open while this cell is empty. Claims write 'name&lt;newline&gt;mobile'
-  // into it, the way organisers already do; no other column is ever written.
+  // This cell lists everyone on the school, one person per line ('Priya 98xxxxxxxx').
+  // A phone number on its own line belongs to the name above it, so organiser
+  // entries like 'Chandrakant&lt;newline&gt;98xxxxxxxx' count as one person.
+  // No other column is ever written.
   NAME_HEADER_WORDS: ['speaker', 'name'],
+  // Optional column with how many people a school needs. Blank, missing or
+  // non-numeric means 1.
+  SLOTS_HEADER_WORDS: ['slot'],
   TAB_NAME_OVERRIDE: '',                          // e.g. '28-Sep' to force a tab while testing
 
   // Tabs are named like '28-Sep'. Today's date is rendered in these formats
@@ -193,14 +202,22 @@ function mutate_(action, rowNum, fingerprint, rawName, rawMobile) {
     if (!row) throw new Error('That row no longer exists. The list has been refreshed.');
     if (row.fp !== fingerprint) throw new Error('That row was edited or moved since you loaded it. Please check it and try again.');
 
+    var mine = -1;
+    row.assignees.forEach(function (a, i) { if (mine &lt; 0 &amp;&amp; sameName_(a.name, name)) mine = i; });
     if (action === 'claim') {
-      if (row.speaker &amp;&amp; !sameName_(row.speakerName, name)) throw new Error('Already taken by ' + row.speakerName + '.');
-      if (!row.speaker) {
-        writeText_(sheet, rowNum, tab.nameCol, name + '\n' + mobile);
+      if (mine &lt; 0) { // already on it = nothing to do
+        if (row.remaining &lt;= 0) {
+          throw new Error(row.assignees.length ? 'No slots left: taken by ' + names_(row.assignees) + '.' : 'This school has no slots.');
+        }
+        var texts = row.assignees.map(function (a) { return a.text; }).concat([name + ' ' + mobile]);
+        writeText_(sheet, rowNum, tab.nameCol, joinPeople_(texts));
       }
-    } else if (row.speaker) {
-      if (!sameName_(row.speakerName, name)) throw new Error('Only ' + row.speakerName + ' can release this row.');
-      sheet.getRange(rowNum, tab.nameCol).clearContent();
+    } else {
+      if (mine &lt; 0) throw new Error('Your name is not on this row.');
+      var rest = joinPeople_(row.assignees.filter(function (_, i) { return i !== mine; })
+        .map(function (a) { return a.text; }));
+      if (rest) writeText_(sheet, rowNum, tab.nameCol, rest);
+      else sheet.getRange(rowNum, tab.nameCol).clearContent();
     }
     SpreadsheetApp.flush();
     CacheService.getScriptCache().remove(cacheKey_(sheet));
@@ -249,20 +266,68 @@ function readTab_(sheet) {
   if (nIdx &lt; 0) throw new Error('Tab "' + sheet.getName() + '" has no column in row ' + CONFIG.HEADER_ROW +
     ' whose header contains "' + CONFIG.NAME_HEADER_WORDS.join('" and "') + '".');
 
+  var sIdx = findHeader_(sheet, headers, CONFIG.SLOTS_HEADER_WORDS);
+  if (sIdx === nIdx) sIdx = -1;
+
   var rows = [];
   values.slice(1).forEach(function (r, i) {
     var details = r.filter(function (_, c) { return c !== nIdx; });
     if (details.join('').trim() === '') return; // skip blank rows
     var speaker = r[nIdx].trim();
+    var assignees = parseAssignees_(speaker);
+    var total = slotsFrom_(sIdx &gt;= 0 ? r[sIdx] : '');
     rows.push({ row: CONFIG.HEADER_ROW + 1 + i, fp: fingerprint_(details), cells: r, speaker: speaker,
-      speakerName: speaker.split('\n')[0].trim() }); // first line = name (mobile may follow on line 2)
+      assignees: assignees, total: total, remaining: Math.max(0, total - assignees.length) });
   });
-  return { headers: headers, nameCol: nIdx + 1, rows: rows };
+  return { headers: headers, nameCol: nIdx + 1, slotsHeader: sIdx &gt;= 0 ? headers[sIdx] : '', rows: rows };
 }
 
 function buildState_(sheet) {
   var tab = readTab_(sheet);
-  return { tab: sheet.getName(), headers: tab.headers, nameIdx: tab.nameCol - 1, rows: tab.rows };
+  return { tab: sheet.getName(), headers: tab.headers, nameIdx: tab.nameCol - 1, slotsHeader: tab.slotsHeader, rows: tab.rows };
+}
+
+/**
+ * Splits a speaker cell into people. A person ends at the line holding their
+ * phone number, so 'Chandrakant&lt;newline&gt;98xxxxxxxx' and a wrapped
+ * 'Vidhya and&lt;newline&gt;team&lt;newline&gt;70xxxxxxxx' are one person each, while
+ * 'Priya 98xxxxxxxx&lt;newline&gt;Ravi 91xxxxxxxx' is two. A blank line also ends a
+ * person (used after an entry that has no phone number).
+ */
+var PHONE_ = /\+?\d[\d\s\-]{6,}\d/;
+
+function parseAssignees_(text) {
+  var people = [], cur = [];
+  String(text || '').split('\n').forEach(function (line) {
+    line = line.trim();
+    if (line) cur.push(line);
+    if (cur.length &amp;&amp; (!line || PHONE_.test(line))) { people.push(cur); cur = []; }
+  });
+  if (cur.length) people.push(cur);
+  return people.map(function (lines) {
+    var joined = lines.join(' ');
+    var phone = joined.match(PHONE_);
+    var name = joined.replace(PHONE_, '').replace(/[\s,:;\-]+$/, '').replace(/\s+/g, ' ').trim() || lines[0];
+    return { name: name, phone: phone ? phone[0].trim() : '', text: lines.join('\n') };
+  });
+}
+
+/** Number of people a school needs, from its slots cell; blank or non-numeric means 1. */
+function slotsFrom_(value) {
+  var m = String(value).match(/\d+/);
+  return m ? parseInt(m[0], 10) : 1;
+}
+
+/** One person per line; a blank line after a person with no phone keeps the next one separate. */
+function joinPeople_(texts) {
+  return texts.reduce(function (out, t, i) {
+    if (!i) return t;
+    return out + (PHONE_.test(texts[i - 1]) ? '\n' : '\n\n') + t;
+  }, '');
+}
+
+function names_(assignees) {
+  return assignees.map(function (a) { return a.name; }).join(', ');
 }
 
 /** Short hash of a row's contents, so a claim can't land on a row that was edited or moved. */
@@ -335,7 +400,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   button { font:inherit; padding:5px 12px; border-radius:6px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; white-space:nowrap; }
   button.release { background:#fff; color:var(--accent); }
   button:disabled { opacity:.5; cursor:default; }
-  #status, #updated { color:var(--muted); }
+  #status, #updated, #note { color:var(--muted); }
   #status.err { color:var(--err); font-weight:600; }
   .wrap { overflow-x:auto; border:1px solid var(--line); border-radius:8px; }
   table { border-collapse:collapse; width:100%; }
@@ -356,6 +421,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   &lt;label&gt;&lt;input type="checkbox" id="openOnly"&gt; Open only&lt;/label&gt;
   &lt;span id="status"&gt;&lt;/span&gt;
   &lt;span id="updated"&gt;&lt;/span&gt;
+  &lt;span id="note"&gt;&lt;/span&gt;
 &lt;/header&gt;
 &lt;div class="wrap"&gt;&lt;table id="grid"&gt;&lt;/table&gt;&lt;/div&gt;
 
@@ -427,18 +493,22 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
     var t = document.getElementById('grid');
     t.textContent = '';
     var head = t.insertRow();
-    [''].concat(state.headers).forEach(function (h) {
+    document.getElementById('note').textContent = state.slotsHeader
+      ? 'Slots from column "' + state.slotsHeader.replace(/\s+/g, ' ') + '"'
+      : 'No "slots" column on this tab, so each school takes 1 person.';
+    ['', 'Slots left', 'Assigned'].concat(state.headers).forEach(function (h) {
       var th = document.createElement('th'); th.textContent = h; head.appendChild(th);
     });
     var open = 0;
     state.rows.forEach(function (r) {
-      var mine = r.speaker &amp;&amp; me &amp;&amp; same(r.speakerName, me);
-      if (!r.speaker) open++;
-      if (openOnly.checked &amp;&amp; r.speaker &amp;&amp; !mine) return;
+      var mine = !!me &amp;&amp; r.assignees.some(function (a) { return same(a.name, me); });
+      var hasRoom = r.remaining &gt; 0;
+      if (hasRoom) open++;
+      if (openOnly.checked &amp;&amp; !hasRoom &amp;&amp; !mine) return;
       var tr = t.insertRow();
-      tr.className = mine ? 'mine' : (r.speaker ? 'taken' : '');
+      tr.className = mine ? 'mine' : (hasRoom ? '' : 'taken');
       var btnCell = tr.insertCell();
-      if (!r.speaker || mine) {
+      if (hasRoom || mine) {
         var b = document.createElement('button');
         b.textContent = mine ? 'Release' : 'Claim';
         if (mine) b.className = 'release';
@@ -446,13 +516,16 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
         b.onclick = function () { act(mine ? 'releaseRow' : 'claimRow', r, mine ? 'Releasing' : 'Claiming'); };
         btnCell.appendChild(b);
       }
+      tr.insertCell().textContent = r.remaining + ' of ' + r.total;
+      var who = tr.insertCell();
+      who.className = 'who';
+      who.textContent = r.assignees.map(function (a) { return a.phone ? a.name + ' · ' + a.phone : a.name; }).join('\n');
       r.cells.forEach(function (c, i) {
         var td = tr.insertCell();
         td.textContent = c;
-        if (i === state.nameIdx &amp;&amp; c) td.className = 'who';
       });
     });
-    document.title = open + ' open · ' + state.tab;
+    document.title = open + ' with free slots · ' + state.tab;
     if (!state.rows.length) t.insertRow().insertCell().textContent = 'No rows on this tab yet.';
   }
 
@@ -498,14 +571,15 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
 <h2 id="p8"><span class="step-num">8</span>Test it</h2>
 <ol>
   <li>Open the <code>/exec</code> link in a new browser tab. You should see <b>"Today: [date]"</b>, every column
-    of today's tab, and a blue <b>Claim</b> button on each row whose speaker cell is empty.
+    of today's tab, plus two extra columns at the left: <b>Slots left</b> and <b>Assigned</b> (who is on it, with phone numbers).
+    Each school with a free slot has a blue <b>Claim</b> button.
     <span class="sub">A grey Google bar at the top ("created by a Google Apps Script user") is normal and can't be removed.</span></li>
   <li>Type a test name and a 10-digit mobile, then click <b>Claim</b> on one open row. It turns green.</li>
-  <li>In the sheet, that row's Speaker Name cell now shows the name with the mobile on the line below.
+  <li>In the sheet, that row's Speaker Name cell now has a new line with the name and mobile, below anyone already there.
     No other cell changed.</li>
-  <li>Back on the page, click <b>Release</b>. The cell in the sheet is empty again.</li>
+  <li>Back on the page, click <b>Release</b>. Only your line disappears from the cell; anyone else stays.</li>
   <li>Optional: open the link on your phone too, and try to claim the same row from both at the same time.
-    Only one wins; the other sees <b>"Already taken by …"</b>.</li>
+    On a 1-slot school only one wins; the other sees <b>"No slots left: taken by …"</b>.</li>
 </ol>
 <div class="box ok"><b>All good?</b> Then it's live. Share the link (Part 9).</div>
 
@@ -516,8 +590,8 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
 PASTE-THE-/exec-LINK-HERE
 
 1. Type your name and mobile number at the top (only needed the first time).
-2. Tap "Claim" next to the school you'd like.
-3. Your row turns green: it's yours and it shows in the main sheet.
+2. Tap "Claim" next to a school that still has slots left.
+3. Your row turns green: you're on it, and your name shows in the main sheet.
 4. Changed your mind? Tap "Release".
 The page refreshes every 15 seconds and always shows today's list.</pre>
 
@@ -528,7 +602,7 @@ The page refreshes every 15 seconds and always shows today's list.</pre>
       <td>That's how the page finds today's tab.</td></tr>
   <tr><td>Keep the titles in row 1, with exactly one title containing "Speaker" and "Name".</td>
       <td>That's the column the page writes into.</td></tr>
-  <tr><td>A school is <b>open</b> when its Speaker Name cell is empty. To free a school, just clear that cell.</td>
+  <tr><td>A school has room while it has fewer people than its slot count (1 if there's no slots column). To remove someone, delete their line from the Speaker Name cell.</td>
       <td>The page shows the change within about 15 seconds.</td></tr>
   <tr><td>Keep typing in the sheet as usual (including name + number in one cell).</td>
       <td>The page always reflects the sheet. Rows you fill by hand show as taken.</td></tr>
@@ -545,8 +619,10 @@ The page refreshes every 15 seconds and always shows today's list.</pre>
   <tr><td>"…has no column in row 1 whose header contains "speaker" and "name""</td><td>Today's tab has no Speaker Name title in row 1. Add or fix the title.</td></tr>
   <tr><td>"…has several columns whose header contains…"</td><td>Two titles contain both words. Rename one so only one does.</td></tr>
   <tr><td>"Cannot read properties of null (reading …)"</td><td>The script was created at script.google.com instead of from the sheet. Redo Part 3 from the sheet's Extensions menu.</td></tr>
-  <tr><td>"Already taken by …"</td><td>Someone else got there first. Pick another school.</td></tr>
-  <tr><td>"That row was edited or moved…"</td><td>An organiser changed or re-ordered rows after the page loaded. The page refreshes; check and claim again.</td></tr>
+  <tr><td>"No slots left: taken by …"</td><td>The school is full. Pick another one.</td></tr>
+  <tr><td>"This school has no slots"</td><td>Its slot count is 0. Organisers can raise it in the sheet.</td></tr>
+  <tr><td>"Your name is not on this row"</td><td>Release only works with the same name used to claim (capitals don't matter).</td></tr>
+  <tr><td>"That row was edited or moved…"</td><td>An organiser changed that school's details (including its slot count) or re-ordered rows after the page loaded. The page refreshes; check and claim again.</td></tr>
   <tr><td>"Lots of people are claiming right now"</td><td>Many claims arrived at the same second. Try again.</td></tr>
   <tr><td>"Please enter a valid mobile number"</td><td>Use 10 digits, optionally starting with +91.</td></tr>
   <tr><td>"Who has access" doesn't offer "Anyone"</td><td>Your account's organisation blocks it. Do the setup from a personal Gmail account that has edit access.</td></tr>
@@ -566,8 +642,7 @@ The page refreshes every 15 seconds and always shows today's list.</pre>
 
 <h2 id="p13"><span class="step-num">13</span>Good to know</h2>
 <ul>
-  <li><b>Names are on trust.</b> Anyone with the link can type any name. Only the person whose name is on a row can
-    release it through the page; organisers can always fix things in the sheet.</li>
+  <li><b>Names are on trust.</b> Anyone with the link can type any name. People can only release their own place through the page; organisers can always fix things in the sheet.</li>
   <li><b>Privacy:</b> everything on today's tab, including phone numbers, is visible to anyone with the page link.
     That's the same as the sheet's current "anyone with the link can view" sharing.</li>
   <li><b>Capacity:</b> dozens of people can use it at the same time without problems.</li>
