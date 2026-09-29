@@ -44,6 +44,9 @@ _Last updated: 2026-09-27_
 
 - 2026-09-29: "Assigned" column lists each person on its own numbered line (name + number kept on one line, column widens) with a solid 2px divider. 41 tests.
 
+- 2026-09-29: mobile must be exactly 10 digits (spaces/dashes ignored; leading +91, 91 or 0 accepted and
+  dropped); stored as the plain 10 digits. Checked on the page before sending and again in the script. 42 tests.
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.

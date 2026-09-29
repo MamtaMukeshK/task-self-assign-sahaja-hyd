@@ -28,7 +28,7 @@ test('no tab for today gives a clear error', () => {
 test('28-Sep layout: claim writes name + mobile into B only, never the "Speaker Mobile" column', () => {
   const { gs, today, sheets } = setup(); const r = openRow(gs.getState());
   const after = gs.claimRow(r.row, r.fp, '  Priya   Shah ', '+91 98765 43210');
-  assert.equal(today.grid[r.row-1][1], 'Priya Shah +91 98765 43210');
+  assert.equal(today.grid[r.row-1][1], 'Priya Shah 9876543210', '+91 and spaces removed');
   assert.equal(today.grid[r.row-1][2], '', 'column C not written');
   assert.equal(sheets[0].writes + sheets[1].writes, 0, 'other tabs untouched');
   assert.equal(after.rows.find(x => x.row === r.row).assignees[0].name, 'Priya Shah', 'returns fresh state (cache cleared)');
@@ -67,8 +67,8 @@ test('input validation: blank name, formula injection, bad mobile, bad row', () 
   const { gs } = setup(); const r = openRow(gs.getState());
   assert.throws(() => gs.claimRow(r.row, r.fp, '  ', '9876543210'), /enter your name/);
   assert.throws(() => gs.claimRow(r.row, r.fp, '=IMPORTXML("x")', '9876543210'), /cannot start with/);
-  assert.throws(() => gs.claimRow(r.row, r.fp, 'Priya', '12345'), /valid mobile/);
-  assert.throws(() => gs.claimRow(r.row, r.fp, 'Priya', '98765+43210'), /valid mobile/);
+  for (const bad of ['12345', '98765+43210', '987654321', '98765432101', '+1 9876543210', '98765abcde', '', '+91 98765 4321'])
+    assert.throws(() => gs.claimRow(r.row, r.fp, 'Priya', bad), /Please enter a 10-digit mobile number/, bad);
   assert.throws(() => gs.claimRow(1, r.fp, 'Priya', '9876543210'), /Invalid row/);
   assert.throws(() => gs.claimRow(999, r.fp, 'Priya', '9876543210'), /no longer exists/);
 });
@@ -416,4 +416,12 @@ test('updated 30-Sep layout: capacity, times and clashes from the real column ti
   assert.equal(sheet.grid[3][4], 11);
   const original = sep30v2Grid();
   original.forEach((r, i) => r.forEach((v, j) => { if (j !== 1 && j !== 4) assert.equal(sheet.grid[i][j], v, `cell ${i},${j}`); }));
+});
+
+test('mobile: exactly 10 digits, +91 / 91 / 0 prefix and spacing accepted, stored as 10 digits', () => {
+  const gs = load([makeSheet('28-Sep', 60, [['S No']])], NOW);
+  const ok = { '9876543210': '9876543210', '98765 43210': '9876543210', '98765-43210': '9876543210',
+    '+91 98765 43210': '9876543210', '+919876543210': '9876543210', '919876543210': '9876543210',
+    '09876543210': '9876543210', ' (987) 654-3210 ': '9876543210' };
+  for (const [input, want] of Object.entries(ok)) assert.equal(gs.cleanMobile_(input), want, input);
 });

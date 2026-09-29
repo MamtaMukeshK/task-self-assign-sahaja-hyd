@@ -435,13 +435,16 @@ function cleanName_(raw) {
   return name;
 }
 
+/**
+ * Exactly 10 digits. Spaces, dashes, dots and brackets are ignored, and a
+ * leading +91, 91 or 0 is dropped. Returns the plain 10 digits.
+ */
 function cleanMobile_(raw) {
-  var mobile = String(raw == null ? '' : raw).replace(/[^\d+ ]/g, '').replace(/\s+/g, ' ').trim();
-  var digits = mobile.replace(/\D/g, '');
-  if (digits.length &lt; 10 || digits.length &gt; 13 || /^\+?$/.test(mobile) || mobile.indexOf('+') &gt; 0) {
-    throw new Error('Please enter a valid mobile number (10 digits, optionally with +91).');
-  }
-  return mobile;
+  var digits = String(raw == null ? '' : raw).replace(/[\s\-().]/g, '');
+  if (/^\+?91\d{10}$/.test(digits)) digits = digits.slice(-10);
+  else if (/^0\d{10}$/.test(digits)) digits = digits.slice(1);
+  if (!/^\d{10}$/.test(digits)) throw new Error('Please enter a 10-digit mobile number.');
+  return digits;
 }
 
 /** Index of the one header containing all the words, -1 if none; errors if several match. */
@@ -509,7 +512,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   &lt;h1 id="title"&gt;Loading…&lt;/h1&gt;
   &lt;label&gt;Date &lt;select id="day"&gt;&lt;/select&gt;&lt;/label&gt;
   &lt;label&gt;Your name &lt;input id="name" autocomplete="name" placeholder="e.g. Priya Shah"&gt;&lt;/label&gt;
-  &lt;label&gt;Mobile &lt;input id="mobile" autocomplete="tel" inputmode="tel" placeholder="e.g. 98xxxxxxxx"&gt;&lt;/label&gt;
+  &lt;label&gt;Mobile &lt;input id="mobile" autocomplete="tel" inputmode="tel" placeholder="10 digits" maxlength="16"&gt;&lt;/label&gt;
   &lt;label&gt;&lt;input type="checkbox" id="openOnly"&gt; Open only&lt;/label&gt;
   &lt;span id="status"&gt;&lt;/span&gt;
   &lt;span id="updated"&gt;&lt;/span&gt;
@@ -538,6 +541,8 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   openOnly.addEventListener('change', render);
 
   function myName() { return nameInput.value.replace(/\s+/g, ' ').trim(); }
+  // Same rule as the script: 10 digits, optionally after +91 / 91 / 0; spaces and dashes ignored.
+  function tenDigits(v) { return /^(\+?91|0)?\d{10}$/.test(String(v).replace(/[\s\-().]/g, '')); }
   function same(a, b) { return a.toLowerCase() === b.toLowerCase(); }
 
   function setStatus(msg, isErr) {
@@ -582,7 +587,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   function act(fn, r, verb) {
     if (!myName()) { setStatus('Please enter your name first.', true); nameInput.focus(); return; }
     var claiming = fn === 'claimRow';
-    if (claiming &amp;&amp; !mobileInput.value.trim()) { setStatus('Please enter your mobile number.', true); mobileInput.focus(); return; }
+    if (claiming &amp;&amp; !tenDigits(mobileInput.value)) { setStatus('Please enter a 10-digit mobile number.', true); mobileInput.focus(); return; }
     busyRow = r.row;
     render();
     setStatus(verb + '…');
@@ -773,7 +778,7 @@ The page refreshes every 15 seconds.</pre>
   <tr><td>"Your name is not on this row"</td><td>Release only works with the same name used to claim (capitals don't matter).</td></tr>
   <tr><td>"That row was edited or moved…"</td><td>An organiser changed that school's details (including "Total volunteers needed") or re-ordered rows after the page loaded. The page refreshes; check and claim again.</td></tr>
   <tr><td>"Lots of people are claiming right now"</td><td>Many claims arrived at the same second. Try again.</td></tr>
-  <tr><td>"Please enter a valid mobile number"</td><td>Use 10 digits, optionally starting with +91.</td></tr>
+  <tr><td>"Please enter a 10-digit mobile number"</td><td>Type exactly 10 digits. Spaces are fine, and a leading +91 or 0 is accepted and removed.</td></tr>
   <tr><td>"Who has access" doesn't offer "Anyone"</td><td>Your account's organisation blocks it. Do the setup from a personal Gmail account that has edit access.</td></tr>
   <tr><td>The page shows yesterday's tab</td><td>Time zone is wrong. Fix it in File → Settings (Part 2).</td></tr>
   <tr><td>You changed the code but the page didn't change</td><td>You must publish a new version (Part 12).</td></tr>

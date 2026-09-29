@@ -56,6 +56,9 @@ test('two users in real browser', { timeout: 60000 }, async () => {
   await a.fill('#mobile', '');
   await a.locator('button:text("Claim")').first().click();
   assert.match(await a.textContent('#status'), /mobile number/);
+  await a.fill('#mobile', '98765');
+  await a.locator('button:text("Claim")').first().click();
+  assert.match(await a.textContent('#status'), /Please enter a 10-digit mobile number/, 'caught on the page before sending');
 
   await a.screenshot({ path: path.join(__dirname, 'phone-view.png'), fullPage: true });
   assert.deepEqual(errs, []);

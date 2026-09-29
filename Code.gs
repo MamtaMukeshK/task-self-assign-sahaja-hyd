@@ -304,13 +304,16 @@ function cleanName_(raw) {
   return name;
 }
 
+/**
+ * Exactly 10 digits. Spaces, dashes, dots and brackets are ignored, and a
+ * leading +91, 91 or 0 is dropped. Returns the plain 10 digits.
+ */
 function cleanMobile_(raw) {
-  var mobile = String(raw == null ? '' : raw).replace(/[^\d+ ]/g, '').replace(/\s+/g, ' ').trim();
-  var digits = mobile.replace(/\D/g, '');
-  if (digits.length < 10 || digits.length > 13 || /^\+?$/.test(mobile) || mobile.indexOf('+') > 0) {
-    throw new Error('Please enter a valid mobile number (10 digits, optionally with +91).');
-  }
-  return mobile;
+  var digits = String(raw == null ? '' : raw).replace(/[\s\-().]/g, '');
+  if (/^\+?91\d{10}$/.test(digits)) digits = digits.slice(-10);
+  else if (/^0\d{10}$/.test(digits)) digits = digits.slice(1);
+  if (!/^\d{10}$/.test(digits)) throw new Error('Please enter a 10-digit mobile number.');
+  return digits;
 }
 
 /** Index of the one header containing all the words, -1 if none; errors if several match. */

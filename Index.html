@@ -36,7 +36,7 @@
   <h1 id="title">Loading…</h1>
   <label>Date <select id="day"></select></label>
   <label>Your name <input id="name" autocomplete="name" placeholder="e.g. Priya Shah"></label>
-  <label>Mobile <input id="mobile" autocomplete="tel" inputmode="tel" placeholder="e.g. 98xxxxxxxx"></label>
+  <label>Mobile <input id="mobile" autocomplete="tel" inputmode="tel" placeholder="10 digits" maxlength="16"></label>
   <label><input type="checkbox" id="openOnly"> Open only</label>
   <span id="status"></span>
   <span id="updated"></span>
@@ -65,6 +65,8 @@
   openOnly.addEventListener('change', render);
 
   function myName() { return nameInput.value.replace(/\s+/g, ' ').trim(); }
+  // Same rule as the script: 10 digits, optionally after +91 / 91 / 0; spaces and dashes ignored.
+  function tenDigits(v) { return /^(\+?91|0)?\d{10}$/.test(String(v).replace(/[\s\-().]/g, '')); }
   function same(a, b) { return a.toLowerCase() === b.toLowerCase(); }
 
   function setStatus(msg, isErr) {
@@ -109,7 +111,7 @@
   function act(fn, r, verb) {
     if (!myName()) { setStatus('Please enter your name first.', true); nameInput.focus(); return; }
     var claiming = fn === 'claimRow';
-    if (claiming && !mobileInput.value.trim()) { setStatus('Please enter your mobile number.', true); mobileInput.focus(); return; }
+    if (claiming && !tenDigits(mobileInput.value)) { setStatus('Please enter a 10-digit mobile number.', true); mobileInput.focus(); return; }
     busyRow = r.row;
     render();
     setStatus(verb + '…');
