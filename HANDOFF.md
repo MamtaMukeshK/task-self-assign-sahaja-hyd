@@ -50,6 +50,12 @@ _Last updated: 2026-09-27_
 - 2026-09-29: page hides the sheet's own Speaker Name column (same people shown in the page's own
   column) and that page column is titled "SY Speaker Name" (was "Assigned"). 42 tests.
 
+- 2026-09-29: register others + over-limit. claimRow(row, fp, name, mobile, tab, othersText, includeSelf):
+  others as 'Name mobile' lines -> written 'Name mobile (via Registrar)'; all-or-nothing validation
+  (10-digit mobile, time clash per person, dedupe, max 30). removePerson(row, fp, requester, person, tab):
+  allowed for the person or their registrar. Schools may exceed their total (row.over); extra people
+  shown red "(over limit)", "Over by N"; total 0 = closed. 48 tests.
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.

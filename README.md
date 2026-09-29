@@ -104,9 +104,13 @@ At midnight India time the page automatically switches to the new day's tab.
   containing "total" and "volunteer"). Blank or no such column = 1 person; 0 = closed.
   A column titled like **count of Volunteers still needed** ("still" + "volunteer")
   is kept up to date by the page, unless it holds a formula.
-- If people claim the last slot at the same moment, one wins and the other sees
-  "No slots left: taken by …".
-- A person can claim as many rows as they like.
+- A school can go **over** its total: everyone is added, the extra people show in red
+  "(over limit)" and "Slots left" reads "Over by N". A total of 0 closes the school.
+- **Register others:** tick it, list one person per line (name then 10-digit mobile),
+  optionally untick "Include me too", then Claim. They're written to the sheet as
+  `Name mobile (via Registrar)`; the registrar (or the person) can remove them with ✕.
+  Every person is validated and time-clash checked; if any fails, nobody is added.
+- A person can claim as many rows as they like, but not two with the same start time on a day.
 
 ## Updating the code later
 

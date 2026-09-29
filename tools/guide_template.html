@@ -185,7 +185,9 @@ Takes about 15 minutes on a laptop or desktop computer (not a phone).</p>
     No other cell changed.</li>
   <li>Back on the page, click <b>Release</b>. Only your line disappears from the cell; anyone else stays.</li>
   <li>Optional: open the link on your phone too, and try to claim the same row from both at the same time.
-    On a 1-slot school only one wins; the other sees <b>"No slots left: taken by …"</b>.</li>
+    Both are added: a school can go over its total, and anyone beyond it shows <b>in red, marked "over limit"</b>.</li>
+  <li>Tick <b>Register others</b>, list one person per line (name then 10-digit mobile), and click <b>Claim</b>. They're added
+    as <code>Ravi 9123456789 (via [your name])</code>, and you can remove them with the ✕ next to their name.</li>
 </ol>
 <div class="box ok"><b>All good?</b> Then it's live. Share the link (Part 9).</div>
 
@@ -198,6 +200,7 @@ PASTE-THE-/exec-LINK-HERE
 1. Type your name and mobile number at the top (only needed the first time).
 2. Choose the date at the top, then tap "Claim" next to a school that still has slots left.
    You can take several schools, just not two at the same time on the same day.
+   Registering a group? Tick "Register others" and list one person per line: name, then 10-digit mobile.
 3. Your row turns green: you're on it, and your name shows in the main sheet.
 4. Changed your mind? Tap "Release".
 The page refreshes every 15 seconds.</pre>
@@ -230,8 +233,11 @@ The page refreshes every 15 seconds.</pre>
   <tr><td>"…has no column in row 1 whose header contains "speaker" and "name""</td><td>That day's tab has no Speaker Name title in row 1. Add or fix the title.</td></tr>
   <tr><td>"…has several columns whose header contains…"</td><td>Two titles contain both words. Rename one so only one does.</td></tr>
   <tr><td>"Cannot read properties of null (reading …)"</td><td>The script was created at script.google.com instead of from the sheet. Redo Part 3 from the sheet's Extensions menu.</td></tr>
-  <tr><td>"No slots left: taken by …"</td><td>The school is full. Pick another one.</td></tr>
-  <tr><td>"This school has no slots"</td><td>Its "Total volunteers needed" is 0. Organisers can raise it in the sheet.</td></tr>
+  <tr><td>A school in red, "Over by N", names in red "(over limit)"</td><td>More people registered than it needs. Organisers decide who goes; anyone can Release or ✕ to bring it back within the limit.</td></tr>
+  <tr><td>"This school is closed (its total is 0)"</td><td>Its "Total volunteers needed" is 0. Organisers can raise it in the sheet.</td></tr>
+  <tr><td>"Line N of "Register others" should be a name then a 10-digit mobile"</td><td>Fix that line (e.g. <code>Ravi 9123456789</code>). Nobody is added until every line is valid.</td></tr>
+  <tr><td>"Time clash: Ravi is already on …. Nobody was added."</td><td>Someone in your list already has a school at that time that day. Remove them from the list, or pick another school.</td></tr>
+  <tr><td>"Only Ravi or Priya can remove Ravi"</td><td>People can remove themselves, and whoever registered them can remove them. Anyone else: ask an organiser to edit the sheet.</td></tr>
   <tr><td>"Your name is not on this row"</td><td>Release only works with the same name used to claim (capitals don't matter).</td></tr>
   <tr><td>"That row was edited or moved…"</td><td>An organiser changed that school's details (including "Total volunteers needed") or re-ordered rows after the page loaded. The page refreshes; check and claim again.</td></tr>
   <tr><td>"Lots of people are claiming right now"</td><td>Many claims arrived at the same second. Try again.</td></tr>
@@ -253,7 +259,7 @@ The page refreshes every 15 seconds.</pre>
 
 <h2 id="p13"><span class="step-num">13</span>Good to know</h2>
 <ul>
-  <li><b>Names are on trust.</b> Anyone with the link can type any name. People can only release their own place through the page; organisers can always fix things in the sheet.</li>
+  <li><b>Names are on trust.</b> Anyone with the link can type any name, and register others. People can remove themselves, and whoever registered someone (shown as "via …") can remove them; organisers can always fix things in the sheet.</li>
   <li><b>Privacy:</b> everything on today's and later days' tabs, including phone numbers, is visible to anyone with the page link.
     That's the same as the sheet's current "anyone with the link can view" sharing.</li>
   <li><b>Capacity:</b> dozens of people can use it at the same time without problems.</li>

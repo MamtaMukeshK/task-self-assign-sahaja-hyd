@@ -35,19 +35,23 @@ test('two users in real browser', { timeout: 60000 }, async () => {
   assert.equal(heads[2], 'SY Speaker Name');
   assert.ok(!heads.some(h => /Sahaja Yoga\s*Speaker Name/.test(h)), 'sheet speaker column not repeated');
   assert.match(await a.textContent('#note'), /No "Total volunteers needed" column/);
-  assert.equal(await a.locator('button:text("Claim")').count(), 2);
+  assert.equal(await a.locator('button:text-is("Claim")').count(), 2);
 
-  await a.locator('button:text("Claim")').first().click();
-  await a.waitForSelector('text=Claimed');
+  await a.locator('button:text-is("Claim")').first().click();
+  await a.waitForSelector('text=Registered');
   assert.equal(sheet.grid[3][1], 'Priya 9876543210');
   assert.equal(await a.locator('button:text("Release")').count(), 1);
 
-  // Ravi's page is stale: still shows row 4 as open. His click must fail cleanly and refresh.
-  await b.locator('button:text("Claim")').first().click();
-  await b.waitForSelector('#status.err');
-  assert.match(await b.textContent('#status'), /No slots left: taken by Priya/);
-  await b.waitForFunction(() => document.querySelectorAll('button').length === 1);
-  assert.equal(sheet.grid[3][1], 'Priya 9876543210', 'sheet unchanged by loser');
+  // Ravi's page is stale: still shows row 4 as open. He is added too, and it is flagged as over the limit.
+  await b.locator('button:text-is("Claim")').first().click();
+  await b.waitForSelector('text=over its limit by 1');
+  assert.equal(sheet.grid[3][1], 'Priya 9876543210\nRavi 9123456789');
+  assert.match(await b.locator('#grid tr').nth(3).textContent(), /Over by 1/);
+  assert.equal(await b.locator('.person.extra').count(), 1);
+  assert.match(await b.locator('.person.extra').textContent(), /Ravi · 9123456789 \(over limit\)/);
+  assert.equal(await b.locator('.person.extra').evaluate(e => getComputedStyle(e).color), 'rgb(179, 38, 30)', 'red');
+  await b.locator('#grid tr').nth(3).locator('button:text("Release")').click();
+  await b.waitForSelector('text=Released.');
 
   await b.check('#openOnly');
   assert.equal(await b.locator('tr').count(), 2, 'header + 1 open row');
@@ -57,10 +61,10 @@ test('two users in real browser', { timeout: 60000 }, async () => {
   assert.equal(sheet.grid[3][1], '');
 
   await a.fill('#mobile', '');
-  await a.locator('button:text("Claim")').first().click();
+  await a.locator('button:text-is("Claim")').first().click();
   assert.match(await a.textContent('#status'), /mobile number/);
   await a.fill('#mobile', '98765');
-  await a.locator('button:text("Claim")').first().click();
+  await a.locator('button:text-is("Claim")').first().click();
   assert.match(await a.textContent('#status'), /Please enter a 10-digit mobile number/, 'caught on the page before sending');
 
   await a.screenshot({ path: path.join(__dirname, 'phone-view.png'), fullPage: true });
@@ -95,9 +99,9 @@ test('multi-slot school in real browser: two join, third sees it full, one leave
     assert.match(await row1(a).textContent(), /2 of 3/);
     assert.match(await row1(a).textContent(), /Ramesh · 9000000001/);
 
-    await row1(a).locator('button:text("Claim")').click(); await a.waitForSelector('text=Claimed');
+    await row1(a).locator('button:text-is("Claim")').click(); await a.waitForSelector('text=Registered');
     const b = await user('Ravi', '9123456789');
-    await row1(b).locator('button:text("Claim")').click(); await b.waitForSelector('text=Claimed');
+    await row1(b).locator('button:text-is("Claim")').click(); await b.waitForSelector('text=Registered');
     assert.equal(sheet.grid[1][1], 'Ramesh\n9000000001\nPriya 9876543210\nRavi 9123456789');
     assert.match(await row1(b).textContent(), /0 of 3/);
     assert.deepEqual(await row1(b).locator('.person').allTextContents(),
@@ -108,7 +112,7 @@ test('multi-slot school in real browser: two join, third sees it full, one leave
     assert.equal(sheet.grid[1][4], 0, 'still-needed column updated');
 
     const c = await user('Neha', '9000000003');
-    assert.equal(await row1(c).locator('button').count(), 0, 'full: no Claim button');
+    assert.deepEqual(await row1(c).locator('button').allTextContents(), ['Claim (full)'], 'full: warning Claim button');
     await a.reload(); await a.waitForSelector('text=Day: 28-Sep');
     await row1(a).locator('button:text("Release")').click(); await a.waitForSelector('text=Released.');
     assert.equal(sheet.grid[1][1], 'Ramesh\n9000000001\nRavi 9123456789');
@@ -143,16 +147,16 @@ test('date picker and time-clash label in real browser', { timeout: 60000 }, asy
     await p.selectOption('#day', '30-Sep');
     await p.waitForSelector('text=Day: 30-Sep');
     const row = n => p.locator('#grid tr').nth(n);
-    await row(1).locator('button:text("Claim")').click(); await p.waitForSelector('text=Claimed');
+    await row(1).locator('button:text-is("Claim")').click(); await p.waitForSelector('text=Registered');
     assert.equal(d30.grid[1][1], 'Priya 9876543210', 'written to the picked day');
     assert.equal(d28.grid[1][1], '', 'today untouched');
     assert.match(await row(2).textContent(), /Clashes with S No 1 \(10:00\)/);
     assert.equal(await row(2).locator('button').count(), 0, 'no Claim button on a clashing school');
-    assert.equal(await row(3).locator('button:text("Claim")').count(), 1, 'other times still claimable');
+    assert.equal(await row(3).locator('button:text-is("Claim")').count(), 1, 'other times still claimable');
 
     await p.selectOption('#day', '28-Sep');
     await p.waitForSelector('text=Day: 28-Sep');
-    assert.equal(await row(2).locator('button:text("Claim")').count(), 1, 'same time on another day is fine');
+    assert.equal(await row(2).locator('button:text-is("Claim")').count(), 1, 'same time on another day is fine');
     assert.deepEqual(errs, []);
   } finally { await browser.close(); }
 });
@@ -181,5 +185,46 @@ test('map and web links in cells are clickable, other text stays plain', { timeo
     ]);
     assert.match(await p.locator('#grid tr').nth(1).textContent(), /see https:\/\/example\.org\/info for details/);
     assert.match(await p.locator('#grid tr').nth(2).textContent(), /javascript:alert\(1\)/, 'shown as plain text, not a link');
+  } finally { await browser.close(); }
+});
+
+test('register others in real browser: list, over-limit in red, remove with ✕', { timeout: 60000 }, async () => {
+  const grid = [
+    ['S No', 'Speaker Name', 'Total volunteers needed', 'Institution name'],
+    ['1', '', '2', 'School A'],
+  ];
+  const sheet = makeSheet('28-Sep', 3, grid);
+  const gs = load([sheet], new Date(Date.UTC(2026, 8, 28)));
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
+  try {
+    const p = await (await browser.newContext({ viewport: { width: 1100, height: 700 } })).newPage();
+    p.setDefaultTimeout(8000);
+    const errs = []; p.on('pageerror', e => errs.push(e.message));
+    await p.exposeFunction('gsCall', (fn, a) => { try { return { ok: JSON.parse(JSON.stringify(gs[fn](...a))) }; } catch (e) { return { err: e.message }; } });
+    await p.addInitScript(SHIM);
+    await p.route('http://app.test/', r => r.fulfill({ contentType: 'text/html', body: html }));
+    await p.goto('http://app.test/');
+    await p.waitForSelector('text=Day: 28-Sep');
+    await p.fill('#name', 'Priya'); await p.fill('#mobile', '');
+    assert.equal(await p.isVisible('#others'), false, 'box hidden until ticked');
+    await p.check('#showOthers');
+    await p.uncheck('#includeMe');                                         // leader registers others only
+    await p.fill('#others', 'Ravi 9123456789\nAsha 12345');
+    await p.locator('button:text-is("Claim")').click();
+    assert.match(await p.textContent('#status'), /Line 2 of "Register others"/, 'checked on the page first');
+    await p.fill('#others', 'Ravi 9123456789\nAsha 9000000002\nNeha 9000000003');
+    await p.locator('button:text-is("Claim")').click();
+    await p.waitForSelector('text=over its limit by 1');
+    assert.equal(sheet.grid[1][1], 'Ravi 9123456789 (via Priya)\nAsha 9000000002 (via Priya)\nNeha 9000000003 (via Priya)');
+    const row = p.locator('#grid tr').nth(1);
+    assert.match(await row.textContent(), /Over by 1 \(needs 2\)/);
+    assert.deepEqual(await row.locator('.person.extra').allTextContents(), ['3. Neha · 9000000003 (over limit) · via Priya✕']);
+    assert.equal(await row.locator('button.x').count(), 3, 'Priya can remove all three she added');
+    await p.screenshot({ path: path.join(__dirname, 'others-view.png') });
+    await row.locator('.person').nth(2).locator('button.x').click();
+    await p.waitForSelector('text=Removed Neha.');
+    assert.equal(sheet.grid[1][1], 'Ravi 9123456789 (via Priya)\nAsha 9000000002 (via Priya)');
+    assert.equal(await p.locator('#grid tr').nth(1).locator('.person.extra').count(), 0, 'no longer over');
+    assert.deepEqual(errs, []);
   } finally { await browser.close(); }
 });

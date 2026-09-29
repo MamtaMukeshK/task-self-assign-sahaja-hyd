@@ -33,11 +33,13 @@ test('28-Sep layout: claim writes name + mobile into B only, never the "Speaker 
   assert.equal(sheets[0].writes + sheets[1].writes, 0, 'other tabs untouched');
   assert.equal(after.rows.find(x => x.row === r.row).assignees[0].name, 'Priya Shah', 'returns fresh state (cache cleared)');
 });
-test('second person with a stale view loses the race cleanly', () => {
+test('a full school still takes a second person, who is marked as over the limit', () => {
   const { gs, today } = setup(); const view = gs.getState(); const r = openRow(view);
   gs.claimRow(r.row, r.fp, 'Priya', '9876543210');
-  assert.throws(() => gs.claimRow(r.row, r.fp, 'Ravi', '9123456789'), /No slots left: taken by Priya/);
-  assert.equal(today.grid[r.row-1][1], 'Priya 9876543210');
+  const s = gs.claimRow(r.row, r.fp, 'Ravi', '9123456789');       // stale page, 1-place school
+  assert.equal(today.grid[r.row-1][1], 'Priya 9876543210\nRavi 9123456789');
+  const now = s.rows.find(x => x.row === r.row);
+  assert.deepEqual([now.remaining, now.over], [0, 1]);
 });
 test('same person re-clicking claim is harmless; can claim several rows', () => {
   const { gs } = setup(); const s = gs.getState(); const [a, b] = s.rows.filter(r => !r.speaker);
@@ -46,9 +48,11 @@ test('same person re-clicking claim is harmless; can claim several rows', () => 
   const s2 = gs.claimRow(b.row, b.fp, 'Priya', '9876543210');
   assert.equal(s2.rows.filter(r => r.assignees.some(a => a.name === 'Priya')).length, 2);
 });
-test('pre-filled rows (from organisers) cannot be claimed', () => {
-  const { gs } = setup(); const r = gs.getState().rows[0];
-  assert.throws(() => gs.claimRow(r.row, r.fp, 'Priya', '9876543210'), /No slots left: taken by Asha Rao/);
+test('pre-filled rows (from organisers) can be joined, over the limit', () => {
+  const { gs, today } = setup(); const r = gs.getState().rows[0];
+  const s = gs.claimRow(r.row, r.fp, 'Priya', '9876543210');
+  assert.equal(today.grid[r.row-1][1], 'Asha Rao\n9000000001\nPriya 9876543210');
+  assert.equal(s.rows[0].over, 1);
 });
 test('release: only the claimer, and it clears both cells', () => {
   const { gs, today } = setup(); const r = openRow(gs.getState());
@@ -110,12 +114,9 @@ test('27-Sep layout: finds "( IND) Speaker Name" column and writes name + mobile
   assert.equal(sheet.grid[r.row - 1][2], 'Local B\n9000000012', 'Local Sahaja Yogi column untouched');
   const mine = after.rows.find(x => x.row === r.row);
   assert.deepEqual(mine.assignees.map(a => [a.name, a.phone]), [['Priya', '9876543210']]);
-  assert.throws(() => gs.claimRow(r.row, r.fp, 'Ravi', '9123456789'), /No slots left: taken by Priya\./);
   assert.throws(() => gs.releaseRow(r.row, r.fp, 'Ravi'), /Your name is not on this row/);
   gs.releaseRow(r.row, r.fp, 'priya');
   assert.equal(sheet.grid[r.row - 1][1], '');
-  const first = gs.getState().rows[0];
-  assert.throws(() => gs.claimRow(first.row, first.fp, 'Ravi', '9123456789'), /No slots left: taken by Asha Rao\./);
 });
 test('two columns matching the speaker words is an error, not a guess', () => {
   const g = sep27Grid(); g[0][2] = 'Backup Speaker Name';
@@ -169,7 +170,8 @@ test('slots: people fill a school up to its total, then it is full', () => {
   const s = gs.claimRow(r.row, r.fp, 'Asha', '9000000002');
   assert.equal(sheet.grid[1][1], 'Priya 9876543210\nRavi 9123456789\nAsha 9000000002');
   assert.equal(byRow(s, 2).remaining, 0);
-  assert.throws(() => gs.claimRow(r.row, r.fp, 'Neha', '9000000003'), /No slots left: taken by Priya, Ravi, Asha\./);
+  const over = gs.claimRow(r.row, r.fp, 'Neha', '9000000003');     // a fourth person on a 3-place school
+  assert.deepEqual([byRow(over, 2).remaining, byRow(over, 2).over], [0, 1]);
 });
 test('slots: releasing removes only that person and keeps the others exactly', () => {
   const sheet = makeSheet('28-Sep', 8, slotsGrid());
@@ -199,9 +201,9 @@ test('slots: blank means 1, zero means closed, and no slots column means 1 each'
   const s = gs.getState();
   const w = byRow(s, 5);
   gs.claimRow(w.row, w.fp, 'Priya', '9876543210');
-  assert.throws(() => gs.claimRow(w.row, w.fp, 'Ravi', '9123456789'), /No slots left: taken by Priya\./);
+  assert.equal(byRow(gs.claimRow(w.row, w.fp, 'Ravi', '9123456789'), 5).over, 1, 'blank = 1 place, so Ravi is over');
   const v = byRow(s, 6);
-  assert.throws(() => gs.claimRow(v.row, v.fp, 'Ravi', '9123456789'), /This school has no slots/);
+  assert.throws(() => gs.claimRow(v.row, v.fp, 'Ravi', '9123456789'), /This school is closed \(its total is 0\)/);
   const plain = load([makeSheet('28-Sep', 9, screenshotGrid())], NOW).getState();
   assert.equal(plain.slotsHeader, '');
   assert.ok(plain.rows.every(r => r.total === 1));
@@ -282,16 +284,19 @@ test('30-Sep layout: a full day of claims only ever changes columns B and E', ()
   const r = sno => v.rows.find(x => x.cells[0] === sno);
   gs.claimRow(r('1').row, r('1').fp, 'Vol A', '9000000011');
   gs.claimRow(r('1').row, r('1').fp, 'Vol B', '9000000012'); // stale page, still joins
-  assert.throws(() => gs.claimRow(r('1').row, r('1').fp, 'Vol C', '9000000013'), /No slots left: taken by Vol A, Vol B\./);
+  assert.equal(sheet.grid[1][4], 0);
+  gs.claimRow(r('1').row, r('1').fp, 'Vol C', '9000000013');   // over the limit: added, still-needed stays 0
   assert.equal(sheet.grid[1][4], 0);
   gs.releaseRow(r('1').row, r('1').fp, 'vol a');
-  assert.equal(sheet.grid[1][1], 'Vol B 9000000012');
+  assert.equal(sheet.grid[1][1], 'Vol B 9000000012\nVol C 9000000013');
+  assert.equal(sheet.grid[1][4], 0);
+  gs.releaseRow(r('1').row, r('1').fp, 'vol c');
   assert.equal(sheet.grid[1][4], 1);
   gs.claimRow(r('4').row, r('4').fp, 'Vol D', '9000000014');
   assert.equal(sheet.grid[4][1], 'Neha Singh 9000000002\nVol D 9000000014');
   gs.claimRow(r('5').row, r('5').fp, 'Vol E', '9000000015');
   assert.equal(sheet.grid[5][1], 'Suresh\n\nVol E 9000000015');
-  assert.throws(() => gs.claimRow(r('6').row, r('6').fp, 'Vol F', '9000000016'), /No slots left: taken by 12 sessions\./);
+  assert.equal(gs.claimRow(r('6').row, r('6').fp, 'Vol F', '9000000016').rows.find(x => x.cells[0] === '6').over, 1);
   gs.claimRow(r('7').row, r('7').fp, 'Vol G', '9000000017');
   assert.equal(sheet.grid[7][4], 0);
   original.forEach((row, i) => row.forEach((c, j) => { if (j !== 1 && j !== 4) assert.equal(sheet.grid[i][j], c, `cell ${i},${j} changed`); }));
@@ -424,4 +429,61 @@ test('mobile: exactly 10 digits, +91 / 91 / 0 prefix and spacing accepted, store
     '+91 98765 43210': '9876543210', '+919876543210': '9876543210', '919876543210': '9876543210',
     '09876543210': '9876543210', ' (987) 654-3210 ': '9876543210' };
   for (const [input, want] of Object.entries(ok)) assert.equal(gs.cleanMobile_(input), want, input);
+});
+
+// ---- Registering other people ----
+test('others: a person can register a list of others, with or without themselves', () => {
+  const sheet = makeSheet('28-Sep', 70, slotsGrid());
+  const gs = load([sheet], NOW);
+  const r = byRow(gs.getState(), 2);                                   // School X, 3 places
+  gs.claimRow(r.row, r.fp, 'Priya', '9876543210', undefined, 'Ravi Kumar 91234 56789\nAsha, +91 90000 00002', true);
+  assert.equal(sheet.grid[1][1], 'Priya 9876543210\nRavi Kumar 9123456789 (via Priya)\nAsha 9000000002 (via Priya)');
+  const s = gs.getState();
+  assert.deepEqual(byRow(s, 2).assignees.map(a => [a.name, a.phone, a.by]),
+    [['Priya', '9876543210', ''], ['Ravi Kumar', '9123456789', 'Priya'], ['Asha', '9000000002', 'Priya']]);
+  assert.equal(sheet.grid[1][3], 0, 'still-needed updated for all three');
+  const w = byRow(s, 5);                                               // leader not going: only others
+  gs.claimRow(w.row, w.fp, 'Priya', '', undefined, 'Neha 9000000003', false);
+  assert.equal(sheet.grid[4][1], 'Neha 9000000003 (via Priya)');
+});
+test('others: going over the limit is allowed and counted', () => {
+  const sheet = makeSheet('28-Sep', 71, slotsGrid());
+  const gs = load([sheet], NOW);
+  const r = byRow(gs.getState(), 3);                                   // School Y: 2 places, 1 organiser entry
+  const s = gs.claimRow(r.row, r.fp, 'Priya', '9876543210', undefined, 'Ravi 9123456789\nAsha 9000000002', true);
+  assert.deepEqual([byRow(s, 3).assignees.length, byRow(s, 3).remaining, byRow(s, 3).over], [4, 0, 2]);
+  assert.equal(sheet.grid[2][3], 0);
+});
+test('others: bad lines, duplicates and nobody-to-add are handled before anything is written', () => {
+  const sheet = makeSheet('28-Sep', 72, slotsGrid());
+  const gs = load([sheet], NOW);
+  const r = byRow(gs.getState(), 2);
+  assert.throws(() => gs.claimRow(r.row, r.fp, 'Priya', '9876543210', undefined, 'Ravi 12345', true), /Line 1 of "Register others"/);
+  assert.throws(() => gs.claimRow(r.row, r.fp, 'Priya', '9876543210', undefined, 'Ravi 9123456789\n9000000002', true), /Line 2 of "Register others"/);
+  assert.throws(() => gs.claimRow(r.row, r.fp, 'Priya', '', undefined, '', false), /Nobody to register/);
+  assert.equal(sheet.grid[1][1], '', 'nothing written');
+  gs.claimRow(r.row, r.fp, 'Priya', '9876543210', undefined, 'priya 9876543210\nRavi 9123456789\nravi 9123456789', true);
+  assert.equal(sheet.grid[1][1], 'Priya 9876543210\nRavi 9123456789 (via Priya)', 'each person once');
+});
+test('others: a time clash for anyone in the list stops the whole registration', () => {
+  const sheet = makeSheet('28-Sep', 73, timeGrid());
+  const gs = load([sheet], NOW);
+  const v = gs.getState(); const r = n => v.rows.find(x => x.cells[0] === String(n));
+  gs.claimRow(r(1).row, r(1).fp, 'Ravi', '9123456789');              // Ravi is on School A at 10:00
+  assert.throws(() => gs.claimRow(r(2).row, r(2).fp, 'Priya', '9876543210', undefined, 'Asha 9000000002\nRavi 9123456789', true),
+    /Time clash: Ravi is already on S No 1 \(School A\) at 10\.00 A\.M on 28-Sep\. Nobody was added/);
+  assert.equal(sheet.grid[2][1], '', 'nobody added');
+});
+test('others: the registrar can remove people they added; others cannot', () => {
+  const sheet = makeSheet('28-Sep', 74, slotsGrid());
+  const gs = load([sheet], NOW);
+  const r = byRow(gs.getState(), 2);
+  gs.claimRow(r.row, r.fp, 'Priya', '9876543210', undefined, 'Ravi 9123456789\nAsha 9000000002', true);
+  assert.throws(() => gs.removePerson(r.row, r.fp, 'Neha', 'Ravi'), /Only Ravi or Priya can remove Ravi/);
+  gs.removePerson(r.row, r.fp, 'priya', 'Ravi');
+  assert.equal(sheet.grid[1][1], 'Priya 9876543210\nAsha 9000000002 (via Priya)');
+  gs.removePerson(r.row, r.fp, 'Asha', 'Asha');                        // people can remove themselves
+  assert.equal(sheet.grid[1][1], 'Priya 9876543210');
+  assert.throws(() => gs.removePerson(r.row, r.fp, 'Priya', 'Nobody'), /Nobody is not on this row/);
+  assert.equal(sheet.grid[1][3], 2);
 });

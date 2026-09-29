@@ -31,7 +31,8 @@ var CONFIG = {
 
   CACHE_SECONDS: 5,    // shared read cache so many viewers don't hammer the sheet
   LOCK_WAIT_MS: 10000, // how long a claim waits for its turn
-  MAX_NAME_LENGTH: 60
+  MAX_NAME_LENGTH: 60,
+  MAX_PEOPLE_PER_CLAIM: 30
 };
 
 function doGet() {
@@ -58,60 +59,74 @@ function getState(tabName) {
   return state;
 }
 
-function claimRow(rowNum, fingerprint, name, mobile, tabName) {
-  return mutate_('claim', rowNum, fingerprint, name, mobile, tabName);
+/**
+ * Adds people to a school. By default that's the person using the page; they
+ * can also list others ('Name 98xxxxxxxx' per line), with or without
+ * themselves. Others are written as 'Name mobile (via Registrar)'. A school may
+ * go over its total (the extra people show in red); a total of 0 means closed.
+ */
+function claimRow(rowNum, fingerprint, name, mobile, tabName, othersText, includeSelf) {
+  return mutate_({ action: 'claim', rowNum: rowNum, fingerprint: fingerprint, name: name, mobile: mobile,
+    tabName: tabName, othersText: othersText, includeSelf: includeSelf !== false });
 }
 
+/** Takes the person using the page off a school. */
 function releaseRow(rowNum, fingerprint, name, tabName) {
-  return mutate_('release', rowNum, fingerprint, name, '', tabName);
+  return mutate_({ action: 'remove', rowNum: rowNum, fingerprint: fingerprint, name: name, target: name, tabName: tabName });
 }
 
-function mutate_(action, rowNum, fingerprint, rawName, rawMobile, tabName) {
-  var name = cleanName_(rawName);
-  var mobile = action === 'claim' ? cleanMobile_(rawMobile) : '';
-  rowNum = Number(rowNum);
+/** Takes someone the person using the page registered (or themselves) off a school. */
+function removePerson(rowNum, fingerprint, name, personName, tabName) {
+  return mutate_({ action: 'remove', rowNum: rowNum, fingerprint: fingerprint, name: name, target: personName, tabName: tabName });
+}
+
+function mutate_(o) {
+  var me = cleanName_(o.name);
+  var rowNum = Number(o.rowNum);
   if (!(rowNum % 1 === 0 && rowNum > CONFIG.HEADER_ROW)) throw new Error('Invalid row.');
+  var adding = o.action === 'claim' ? peopleToAdd_(me, o) : [];
 
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(CONFIG.LOCK_WAIT_MS)) throw new Error('Lots of people are claiming right now. Please try again.');
   var day;
   try {
-    day = resolveDay_(openSpreadsheet_(), tabName);
+    day = resolveDay_(openSpreadsheet_(), o.tabName);
     var sheet = day.sheet;
     var tab = readTab_(sheet);
     var row = tab.rows.filter(function (r) { return r.row === rowNum; })[0];
     if (!row) throw new Error('That row no longer exists. The list has been refreshed.');
-    if (row.fp !== fingerprint) throw new Error('That row was edited or moved since you loaded it. Please check it and try again.');
+    if (row.fp !== o.fingerprint) throw new Error('That row was edited or moved since you loaded it. Please check it and try again.');
+    var onRow = function (n) { return row.assignees.some(function (a) { return sameName_(a.name, n); }); };
 
-    var mine = -1;
-    row.assignees.forEach(function (a, i) { if (mine < 0 && sameName_(a.name, name)) mine = i; });
-    if (action === 'claim') {
-      if (mine < 0) { // already on it = nothing to do
-        if (row.remaining <= 0) {
-          throw new Error(row.assignees.length ? 'No slots left: taken by ' + names_(row.assignees) + '.' : 'This school has no slots.');
-        }
-        var clash = row.start && tab.rows.filter(function (o) {
-          return o.row !== rowNum && o.start === row.start &&
-            o.assignees.some(function (a) { return sameName_(a.name, name); });
+    var people = row.assignees.map(function (a) { return a.text; });
+    if (o.action === 'claim') {
+      if (row.total <= 0) throw new Error('This school is closed (its total is 0).');
+      adding = adding.filter(function (p) { return !onRow(p.name); }); // already on it = nothing to do
+      adding.forEach(function (p) {
+        var clash = row.start && tab.rows.filter(function (x) {
+          return x.row !== rowNum && x.start === row.start &&
+            x.assignees.some(function (a) { return sameName_(a.name, p.name); });
         })[0];
         if (clash) {
-          throw new Error('Time clash: you are already on ' + describe_(tab, clash) + ' at ' + clash.timeText +
-            ' on ' + sheet.getName() + '. Release that first, or pick a different time.');
+          throw new Error('Time clash: ' + (p.self ? 'you are' : p.name + ' is') + ' already on ' + describe_(tab, clash) +
+            ' at ' + clash.timeText + ' on ' + sheet.getName() + '. Nobody was added. Release that first, or pick a different time.');
         }
-        var texts = row.assignees.map(function (a) { return a.text; }).concat([name + ' ' + mobile]);
-        writeText_(sheet, rowNum, tab.nameCol, joinPeople_(texts));
-      }
+      });
+      adding.forEach(function (p) { people.push(p.name + ' ' + p.mobile + (p.self ? '' : ' (via ' + me + ')')); });
     } else {
-      if (mine < 0) throw new Error('Your name is not on this row.');
-      var rest = joinPeople_(row.assignees.filter(function (_, i) { return i !== mine; })
-        .map(function (a) { return a.text; }));
-      if (rest) writeText_(sheet, rowNum, tab.nameCol, rest);
-      else sheet.getRange(rowNum, tab.nameCol).clearContent();
+      var idx = -1;
+      row.assignees.forEach(function (a, i) { if (idx < 0 && sameName_(a.name, o.target)) idx = i; });
+      if (idx < 0) throw new Error(sameName_(o.target, me) ? 'Your name is not on this row.' : o.target + ' is not on this row.');
+      var p = row.assignees[idx];
+      if (!sameName_(p.name, me) && !sameName_(p.by, me)) throw new Error('Only ' + p.name + (p.by ? ' or ' + p.by : '') + ' can remove ' + p.name + '.');
+      people.splice(idx, 1);
     }
+    var text = joinPeople_(people);
+    if (text) writeText_(sheet, rowNum, tab.nameCol, text);
+    else sheet.getRange(rowNum, tab.nameCol).clearContent();
     if (tab.remainingCol) {
-      var count = row.assignees.length + (action === 'claim' ? (mine < 0 ? 1 : 0) : -1);
       var cell = sheet.getRange(rowNum, tab.remainingCol);
-      if (!cell.getFormula()) cell.setValue(Math.max(0, row.total - count));
+      if (!cell.getFormula()) cell.setValue(Math.max(0, row.total - people.length));
     }
     SpreadsheetApp.flush();
     CacheService.getScriptCache().remove(cacheKey_(sheet));
@@ -121,6 +136,25 @@ function mutate_(action, rowNum, fingerprint, rawName, rawMobile, tabName) {
   var state = buildState_(day.sheet);
   state.days = day.days;
   return state;
+}
+
+/** Everyone a claim should add, each checked: [{name, mobile, self}]. */
+function peopleToAdd_(me, o) {
+  var list = [];
+  if (o.includeSelf) list.push({ name: me, mobile: cleanMobile_(o.mobile), self: true });
+  String(o.othersText || '').split('\n').forEach(function (line, i) {
+    line = line.trim();
+    if (!line) return;
+    var m = /^(.*?)[\s,:\-]*((?:\+?91|0)?[\d\s\-().]{10,})$/.exec(line);
+    if (!m || !m[1].trim()) throw new Error('Line ' + (i + 1) + ' of "Register others" should be a name then a 10-digit mobile, like "Ravi 9123456789".');
+    var mobile;
+    try { mobile = cleanMobile_(m[2]); } catch (e) { throw new Error('Line ' + (i + 1) + ' of "Register others" (' + line + '): ' + e.message); }
+    list.push({ name: cleanName_(m[1]), mobile: mobile, self: false });
+  });
+  if (!list.length) throw new Error('Nobody to register: tick "Include me" or add people under "Register others".');
+  if (list.length > CONFIG.MAX_PEOPLE_PER_CLAIM) throw new Error('Please register at most ' + CONFIG.MAX_PEOPLE_PER_CLAIM + ' people at a time.');
+  var seen = {};
+  return list.filter(function (p) { var k = norm_(p.name); if (seen[k]) return false; seen[k] = true; return true; });
 }
 
 /** The sheet this script is attached to, or SHEET_ID if it runs as a standalone script. */
@@ -205,6 +239,7 @@ function readTab_(sheet) {
     tIdxs.forEach(function (c) { if (!timeText && r[c].trim()) timeText = r[c].trim(); });
     rows.push({ row: CONFIG.HEADER_ROW + 1 + i, fp: fingerprint_(details), cells: r, speaker: speaker,
       assignees: assignees, total: total, remaining: Math.max(0, total - assignees.length),
+      over: Math.max(0, assignees.length - total),
       timeText: timeText, start: startTime_(timeText) });
   });
   return { headers: headers, nameCol: nIdx + 1, remainingCol: rIdx + 1,
@@ -235,9 +270,11 @@ function parseAssignees_(text) {
   if (cur.length) people.push(cur);
   return people.map(function (lines) {
     var joined = lines.join(' ');
+    var via = /\s*\(via ([^)]+)\)\s*$/i.exec(joined);
+    if (via) joined = joined.slice(0, via.index);
     var phone = joined.match(PHONE_);
     var name = joined.replace(PHONE_, '').replace(/[\s,:;\-]+$/, '').replace(/\s+/g, ' ').trim() || lines[0];
-    return { name: name, phone: phone ? phone[0].trim() : '', text: lines.join('\n') };
+    return { name: name, phone: phone ? phone[0].trim() : '', by: via ? via[1].trim() : '', text: lines.join('\n') };
   });
 }
 
@@ -279,10 +316,6 @@ function joinPeople_(texts) {
     if (!i) return t;
     return out + (PHONE_.test(texts[i - 1]) ? '\n' : '\n\n') + t;
   }, '');
-}
-
-function names_(assignees) {
-  return assignees.map(function (a) { return a.name; }).join(', ');
 }
 
 /** Short hash of a row's contents, so a claim can't land on a row that was edited or moved. */

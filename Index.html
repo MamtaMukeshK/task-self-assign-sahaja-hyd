@@ -29,6 +29,15 @@
   .who { font-weight:600; color:var(--fg); }
   .person { white-space:nowrap; }  /* name and number stay on one line; the column widens to fit */
   .person + .person { border-top:2px solid #9aa0a6; margin-top:6px; padding-top:6px; }
+  .person.extra { color:var(--err); }                      /* people beyond the school's total */
+  .overcount { color:var(--err); font-weight:700; }
+  tr.overrow td { background:#fdecea; }
+  .via { color:var(--muted); font-weight:400; }
+  button.warn { background:#fff; color:var(--err); border-color:var(--err); }
+  button.x { padding:0 7px; margin-left:8px; background:#fff; color:var(--err); border-color:var(--err); font-size:12px; }
+  #othersBox { flex-basis:100%; display:flex; flex-wrap:wrap; gap:8px; align-items:flex-start; }
+  #othersBox[hidden] { display:none; }
+  textarea { font:inherit; min-width:280px; min-height:64px; padding:6px 8px; border:1px solid var(--line); border-radius:6px; }
 </style>
 </head>
 <body>
@@ -37,7 +46,12 @@
   <label>Date <select id="day"></select></label>
   <label>Your name <input id="name" autocomplete="name" placeholder="e.g. Priya Shah"></label>
   <label>Mobile <input id="mobile" autocomplete="tel" inputmode="tel" placeholder="10 digits" maxlength="16"></label>
+  <label><input type="checkbox" id="showOthers"> Register others</label>
   <label><input type="checkbox" id="openOnly"> Open only</label>
+  <div id="othersBox" hidden>
+    <textarea id="others" placeholder="One person per line: name, then 10-digit mobile&#10;Ravi Kumar 9123456789&#10;Asha 9000000002"></textarea>
+    <label><input type="checkbox" id="includeMe" checked> Include me too</label>
+  </div>
   <span id="status"></span>
   <span id="updated"></span>
   <span id="note"></span>
@@ -63,6 +77,28 @@
     });
   });
   openOnly.addEventListener('change', render);
+  var showOthers = document.getElementById('showOthers');
+  var othersBox = document.getElementById('othersBox');
+  var othersInput = document.getElementById('others');
+  var includeMe = document.getElementById('includeMe');
+  try { othersInput.value = localStorage.getItem('selfAssignOthers') || ''; } catch (e) {}
+  othersInput.addEventListener('input', function () { try { localStorage.setItem('selfAssignOthers', othersInput.value); } catch (e) {} render(); });
+  showOthers.addEventListener('change', function () { othersBox.hidden = !showOthers.checked; render(); });
+  includeMe.addEventListener('change', render);
+  function othersText() { return showOthers.checked ? othersInput.value : ''; }
+  function meIncluded() { return !showOthers.checked || includeMe.checked; }
+  // Same line rule as the script: a name, then a 10-digit mobile.
+  function checkOthers(text) {
+    var lines = text.split('\n'), n = 0;
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line) continue;
+      var m = /^(.*?)[\s,:\-]*((?:\+?91|0)?[\d\s\-().]{10,})$/.exec(line);
+      if (!m || !m[1].trim() || !tenDigits(m[2])) return 'Line ' + (i + 1) + ' of "Register others" should be a name then a 10-digit mobile, like "Ravi 9123456789".';
+      n++;
+    }
+    return n;
+  }
 
   function myName() { return nameInput.value.replace(/\s+/g, ' ').trim(); }
   // Same rule as the script: 10 digits, optionally after +91 / 91 / 0; spaces and dashes ignored.
@@ -83,7 +119,7 @@
         shownSeq = mySeq; state = s; busyRow = null;
         render();
         document.getElementById('updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
-        if (okMsg) setStatus(okMsg);
+        if (okMsg) setStatus(typeof okMsg === 'function' ? okMsg(s) : okMsg);
       })
       .withFailureHandler(function (err) {
         busyRow = null;
@@ -108,15 +144,26 @@
 
   function refresh() { call('getState', [pickedDay]); }
 
-  function act(fn, r, verb) {
+  function act(fn, r, verb, target) {
     if (!myName()) { setStatus('Please enter your name first.', true); nameInput.focus(); return; }
     var claiming = fn === 'claimRow';
-    if (claiming && !tenDigits(mobileInput.value)) { setStatus('Please enter a 10-digit mobile number.', true); mobileInput.focus(); return; }
+    if (claiming && meIncluded() && !tenDigits(mobileInput.value)) { setStatus('Please enter a 10-digit mobile number.', true); mobileInput.focus(); return; }
+    if (claiming) {
+      var n = checkOthers(othersText());
+      if (typeof n === 'string') { setStatus(n, true); othersInput.focus(); return; }
+      if (!n && !meIncluded()) { setStatus('Nobody to register: tick "Include me too" or add people under "Register others".', true); return; }
+    }
     busyRow = r.row;
     render();
     setStatus(verb + '…');
-    var args = claiming ? [r.row, r.fp, myName(), mobileInput.value, state.tab] : [r.row, r.fp, myName(), state.tab];
-    call(fn, args, claiming ? 'Claimed — highlighted in green.' : 'Released.');
+    var args = claiming ? [r.row, r.fp, myName(), mobileInput.value, state.tab, othersText(), meIncluded()]
+      : fn === 'removePerson' ? [r.row, r.fp, myName(), target, state.tab]
+      : [r.row, r.fp, myName(), state.tab];
+    call(fn, args, function (s) {
+      if (!claiming) return fn === 'removePerson' ? 'Removed ' + target + '.' : 'Released.';
+      var now = s.rows.filter(function (x) { return x.row === r.row; })[0];
+      return 'Registered.' + (now && now.over ? ' Note: this school is now over its limit by ' + now.over + ' (shown in red).' : '');
+    });
   }
 
   // Web addresses in a cell become links (map links read "Open map"); the rest stays plain text.
@@ -166,33 +213,61 @@
     state.rows.forEach(function (r) { if (r.start && isMine(r) && !myStarts[r.start]) myStarts[r.start] = ((state.headers[0] || '').trim() + ' ' + r.cells[0]).trim() || ('row ' + r.row); });
     state.rows.forEach(function (r) {
       var mine = isMine(r);
-      var clashWith = !mine && r.start ? myStarts[r.start] : '';
+      var justMe = meIncluded() && !othersText().trim();
+      var clashWith = justMe && !mine && r.start ? myStarts[r.start] : '';
       var hasRoom = r.remaining > 0;
       if (hasRoom) open++;
       if (openOnly.checked && !hasRoom && !mine) return;
       var tr = t.insertRow();
-      tr.className = mine ? 'mine' : (hasRoom ? '' : 'taken');
+      tr.className = mine ? 'mine' : r.over ? 'overrow' : (hasRoom ? '' : 'taken');
       var btnCell = tr.insertCell();
-      if (hasRoom && clashWith) {
+      var addButton = function (label, cls, handler) {
+        var b = document.createElement('button');
+        b.textContent = label;
+        if (cls) b.className = cls;
+        b.disabled = busyRow !== null;
+        b.onclick = handler;
+        btnCell.appendChild(b);
+      };
+      if (r.total <= 0) {
+        btnCell.textContent = 'Closed';
+      } else if (clashWith) {
         var note = document.createElement('span');
         note.className = 'clash';
         note.textContent = 'Clashes with ' + clashWith + ' (' + r.start + ')';
         btnCell.appendChild(note);
-      } else if (hasRoom || mine) {
-        var b = document.createElement('button');
-        b.textContent = mine ? 'Release' : 'Claim';
-        if (mine) b.className = 'release';
-        b.disabled = busyRow !== null;
-        b.onclick = function () { act(mine ? 'releaseRow' : 'claimRow', r, mine ? 'Releasing' : 'Claiming'); };
-        btnCell.appendChild(b);
+      } else if (!mine || !justMe) {
+        // A full school can still take more; the extra people show in red.
+        addButton(hasRoom ? 'Claim' : 'Claim (full)', hasRoom ? '' : 'warn', function () { act('claimRow', r, 'Registering'); });
       }
-      tr.insertCell().textContent = r.remaining + ' of ' + r.total;
+      if (mine) addButton('Release', 'release', function () { act('releaseRow', r, 'Releasing'); });
+      var slots = tr.insertCell();
+      if (r.over) { slots.className = 'overcount'; slots.textContent = 'Over by ' + r.over + ' (needs ' + r.total + ')'; }
+      else slots.textContent = r.remaining + ' of ' + r.total;
       var who = tr.insertCell();
       who.className = 'who';
       r.assignees.forEach(function (a, i) {
         var line = document.createElement('div');
         line.className = 'person';
-        line.textContent = (r.assignees.length > 1 ? (i + 1) + '. ' : '') + (a.phone ? a.name + ' · ' + a.phone : a.name);
+        var extra = i >= r.total;
+        if (extra) line.className += ' extra';
+        line.textContent = (r.assignees.length > 1 ? (i + 1) + '. ' : '') + (a.phone ? a.name + ' · ' + a.phone : a.name) +
+          (extra ? ' (over limit)' : '');
+        if (a.by) {
+          var via = document.createElement('span');
+          via.className = 'via';
+          via.textContent = ' · via ' + a.by;
+          line.appendChild(via);
+        }
+        if (me && a.by && same(a.by, me) && !same(a.name, me)) {
+          var x = document.createElement('button');
+          x.className = 'x';
+          x.textContent = '✕';
+          x.title = 'Remove ' + a.name;
+          x.disabled = busyRow !== null;
+          x.onclick = function () { act('removePerson', r, 'Removing', a.name); };
+          line.appendChild(x);
+        }
         who.appendChild(line);
       });
       r.cells.filter(shown).forEach(function (c) {
