@@ -226,9 +226,12 @@
   }
 
   var daySelect = document.getElementById('day');
-  var pickedDay = ''; // '' = today (or the next day with a tab)
+  var pickedDay = ''; // '' = today (or the next day with a tab); set only when someone picks another date
   daySelect.addEventListener('change', function () {
-    pickedDay = daySelect.value;
+    // Picking the default day (today, or the next day once today's slots are all over) means
+    // "always the default", so a page left open moves on by itself.
+    var chosen = ((state && state.days) || []).filter(function (d) { return d.name === daySelect.value; })[0];
+    pickedDay = chosen && chosen.name === state.defaultDay ? '' : daySelect.value;
     shownSeq = ++seq; // ignore answers still on their way for the previous day
     state = null; busyRow = null;
     document.getElementById('grid').textContent = '';
@@ -289,7 +292,6 @@
 
   function render() {
     if (!state) return;
-    pickedDay = state.tab;
     var days = state.days || [];
     if (daySelect.dataset.list !== JSON.stringify(days)) {
       daySelect.dataset.list = JSON.stringify(days);

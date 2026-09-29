@@ -612,3 +612,19 @@ test('end times read from the real free-text formats in the sheet', () => {
     '2pmto3pm': '15:00', '8:30am-9:40am': '09:40', '1.30 - 2.30pm': '14:30', 'to be confirmed': '', '': '' };
   for (const [text, want] of Object.entries(cases)) assert.equal(gs.endTime_(text), want, text);
 });
+
+// ---- Default day: today, unless every timed slot today has ended ----
+test('default day: next day once all of today\'s timed slots are over; untimed ones do not hold it back', () => {
+  const g = rows => [['S No', 'Speaker Name', 'Institution name', 'Time']].concat(rows.map((t, i) => [String(i + 1), '', 'School ' + i, t]));
+  const at = (hh, mm) => new Date(Date.UTC(2026, 8, 28, hh, mm));   // 28 Sep (test clock, UTC)
+  const tabs = rows => [makeSheet('27-Sep', 1, g(rows)), makeSheet('28-Sep', 2, g(rows)), makeSheet('29-Sep', 3, g(['10:00']))];
+  const today = ['9.00 AM to 10.00 AM', '2pm to 3pm', 'to be confirmed', ''];
+  assert.equal(load(tabs(today), at(14, 30)).getState().tab, '28-Sep', '2pm slot still running');
+  const s = load(tabs(today), at(15, 0)).getState();
+  assert.deepEqual([s.tab, s.defaultDay], ['29-Sep', '29-Sep'], 'all timed slots over -> next day');
+  const viewToday = load(tabs(today), at(15, 0)).getState('28-Sep');
+  assert.deepEqual([viewToday.tab, viewToday.pastDay, viewToday.rows.filter(r => r.past).length], ['28-Sep', false, 2], 'today can still be viewed');
+  assert.equal(load(tabs(['to be confirmed', '']), at(23, 0)).getState().tab, '28-Sep', 'no timed slots: stay on today');
+  const noNext = [makeSheet('28-Sep', 2, g(today))];
+  assert.equal(load(noNext, at(23, 0)).getState().tab, '28-Sep', 'no later day: stay on today');
+});

@@ -51,20 +51,26 @@ function doGet() {
 function getState(tabName) {
   var ss = openSpreadsheet_();
   var day = resolveDay_(ss, tabName);
-  var cache = CacheService.getScriptCache();
-  var key = cacheKey_(day.sheet);
-  var hit = cache.get(key);
-  var state = hit ? JSON.parse(hit) : buildState_(day.sheet);
-  if (!hit) {
-    try {
-      cache.put(key, JSON.stringify(state), CONFIG.CACHE_SECONDS);
-    } catch (e) {
-      // Value over the 100 KB cache limit: just serve uncached.
-    }
-  }
+  var state = cachedState_(day.sheet);
   state.days = day.days;
+  state.defaultDay = day.defaultDay;
   state.speakers = speakerList_(ss);
   return markPast_(state, day);
+}
+
+/** A day's rows, from the shared cache when fresh (a copy, safe to annotate). */
+function cachedState_(sheet) {
+  var cache = CacheService.getScriptCache();
+  var key = cacheKey_(sheet);
+  var hit = cache.get(key);
+  if (hit) return JSON.parse(hit);
+  var state = buildState_(sheet);
+  try {
+    cache.put(key, JSON.stringify(state), CONFIG.CACHE_SECONDS);
+  } catch (e) {
+    // Value over the 100 KB cache limit: just serve uncached.
+  }
+  return JSON.parse(JSON.stringify(state));
 }
 
 /**
@@ -149,6 +155,7 @@ function mutate_(o) {
   }
   var state = buildState_(day.sheet);
   state.days = day.days;
+  state.defaultDay = day.defaultDay;
   state.speakers = speakerList_(ss);
   return markPast_(state, day);
 }
@@ -292,24 +299,33 @@ function listDays_(ss) {
 var MONTHS_ = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 
 /**
- * The day tab the person picked, or today's (else the next one; else the
- * latest past one) when none was picked, plus what "now" is for greying out
- * slots that have ended.
+ * The day tab the person picked, or the default when none was picked: today,
+ * unless every timed slot today has already ended, then the next day; with
+ * no tab for today, the next day; with only past days, the latest one. Also
+ * returns what "now" is, for greying out slots that have ended.
  */
 function resolveDay_(ss, tabName) {
   var now = Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'HH:mm');
   if (CONFIG.TAB_NAME_OVERRIDE) {
     var forced = ss.getSheetByName(CONFIG.TAB_NAME_OVERRIDE);
     if (!forced) throw new Error('Tab "' + CONFIG.TAB_NAME_OVERRIDE + '" not found.');
-    return { sheet: forced, past: false, isToday: false, now: now, days: [{ name: forced.getName(), label: forced.getName(), past: false }] };
+    return { sheet: forced, past: false, isToday: false, now: now, defaultDay: forced.getName(), days: [{ name: forced.getName(), label: forced.getName(), past: false }] };
   }
   var days = listDays_(ss);
   if (!days.length) throw new Error('There are no day tabs (named like 30-Sep) yet.');
   var upcoming = days.filter(function (d) { return !d.past; });
-  var pick = tabName ? days.filter(function (d) { return d.name === tabName; })[0] : (upcoming[0] || days[days.length - 1]);
+  var def = upcoming[0] || days[days.length - 1];
+  if (def.isToday && upcoming[1] && dayIsOver_(def.sheet, now)) def = upcoming[1];
+  var pick = tabName ? days.filter(function (d) { return d.name === tabName; })[0] : def;
   if (!pick) throw new Error('"' + tabName + '" is not available any more (it may have been renamed). Please pick another date.');
-  return { sheet: pick.sheet, past: pick.past, isToday: pick.isToday, now: now,
-    days: days.map(function (d) { return { name: d.name, label: d.label, past: d.past }; }) };
+  return { sheet: pick.sheet, past: pick.past, isToday: pick.isToday, now: now, defaultDay: def.name,
+    days: days.map(function (d) { return { name: d.name, label: d.label, past: d.past, today: d.isToday }; }) };
+}
+
+/** True when today's tab has timed slots and all of them have ended (untimed ones don't count). */
+function dayIsOver_(sheet, now) {
+  var timed = cachedState_(sheet).rows.filter(function (r) { return r.end; });
+  return timed.length > 0 && timed.every(function (r) { return now >= r.end; });
 }
 
 /** Marks a past day, and today's slots whose end time has passed, as view-only. */

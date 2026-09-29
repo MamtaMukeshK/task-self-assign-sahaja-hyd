@@ -79,6 +79,12 @@ _Last updated: 2026-09-27_
   mutate_ refuses any change on a past day or ended slot. Page greys them out ("Past"/"Ended"), hides
   Register others on past days, and "Open only" hides past rows. 58 tests.
 
+- 2026-09-29: default day = today, or the next day once every timed slot today has ended (untimed rows
+  ignored; needs >= 1 timed row; stays on today if there is no later tab). state.defaultDay tells the page.
+  The page no longer pins the first day shown, so an open page follows the default (e.g. past midnight)
+  unless another date was picked; picking the default entry = follow it. 61 tests.
+  If a deployed page opens on a fixed date, check TAB_NAME_OVERRIDE is '' in Code.gs.
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.

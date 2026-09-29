@@ -326,3 +326,57 @@ test('past day and ended slots in real browser: greyed out, no buttons, hidden b
     assert.deepEqual(errs, []);
   } finally { await browser.close(); }
 });
+
+test('opens on today, and a page left open moves to the new today after midnight', { timeout: 60000 }, async () => {
+  const grid = () => [['S No', 'Speaker Name', 'Institution name'], ['1', '', 'School A']];
+  const clock = new Date(Date.UTC(2026, 8, 28, 23, 50));         // 28 Sep, 23:50
+  const gs = load(['27-Sep', '28-Sep', '29-Sep', '30-Sep'].map((n, i) => makeSheet(n, i + 1, grid())), clock);
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
+  try {
+    const open = async () => {
+      const p = await (await browser.newContext()).newPage();
+      p.setDefaultTimeout(8000);
+      await p.exposeFunction('gsCall', (fn, a) => { try { return { ok: JSON.parse(JSON.stringify(gs[fn](...a))) }; } catch (e) { return { err: e.message }; } });
+      await p.addInitScript(SHIM);
+      await p.route('http://app.test/', r => r.fulfill({ contentType: 'text/html', body: html }));
+      await p.goto('http://app.test/');
+      return p;
+    };
+    const p = await open(), q = await open();
+    await p.waitForSelector('text=Day: 28-Sep');
+    assert.equal(await p.inputValue('#day'), '28-Sep', 'opens on today, not the earlier past tab');
+    await q.waitForSelector('text=Day: 28-Sep');
+    await q.selectOption('#day', '30-Sep');                        // someone deliberately picks another date
+    await q.waitForSelector('text=Day: 30-Sep');
+
+    clock.setTime(Date.UTC(2026, 8, 29, 0, 5));                    // midnight passes
+    for (const page of [p, q]) await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await p.waitForSelector('text=Day: 29-Sep');
+    assert.equal(await p.inputValue('#day'), '29-Sep');
+    assert.match(await p.locator('#day option:checked').textContent(), /\(today\)/);
+    await q.waitForTimeout(500);
+    assert.equal(await q.inputValue('#day'), '30-Sep', 'a date picked on purpose stays');
+  } finally { await browser.close(); }
+});
+
+test('when today is over the page opens on the next day, and today can still be picked to look at', { timeout: 60000 }, async () => {
+  const grid = t => [['S No', 'Speaker Name', 'Institution name', 'Time'], ['1', '', 'School A', t]];
+  const clock = new Date(Date.UTC(2026, 8, 28, 16, 0));           // 28 Sep 16:00, after the 2-3pm slot
+  const gs = load([makeSheet('28-Sep', 1, grid('2pm to 3pm')), makeSheet('29-Sep', 2, grid('10:00'))], clock);
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
+  try {
+    const p = await (await browser.newContext()).newPage();
+    p.setDefaultTimeout(8000);
+    await p.exposeFunction('gsCall', (fn, a) => { try { return { ok: JSON.parse(JSON.stringify(gs[fn](...a))) }; } catch (e) { return { err: e.message }; } });
+    await p.addInitScript(SHIM);
+    await p.route('http://app.test/', r => r.fulfill({ contentType: 'text/html', body: html }));
+    await p.goto('http://app.test/');
+    await p.waitForSelector('text=Day: 29-Sep');
+    await p.selectOption('#day', '28-Sep');
+    await p.waitForSelector('text=Day: 28-Sep');
+    await p.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));   // a refresh
+    await p.waitForTimeout(500);
+    assert.equal(await p.inputValue('#day'), '28-Sep', 'stays on today when picked on purpose');
+    assert.match(await p.locator('#grid tr').nth(1).textContent(), /Ended/);
+  } finally { await browser.close(); }
+});
