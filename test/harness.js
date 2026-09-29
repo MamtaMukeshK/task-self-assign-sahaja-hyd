@@ -11,11 +11,12 @@ function formatDate(d, tz, f) { // tz ignored: harness runs in UTC
     EEE: DAY[d.getUTCDay()] }[t]));
 }
 function makeSheet(name, id, grid) {
-  const g = grid.map(r => r.slice()); let maxCols = Math.max(...g.map(r => r.length));
+  const g = grid.map(r => r.slice()); let maxCols = Math.max(1, ...g.map(r => r.length));
   const cell = (r, c) => (g[r-1] && g[r-1][c-1] != null) ? String(g[r-1][c-1]) : '';
   const sheet = {
     grid: g, writes: 0,
     getName: () => name, getSheetId: () => id, getMaxColumns: () => maxCols,
+    insertColumnsAfter: (after, n) => { maxCols += n; },
     getLastRow: () => { for (let r = g.length; r > 0; r--) if (g[r-1].some(v => v !== '')) return r; return 0; },
     getLastColumn: () => { let m = 0; g.forEach(r => r.forEach((v, i) => { if (v !== '') m = Math.max(m, i+1); })); return m; },
     getRange: (r, c, nr = 1, nc = 1) => {
@@ -25,6 +26,7 @@ function makeSheet(name, id, grid) {
         getDisplayValues: () => Array.from({length: nr}, (_, i) => Array.from({length: nc}, (_, j) => cell(r+i, c+j))),
         setNumberFormat: f => { rng.fmt = f; return rng; },
         getFormula: () => { const v = cell(r, c); return v.startsWith('=') ? v : ''; },
+        setValues: vals => { vals.forEach((row, i) => row.forEach((v, j) => { while (g.length < r + i) g.push([]); g[r - 1 + i][c - 1 + j] = v; })); sheet.writes++; return rng; },
         setValue: v => { if (rng.fmt !== '@' && /^=/.test(v)) throw new Error('formula written'); set(v); return rng; },
         clearContent: () => { set(''); return rng; }
       };
@@ -41,11 +43,13 @@ function fakeDate(now) {
 function load(sheets, now) {
   const store = {};
   const ss = { getSheets: () => sheets, getSheetByName: n => sheets.find(s => s.getName() === n) || null,
+    // A new Google tab has 26 columns.
+    insertSheet: n => { const s = makeSheet(n, 900 + sheets.length, [Array(26).fill('')]); sheets.push(s); return s; },
     getSpreadsheetTimeZone: () => 'UTC' };
   const ctx = {
     SpreadsheetApp: { openById: id => ({ ...ss, openedById: id }), getActiveSpreadsheet: () => ss, flush: () => {} },
     LockService: { getScriptLock: () => ({ tryLock: () => true, releaseLock: () => {} }) },
-    CacheService: { getScriptCache: () => ({ get: k => store[k] || null, put: (k, v) => { store[k] = v; }, remove: k => { delete store[k]; } }) },
+    CacheService: { getScriptCache: () => ({ get: k => store[k] || null, put: (k, v) => { store[k] = v; }, remove: k => { delete store[k]; }, removeAll: ks => ks.forEach(k => { delete store[k]; }) }) },
     Utilities: { formatDate: (d, tz, f) => formatDate(d, tz, f), DigestAlgorithm: { MD5: 'md5' }, Charset: { UTF_8: 'utf8' },
       computeDigest: (a, s) => crypto.createHash('md5').update(s, 'utf8').digest(), base64Encode: b => Buffer.from(b).toString('base64') },
     HtmlService: {}, JSON, Date: fakeDate(now), String, Number, Math, Error, _cache: store

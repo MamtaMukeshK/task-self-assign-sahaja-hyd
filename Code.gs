@@ -32,7 +32,13 @@ var CONFIG = {
   CACHE_SECONDS: 5,    // shared read cache so many viewers don't hammer the sheet
   LOCK_WAIT_MS: 10000, // how long a claim waits for its turn
   MAX_NAME_LENGTH: 60,
-  MAX_PEOPLE_PER_CLAIM: 30
+  MAX_PEOPLE_PER_CLAIM: 30,
+  // Tab holding the list of speakers (name + mobile) offered on the page. Found
+  // by name ('Speaker' or 'Speakers'); created if missing. Everyone registered
+  // through the page is added to it (or has their mobile filled in).
+  SPEAKERS_TAB_NAMES: ['speaker', 'speakers'],
+  SPEAKERS_NEW_TAB_NAME: 'Speakers',
+  SPEAKERS_MOBILE_HEADER: 'Mobile'
 };
 
 function doGet() {
@@ -43,7 +49,8 @@ function doGet() {
 
 /** Called by the page: the picked day's rows (today's if none) plus who holds each. */
 function getState(tabName) {
-  var day = resolveDay_(openSpreadsheet_(), tabName);
+  var ss = openSpreadsheet_();
+  var day = resolveDay_(ss, tabName);
   var cache = CacheService.getScriptCache();
   var key = cacheKey_(day.sheet);
   var hit = cache.get(key);
@@ -56,6 +63,7 @@ function getState(tabName) {
     }
   }
   state.days = day.days;
+  state.speakers = speakerList_(ss);
   return state;
 }
 
@@ -88,9 +96,10 @@ function mutate_(o) {
 
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(CONFIG.LOCK_WAIT_MS)) throw new Error('Lots of people are claiming right now. Please try again.');
-  var day;
+  var day, ss;
   try {
-    day = resolveDay_(openSpreadsheet_(), o.tabName);
+    ss = openSpreadsheet_();
+    day = resolveDay_(ss, o.tabName);
     var sheet = day.sheet;
     var tab = readTab_(sheet);
     var row = tab.rows.filter(function (r) { return r.row === rowNum; })[0];
@@ -128,13 +137,15 @@ function mutate_(o) {
       var cell = sheet.getRange(rowNum, tab.remainingCol);
       if (!cell.getFormula()) cell.setValue(Math.max(0, row.total - people.length));
     }
+    if (adding.length) saveSpeakers_(ss, adding);
     SpreadsheetApp.flush();
-    CacheService.getScriptCache().remove(cacheKey_(sheet));
+    CacheService.getScriptCache().removeAll([cacheKey_(sheet), 'speakers']);
   } finally {
     lock.releaseLock();
   }
   var state = buildState_(day.sheet);
   state.days = day.days;
+  state.speakers = speakerList_(ss);
   return state;
 }
 
@@ -155,6 +166,96 @@ function peopleToAdd_(me, o) {
   if (list.length > CONFIG.MAX_PEOPLE_PER_CLAIM) throw new Error('Please register at most ' + CONFIG.MAX_PEOPLE_PER_CLAIM + ' people at a time.');
   var seen = {};
   return list.filter(function (p) { var k = norm_(p.name); if (seen[k]) return false; seen[k] = true; return true; });
+}
+
+/** The speakers tab ('Speaker' / 'Speakers'), or null. */
+function speakersTab_(ss) {
+  return ss.getSheets().filter(function (s) { return CONFIG.SPEAKERS_TAB_NAMES.indexOf(norm_(s.getName())) >= 0; })[0] || null;
+}
+
+/**
+ * Reads the speakers tab: [{row, name, mobile}]. Name comes from the header
+ * 'Speaker' (else one containing 'name'), mobile from a header containing
+ * 'mobile' or 'phone', or from a number typed next to the name.
+ */
+function readSpeakers_(sheet) {
+  var lastRow = sheet.getLastRow(), lastCol = sheet.getLastColumn();
+  if (lastRow < 1 || lastCol < 1) return { headers: [], nameCol: 0, mobileCol: 0, people: [], maxSerial: 0 };
+  var values = sheet.getRange(1, 1, lastRow, lastCol).getDisplayValues();
+  var headers = values[0].map(norm_);
+  var nIdx = headers.indexOf('speaker');
+  if (nIdx < 0) headers.forEach(function (h, i) { if (nIdx < 0 && (h.indexOf('speaker') >= 0 || h.indexOf('name') >= 0)) nIdx = i; });
+  var mIdx = -1;
+  headers.forEach(function (h, i) { if (mIdx < 0 && (h.indexOf('mobile') >= 0 || h.indexOf('phone') >= 0)) mIdx = i; });
+  var people = [], maxSerial = 0;
+  values.slice(1).forEach(function (r) { var v = Number(r[0]); if (v > maxSerial) maxSerial = v; });
+  if (nIdx >= 0) values.slice(1).forEach(function (r, i) {
+    var p = parseAssignees_(r[nIdx])[0];
+    if (!p) return;
+    var digits = String(mIdx >= 0 && r[mIdx] ? r[mIdx] : p.phone).replace(/\D/g, '');
+    if (digits.length > 10 && /^(91|0)/.test(digits)) digits = digits.slice(-10);
+    people.push({ row: i + 2, name: p.name, mobile: digits.length === 10 ? digits : '' });
+  });
+  return { headers: headers, nameCol: nIdx + 1, mobileCol: mIdx + 1, people: people, maxSerial: maxSerial };
+}
+
+/** For the page: unique speakers sorted by name; mobile is '' when none is saved yet. */
+function speakerList_(ss) {
+  var cache = CacheService.getScriptCache();
+  var hit = cache.get('speakers');
+  if (hit) return JSON.parse(hit);
+  var sheet = speakersTab_(ss);
+  var seen = {}, list = [];
+  (sheet ? readSpeakers_(sheet).people : []).forEach(function (p) {
+    var k = norm_(p.name) + '|' + p.mobile;
+    if (seen[k]) return;
+    seen[k] = true;
+    list.push({ name: p.name, mobile: p.mobile });
+  });
+  // A name with a saved mobile makes the same name without one redundant.
+  list = list.filter(function (p) { return p.mobile || !list.some(function (q) { return q.mobile && sameName_(q.name, p.name); }); });
+  list.sort(function (a, b) { return norm_(a.name) < norm_(b.name) ? -1 : norm_(a.name) > norm_(b.name) ? 1 : 0; });
+  try { cache.put('speakers', JSON.stringify(list), CONFIG.CACHE_SECONDS); } catch (e) {}
+  return list;
+}
+
+/**
+ * Records people in the speakers tab: a known name without a mobile gets it
+ * filled in; a new name, or a known name with a different mobile, gets a new
+ * row. Only the name, mobile and serial-number cells are ever written.
+ */
+function saveSpeakers_(ss, people) {
+  var sheet = speakersTab_(ss);
+  if (!sheet) {
+    sheet = ss.insertSheet(CONFIG.SPEAKERS_NEW_TAB_NAME);
+    sheet.getRange(1, 1, 1, 3).setValues([['Sr. No.', 'Speaker', CONFIG.SPEAKERS_MOBILE_HEADER]]);
+  }
+  var tab = readSpeakers_(sheet);
+  if (!tab.nameCol) return; // no name column: leave the tab alone
+  if (!tab.mobileCol) {
+    var col = tab.headers.indexOf('') + 1 || sheet.getLastColumn() + 1;
+    if (col > sheet.getMaxColumns()) sheet.insertColumnsAfter(sheet.getMaxColumns(), col - sheet.getMaxColumns());
+    sheet.getRange(1, col).setValue(CONFIG.SPEAKERS_MOBILE_HEADER);
+    tab.mobileCol = col;
+  }
+  var serialCol = tab.headers[0] && /^(s|sr)\.?\s*no/.test(tab.headers[0]) ? 1 : 0;
+  var nextRow = sheet.getLastRow() + 1;
+  var serial = tab.maxSerial;
+  people.forEach(function (p) {
+    var same = tab.people.filter(function (x) { return sameName_(x.name, p.name); });
+    if (same.some(function (x) { return x.mobile === p.mobile; })) return;
+    var blank = same.filter(function (x) { return !x.mobile; })[0];
+    if (blank) {
+      writeText_(sheet, blank.row, tab.mobileCol, p.mobile);
+      blank.mobile = p.mobile;
+      return;
+    }
+    if (serialCol) sheet.getRange(nextRow, 1).setValue(++serial);
+    writeText_(sheet, nextRow, tab.nameCol, p.name);
+    writeText_(sheet, nextRow, tab.mobileCol, p.mobile);
+    tab.people.push({ row: nextRow, name: p.name, mobile: p.mobile });
+    nextRow++;
+  });
 }
 
 /** The sheet this script is attached to, or SHEET_ID if it runs as a standalone script. */

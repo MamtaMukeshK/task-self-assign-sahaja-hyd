@@ -95,6 +95,11 @@ Takes about 15 minutes on a laptop or desktop computer (not a phone).</p>
   <li><b>Tab names:</b> each day's tab must be named like <code>27-Sep</code>, <code>28-Sep</code>,
     <code>1-Oct</code> or <code>01-Oct</code> (day, dash, 3-letter month). Other tabs like <code>Summary</code>,
     <code>cancel</code> or <code>Dummy-26-Sep</code> are ignored, and so are past days.</li>
+  <li><b>Speaker list (optional):</b> a tab named <b>Speaker</b> (or <b>Speakers</b>) with a <b>Speaker</b> column. The page offers
+    these names in a dropdown, alphabetically, so people don't retype them. Everyone registered through the page is saved there:
+    a new name gets a new row (with the next Sr. No.), and a known name without a number gets it filled in. The first time, the
+    page adds a <b>Mobile</b> column in the tab's first empty column. Other columns (Language, dates) are never touched.
+    If there's no such tab, the page creates one called <b>Speakers</b>.</li>
   <li><b>Time (for clash checks):</b> a column whose title contains <b>Time</b>. The page reads the <b>start time</b> from
     whatever is typed (<code>10.30 A.M</code>, <code>3:30-4:30 PM</code>, <code>14:00</code>…). If a volunteer tries to take two
     schools that start at the same time on the same day, the second is refused. A blank Time, or text like "to be confirmed",
@@ -163,7 +168,13 @@ var CONFIG = {
   CACHE_SECONDS: 5,    // shared read cache so many viewers don't hammer the sheet
   LOCK_WAIT_MS: 10000, // how long a claim waits for its turn
   MAX_NAME_LENGTH: 60,
-  MAX_PEOPLE_PER_CLAIM: 30
+  MAX_PEOPLE_PER_CLAIM: 30,
+  // Tab holding the list of speakers (name + mobile) offered on the page. Found
+  // by name ('Speaker' or 'Speakers'); created if missing. Everyone registered
+  // through the page is added to it (or has their mobile filled in).
+  SPEAKERS_TAB_NAMES: ['speaker', 'speakers'],
+  SPEAKERS_NEW_TAB_NAME: 'Speakers',
+  SPEAKERS_MOBILE_HEADER: 'Mobile'
 };
 
 function doGet() {
@@ -174,7 +185,8 @@ function doGet() {
 
 /** Called by the page: the picked day's rows (today's if none) plus who holds each. */
 function getState(tabName) {
-  var day = resolveDay_(openSpreadsheet_(), tabName);
+  var ss = openSpreadsheet_();
+  var day = resolveDay_(ss, tabName);
   var cache = CacheService.getScriptCache();
   var key = cacheKey_(day.sheet);
   var hit = cache.get(key);
@@ -187,6 +199,7 @@ function getState(tabName) {
     }
   }
   state.days = day.days;
+  state.speakers = speakerList_(ss);
   return state;
 }
 
@@ -219,9 +232,10 @@ function mutate_(o) {
 
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(CONFIG.LOCK_WAIT_MS)) throw new Error('Lots of people are claiming right now. Please try again.');
-  var day;
+  var day, ss;
   try {
-    day = resolveDay_(openSpreadsheet_(), o.tabName);
+    ss = openSpreadsheet_();
+    day = resolveDay_(ss, o.tabName);
     var sheet = day.sheet;
     var tab = readTab_(sheet);
     var row = tab.rows.filter(function (r) { return r.row === rowNum; })[0];
@@ -259,13 +273,15 @@ function mutate_(o) {
       var cell = sheet.getRange(rowNum, tab.remainingCol);
       if (!cell.getFormula()) cell.setValue(Math.max(0, row.total - people.length));
     }
+    if (adding.length) saveSpeakers_(ss, adding);
     SpreadsheetApp.flush();
-    CacheService.getScriptCache().remove(cacheKey_(sheet));
+    CacheService.getScriptCache().removeAll([cacheKey_(sheet), 'speakers']);
   } finally {
     lock.releaseLock();
   }
   var state = buildState_(day.sheet);
   state.days = day.days;
+  state.speakers = speakerList_(ss);
   return state;
 }
 
@@ -286,6 +302,96 @@ function peopleToAdd_(me, o) {
   if (list.length &gt; CONFIG.MAX_PEOPLE_PER_CLAIM) throw new Error('Please register at most ' + CONFIG.MAX_PEOPLE_PER_CLAIM + ' people at a time.');
   var seen = {};
   return list.filter(function (p) { var k = norm_(p.name); if (seen[k]) return false; seen[k] = true; return true; });
+}
+
+/** The speakers tab ('Speaker' / 'Speakers'), or null. */
+function speakersTab_(ss) {
+  return ss.getSheets().filter(function (s) { return CONFIG.SPEAKERS_TAB_NAMES.indexOf(norm_(s.getName())) &gt;= 0; })[0] || null;
+}
+
+/**
+ * Reads the speakers tab: [{row, name, mobile}]. Name comes from the header
+ * 'Speaker' (else one containing 'name'), mobile from a header containing
+ * 'mobile' or 'phone', or from a number typed next to the name.
+ */
+function readSpeakers_(sheet) {
+  var lastRow = sheet.getLastRow(), lastCol = sheet.getLastColumn();
+  if (lastRow &lt; 1 || lastCol &lt; 1) return { headers: [], nameCol: 0, mobileCol: 0, people: [], maxSerial: 0 };
+  var values = sheet.getRange(1, 1, lastRow, lastCol).getDisplayValues();
+  var headers = values[0].map(norm_);
+  var nIdx = headers.indexOf('speaker');
+  if (nIdx &lt; 0) headers.forEach(function (h, i) { if (nIdx &lt; 0 &amp;&amp; (h.indexOf('speaker') &gt;= 0 || h.indexOf('name') &gt;= 0)) nIdx = i; });
+  var mIdx = -1;
+  headers.forEach(function (h, i) { if (mIdx &lt; 0 &amp;&amp; (h.indexOf('mobile') &gt;= 0 || h.indexOf('phone') &gt;= 0)) mIdx = i; });
+  var people = [], maxSerial = 0;
+  values.slice(1).forEach(function (r) { var v = Number(r[0]); if (v &gt; maxSerial) maxSerial = v; });
+  if (nIdx &gt;= 0) values.slice(1).forEach(function (r, i) {
+    var p = parseAssignees_(r[nIdx])[0];
+    if (!p) return;
+    var digits = String(mIdx &gt;= 0 &amp;&amp; r[mIdx] ? r[mIdx] : p.phone).replace(/\D/g, '');
+    if (digits.length &gt; 10 &amp;&amp; /^(91|0)/.test(digits)) digits = digits.slice(-10);
+    people.push({ row: i + 2, name: p.name, mobile: digits.length === 10 ? digits : '' });
+  });
+  return { headers: headers, nameCol: nIdx + 1, mobileCol: mIdx + 1, people: people, maxSerial: maxSerial };
+}
+
+/** For the page: unique speakers sorted by name; mobile is '' when none is saved yet. */
+function speakerList_(ss) {
+  var cache = CacheService.getScriptCache();
+  var hit = cache.get('speakers');
+  if (hit) return JSON.parse(hit);
+  var sheet = speakersTab_(ss);
+  var seen = {}, list = [];
+  (sheet ? readSpeakers_(sheet).people : []).forEach(function (p) {
+    var k = norm_(p.name) + '|' + p.mobile;
+    if (seen[k]) return;
+    seen[k] = true;
+    list.push({ name: p.name, mobile: p.mobile });
+  });
+  // A name with a saved mobile makes the same name without one redundant.
+  list = list.filter(function (p) { return p.mobile || !list.some(function (q) { return q.mobile &amp;&amp; sameName_(q.name, p.name); }); });
+  list.sort(function (a, b) { return norm_(a.name) &lt; norm_(b.name) ? -1 : norm_(a.name) &gt; norm_(b.name) ? 1 : 0; });
+  try { cache.put('speakers', JSON.stringify(list), CONFIG.CACHE_SECONDS); } catch (e) {}
+  return list;
+}
+
+/**
+ * Records people in the speakers tab: a known name without a mobile gets it
+ * filled in; a new name, or a known name with a different mobile, gets a new
+ * row. Only the name, mobile and serial-number cells are ever written.
+ */
+function saveSpeakers_(ss, people) {
+  var sheet = speakersTab_(ss);
+  if (!sheet) {
+    sheet = ss.insertSheet(CONFIG.SPEAKERS_NEW_TAB_NAME);
+    sheet.getRange(1, 1, 1, 3).setValues([['Sr. No.', 'Speaker', CONFIG.SPEAKERS_MOBILE_HEADER]]);
+  }
+  var tab = readSpeakers_(sheet);
+  if (!tab.nameCol) return; // no name column: leave the tab alone
+  if (!tab.mobileCol) {
+    var col = tab.headers.indexOf('') + 1 || sheet.getLastColumn() + 1;
+    if (col &gt; sheet.getMaxColumns()) sheet.insertColumnsAfter(sheet.getMaxColumns(), col - sheet.getMaxColumns());
+    sheet.getRange(1, col).setValue(CONFIG.SPEAKERS_MOBILE_HEADER);
+    tab.mobileCol = col;
+  }
+  var serialCol = tab.headers[0] &amp;&amp; /^(s|sr)\.?\s*no/.test(tab.headers[0]) ? 1 : 0;
+  var nextRow = sheet.getLastRow() + 1;
+  var serial = tab.maxSerial;
+  people.forEach(function (p) {
+    var same = tab.people.filter(function (x) { return sameName_(x.name, p.name); });
+    if (same.some(function (x) { return x.mobile === p.mobile; })) return;
+    var blank = same.filter(function (x) { return !x.mobile; })[0];
+    if (blank) {
+      writeText_(sheet, blank.row, tab.mobileCol, p.mobile);
+      blank.mobile = p.mobile;
+      return;
+    }
+    if (serialCol) sheet.getRange(nextRow, 1).setValue(++serial);
+    writeText_(sheet, nextRow, tab.nameCol, p.name);
+    writeText_(sheet, nextRow, tab.mobileCol, p.mobile);
+    tab.people.push({ row: nextRow, name: p.name, mobile: p.mobile });
+    nextRow++;
+  });
 }
 
 /** The sheet this script is attached to, or SHEET_ID if it runs as a standalone script. */
@@ -546,6 +652,13 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   button.x { padding:0 7px; margin-left:8px; background:#fff; color:var(--err); border-color:var(--err); font-size:12px; }
   #othersBox { flex-basis:100%; display:flex; flex-wrap:wrap; gap:8px; align-items:flex-start; }
   #othersBox[hidden] { display:none; }
+  #picker summary { cursor:pointer; padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:#fafafa; }
+  #picker[open] summary { border-radius:6px 6px 0 0; }
+  #pickSearch { display:block; width:100%; min-width:0; margin:0; border-radius:0; }
+  #pickList { max-height:260px; overflow:auto; border:1px solid var(--line); border-top:0; border-radius:0 0 6px 6px; padding:4px 0; min-width:280px; }
+  #pickList label { display:block; padding:3px 10px; white-space:nowrap; }
+  #pickList label.nomobile { color:var(--muted); }
+  #pickList input.firstmobile { width:130px; min-width:0; margin-left:8px; padding:2px 6px; }
   textarea { font:inherit; min-width:280px; min-height:64px; padding:6px 8px; border:1px solid var(--line); border-radius:6px; }
 &lt;/style&gt;
 &lt;/head&gt;
@@ -553,11 +666,16 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
 &lt;header&gt;
   &lt;h1 id="title"&gt;Loading…&lt;/h1&gt;
   &lt;label&gt;Date &lt;select id="day"&gt;&lt;/select&gt;&lt;/label&gt;
-  &lt;label&gt;Your name &lt;input id="name" autocomplete="name" placeholder="e.g. Priya Shah"&gt;&lt;/label&gt;
+  &lt;label&gt;Your name &lt;input id="name" autocomplete="off" list="speakerNames" placeholder="type or pick your name"&gt;&lt;datalist id="speakerNames"&gt;&lt;/datalist&gt;&lt;/label&gt;
   &lt;label&gt;Mobile &lt;input id="mobile" autocomplete="tel" inputmode="tel" placeholder="10 digits" maxlength="16"&gt;&lt;/label&gt;
   &lt;label&gt;&lt;input type="checkbox" id="showOthers"&gt; Register others&lt;/label&gt;
   &lt;label&gt;&lt;input type="checkbox" id="openOnly"&gt; Open only&lt;/label&gt;
   &lt;div id="othersBox" hidden&gt;
+    &lt;details id="picker"&gt;
+      &lt;summary&gt;Choose speakers (&lt;span id="pickCount"&gt;0&lt;/span&gt; selected)&lt;/summary&gt;
+      &lt;input id="pickSearch" placeholder="Search names"&gt;
+      &lt;div id="pickList"&gt;&lt;/div&gt;
+    &lt;/details&gt;
     &lt;textarea id="others" placeholder="One person per line: name, then 10-digit mobile&amp;#10;Ravi Kumar 9123456789&amp;#10;Asha 9000000002"&gt;&lt;/textarea&gt;
     &lt;label&gt;&lt;input type="checkbox" id="includeMe" checked&gt; Include me too&lt;/label&gt;
   &lt;/div&gt;
@@ -594,7 +712,86 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   othersInput.addEventListener('input', function () { try { localStorage.setItem('selfAssignOthers', othersInput.value); } catch (e) {} render(); });
   showOthers.addEventListener('change', function () { othersBox.hidden = !showOthers.checked; render(); });
   includeMe.addEventListener('change', render);
-  function othersText() { return showOthers.checked ? othersInput.value : ''; }
+  // People ticked in "Choose speakers", keyed 'name|mobile'.
+  var picked = {};
+  var pickList = document.getElementById('pickList');
+  var pickSearch = document.getElementById('pickSearch');
+  pickSearch.addEventListener('input', function () { drawPicker(true); });
+  function digitsOf(v) { var d = String(v).replace(/\D/g, ''); return d.length &gt; 10 ? d.slice(-10) : d; }
+  function pickedLines() { return Object.keys(picked).map(function (k) { return picked[k].name + ' ' + picked[k].mobile; }); }
+  function othersText() {
+    if (!showOthers.checked) return '';
+    // Typed lines first so "Line N" in messages matches the box; ticked speakers follow.
+    return [othersInput.value].concat(pickedLines()).join('\n').trim() ? [othersInput.value].concat(pickedLines()).join('\n') : '';
+  }
+  // Alphabetical speaker list (from the speakers tab) with search and tick boxes.
+  function drawPicker(force) {
+    var speakers = (state &amp;&amp; state.speakers) || [];
+    var sig = JSON.stringify(speakers) + '|' + pickSearch.value;
+    if (!force &amp;&amp; pickList.dataset.sig === sig) return;
+    pickList.dataset.sig = sig;
+    // Someone ticked without a saved mobile, whose number has since been saved: keep them ticked under the new entry.
+    Object.keys(picked).forEach(function (k) {
+      var p = picked[k];
+      if (/\|$/.test(k) &amp;&amp; speakers.some(function (sp) { return sp.mobile &amp;&amp; same(sp.name, p.name) &amp;&amp; sp.mobile === digitsOf(p.mobile); })) {
+        delete picked[k];
+        picked[p.name.toLowerCase() + '|' + digitsOf(p.mobile)] = { name: p.name, mobile: digitsOf(p.mobile) };
+      }
+    });
+    var q = pickSearch.value.trim().toLowerCase();
+    pickList.textContent = '';
+    speakers.forEach(function (sp) {
+      if (q &amp;&amp; sp.name.toLowerCase().indexOf(q) &lt; 0 &amp;&amp; sp.mobile.indexOf(q) &lt; 0) return;
+      var key = sp.name.toLowerCase() + '|' + sp.mobile;
+      var label = document.createElement('label');
+      var box = document.createElement('input');
+      box.type = 'checkbox';
+      box.checked = !!picked[key];
+      box.onchange = function () {
+        if (box.checked) picked[key] = { name: sp.name, mobile: sp.mobile }; else delete picked[key];
+        updatePickCount(); drawPicker(true); render();
+      };
+      label.appendChild(box);
+      label.appendChild(document.createTextNode(' ' + sp.name + (sp.mobile ? ' · ' + sp.mobile : ' (no mobile saved yet)')));
+      if (!sp.mobile) {
+        label.className = 'nomobile';
+        // First time only: ask for their number; it is saved to the speakers tab when they are registered.
+        if (picked[key]) {
+          var num = document.createElement('input');
+          num.className = 'firstmobile';
+          num.placeholder = '10-digit mobile';
+          num.inputMode = 'tel';
+          num.value = picked[key].mobile;
+          num.oninput = function () { picked[key].mobile = num.value; };
+          label.appendChild(num);
+        }
+      }
+      pickList.appendChild(label);
+    });
+    if (!pickList.childNodes.length) pickList.textContent = speakers.length ? 'No match.' : 'No speakers saved yet.';
+    var names = document.getElementById('speakerNames');
+    if (names.dataset.sig !== JSON.stringify(speakers)) {
+      names.dataset.sig = JSON.stringify(speakers);
+      names.textContent = '';
+      speakers.forEach(function (sp) { if (sp.mobile) names.appendChild(new Option(sp.name + ' · ' + sp.mobile, sp.name)); });
+    }
+  }
+  function updatePickCount() { document.getElementById('pickCount').textContent = Object.keys(picked).length; }
+  // Picking your own name from the list fills in your saved mobile.
+  nameInput.addEventListener('change', function () {
+    var me = myName();
+    var known = ((state &amp;&amp; state.speakers) || []).filter(function (x) { return same(x.name, me); });
+    var sp = known.filter(function (x) { return x.mobile; })[0];
+    if (known.length &amp;&amp; !sp &amp;&amp; !tenDigits(mobileInput.value)) {
+      setStatus('First time: please enter your 10-digit mobile. It will be saved, so you won\'t be asked again.', true);
+      mobileInput.focus();
+    }
+    if (sp &amp;&amp; !tenDigits(mobileInput.value)) {
+      mobileInput.value = sp.mobile;
+      try { localStorage.setItem('selfAssignMobile', sp.mobile); } catch (e) {}
+      render();
+    }
+  });
   function meIncluded() { return !showOthers.checked || includeMe.checked; }
   // Same line rule as the script: a name, then a 10-digit mobile.
   function checkOthers(text) {
@@ -657,6 +854,14 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
     if (!myName()) { setStatus('Please enter your name first.', true); nameInput.focus(); return; }
     var claiming = fn === 'claimRow';
     if (claiming &amp;&amp; meIncluded() &amp;&amp; !tenDigits(mobileInput.value)) { setStatus('Please enter a 10-digit mobile number.', true); mobileInput.focus(); return; }
+    if (claiming &amp;&amp; showOthers.checked) {
+      var missing = Object.keys(picked).map(function (k) { return picked[k]; }).filter(function (p) { return !tenDigits(p.mobile); })[0];
+      if (missing) {
+        setStatus('Please enter a 10-digit mobile for ' + missing.name + ' in "Choose speakers" (asked once; it will be saved).', true);
+        document.getElementById('picker').open = true;
+        return;
+      }
+    }
     if (claiming) {
       var n = checkOthers(othersText());
       if (typeof n === 'string') { setStatus(n, true); othersInput.focus(); return; }
@@ -704,6 +909,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
     }
     daySelect.value = state.tab;
     document.getElementById('title').textContent = 'Day: ' + state.tab;
+    drawPicker(false);
     var me = myName();
     var t = document.getElementById('grid');
     t.textContent = '';
@@ -853,7 +1059,9 @@ PASTE-THE-/exec-LINK-HERE
 1. Type your name and mobile number at the top (only needed the first time).
 2. Choose the date at the top, then tap "Claim" next to a school that still has slots left.
    You can take several schools, just not two at the same time on the same day.
-   Registering a group? Tick "Register others" and list one person per line: name, then 10-digit mobile.
+   Registering a group? Tick "Register others", then tick names under "Choose speakers"
+   (or type new ones, one per line: name, then 10-digit mobile). If a speaker has no number saved yet,
+   you'll be asked for it once; after that it's remembered.
 3. Your row turns green: you're on it, and your name shows in the main sheet.
 4. Changed your mind? Tap "Release".
 The page refreshes every 15 seconds.</pre>
@@ -890,6 +1098,8 @@ The page refreshes every 15 seconds.</pre>
   <tr><td>"This school is closed (its total is 0)"</td><td>Its "Total volunteers needed" is 0. Organisers can raise it in the sheet.</td></tr>
   <tr><td>"Line N of "Register others" should be a name then a 10-digit mobile"</td><td>Fix that line (e.g. <code>Ravi 9123456789</code>). Nobody is added until every line is valid.</td></tr>
   <tr><td>"Time clash: Ravi is already on …. Nobody was added."</td><td>Someone in your list already has a school at that time that day. Remove them from the list, or pick another school.</td></tr>
+  <tr><td>"Please enter a 10-digit mobile for … in Choose speakers"</td><td>That speaker has no number saved yet. Type it in the small box next to their name; it's asked only once.</td></tr>
+  <tr><td>"First time: please enter your 10-digit mobile"</td><td>Your name is on the speaker list but has no number yet. Type it once; it will be saved.</td></tr>
   <tr><td>"Only Ravi or Priya can remove Ravi"</td><td>People can remove themselves, and whoever registered them can remove them. Anyone else: ask an organiser to edit the sheet.</td></tr>
   <tr><td>"Your name is not on this row"</td><td>Release only works with the same name used to claim (capitals don't matter).</td></tr>
   <tr><td>"That row was edited or moved…"</td><td>An organiser changed that school's details (including "Total volunteers needed") or re-ordered rows after the page loaded. The page refreshes; check and claim again.</td></tr>

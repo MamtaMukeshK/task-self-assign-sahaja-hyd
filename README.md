@@ -111,6 +111,11 @@ At midnight India time the page automatically switches to the new day's tab.
   `Name mobile (via Registrar)`; the registrar (or the person) can remove them with ✕.
   Every person is validated and time-clash checked; if any fails, nobody is added.
 - A person can claim as many rows as they like, but not two with the same start time on a day.
+- **Speaker list:** names come from the **Speaker**/**Speakers** tab (created if missing), shown
+  alphabetically: as suggestions in "Your name" (picking one fills the saved mobile) and as a
+  searchable multi-select "Choose speakers" under Register others. Everyone registered is saved
+  there (new row, or missing mobile filled; a "Mobile" column is added in the first empty column
+  the first time). Speakers with no saved number are asked for it once.
 
 ## Updating the code later
 

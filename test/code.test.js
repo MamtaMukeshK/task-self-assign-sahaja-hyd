@@ -82,7 +82,7 @@ test('tab missing the speaker column errors loudly instead of guessing', () => {
 });
 test('reads are served from the shared cache', () => {
   const { gs } = setup(); gs.getState();
-  assert.ok(Object.keys(gs._cache).length === 1);
+  assert.deepEqual(Object.keys(gs._cache).sort(), ['speakers', 'state:3'], 'day rows and speaker list are cached');
 });
 test('uses the attached sheet by default, and SHEET_ID only when set', () => {
   const { gs } = setup();
@@ -486,4 +486,61 @@ test('others: the registrar can remove people they added; others cannot', () => 
   assert.equal(sheet.grid[1][1], 'Priya 9876543210');
   assert.throws(() => gs.removePerson(r.row, r.fp, 'Priya', 'Nobody'), /Nobody is not on this row/);
   assert.equal(sheet.grid[1][3], 2);
+});
+
+// ---- Speaker list: saved on registration, offered alphabetically on the page ----
+// Same layout as the real "Speaker" tab: no mobile column, date columns, blank columns after.
+function speakerTab() {
+  return makeSheet('Speaker', 80, [
+    ['Sr. No.', 'Speaker', 'Language', '23-Sep-26', '24-Sep-26', '', '', ''],
+    ['1', 'zara Khan ', 'English, Hindi', 'Yes', '', '', '', ''],
+    ['2', 'Anil Rao', 'Hindi', '', 'School', '', '', ''],
+    ['3', 'meera Das', 'Telugu', '', '', '', '', ''],
+  ]);
+}
+test('speakers: list read from the Speaker tab, alphabetical, mobile blank until saved', () => {
+  const gs = load([makeSheet('28-Sep', 81, slotsGrid()), speakerTab()], NOW);
+  assert.deepEqual(gs.getState().speakers, [
+    { name: 'Anil Rao', mobile: '' }, { name: 'meera Das', mobile: '' }, { name: 'zara Khan', mobile: '' }]);
+});
+test('speakers: registering saves new people and fills missing mobiles, touching nothing else', () => {
+  const sp = speakerTab();
+  const original = sp.grid.map(r => r.slice());
+  const gs = load([makeSheet('28-Sep', 82, slotsGrid()), sp], NOW);
+  const r = byRow(gs.getState(), 2);
+  const s = gs.claimRow(r.row, r.fp, 'Anil Rao', '9000000011', undefined, 'Zara khan 9000000012\nNew Person 9000000013', true);
+  assert.equal(sp.grid[0][5], 'Mobile', 'Mobile column added in the first blank header cell');
+  assert.equal(sp.grid[1][5], '9000000012', 'existing Zara gets her mobile');
+  assert.equal(sp.grid[2][5], '9000000011', 'existing Anil gets his mobile');
+  assert.deepEqual(Array.from(sp.grid[4].slice(0, 6), v => v ?? ''), [4, 'New Person', '', '', '', '9000000013'], 'new person added with next Sr. No.');
+  original.forEach((row, i) => row.forEach((v, j) => { if (j !== 5) assert.equal(sp.grid[i][j], v, `cell ${i},${j} changed`); }));
+  assert.deepEqual(s.speakers.map(x => x.name + ' ' + x.mobile),
+    ['Anil Rao 9000000011', 'meera Das ', 'New Person 9000000013', 'zara Khan 9000000012'], 'alphabetical, ignoring capitals');
+});
+test('speakers: a known name with a different mobile is added as a new entry; same mobile is not repeated', () => {
+  const sp = speakerTab();
+  const gs = load([makeSheet('28-Sep', 83, slotsGrid()), sp], NOW);
+  const v = gs.getState();
+  gs.claimRow(byRow(v, 2).row, byRow(v, 2).fp, 'Anil Rao', '9000000011');
+  gs.claimRow(byRow(v, 5).row, byRow(v, 5).fp, 'anil rao', '9000000011');          // same person again
+  gs.claimRow(byRow(v, 4).row, byRow(v, 4).fp, 'Anil Rao', '9000000099');          // same name, other number
+  assert.equal(sp.grid.filter(r => /anil rao/i.test(r[1] || '')).length, 2);
+  assert.deepEqual(gs.getState().speakers.filter(x => /anil/i.test(x.name)).map(x => x.mobile), ['9000000011', '9000000099']);
+});
+test('speakers: without a Speaker tab one called "Speakers" is created', () => {
+  const sheets = [makeSheet('28-Sep', 84, slotsGrid())];
+  const gs = load(sheets, NOW);
+  const r = byRow(gs.getState(), 2);
+  gs.claimRow(r.row, r.fp, 'Priya', '9876543210');
+  const created = sheets.find(s => s.getName() === 'Speakers');
+  assert.ok(created);
+  assert.deepEqual(created.grid.slice(0, 2).map(x => x.slice(0, 3)), [['Sr. No.', 'Speaker', 'Mobile'], [1, 'Priya', '9876543210']]);
+});
+test('speakers: a refused registration saves nobody', () => {
+  const sp = speakerTab();
+  const gs = load([makeSheet('28-Sep', 85, slotsGrid()), sp], NOW);
+  const r = byRow(gs.getState(), 2);
+  assert.throws(() => gs.claimRow(r.row, r.fp, 'Anil Rao', '9000000011', undefined, 'Bad Line 123', true), /Line 1/);
+  assert.equal(sp.grid.length, 4);
+  assert.equal(sp.grid[0][5], '');
 });

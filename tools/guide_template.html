@@ -95,6 +95,11 @@ Takes about 15 minutes on a laptop or desktop computer (not a phone).</p>
   <li><b>Tab names:</b> each day's tab must be named like <code>27-Sep</code>, <code>28-Sep</code>,
     <code>1-Oct</code> or <code>01-Oct</code> (day, dash, 3-letter month). Other tabs like <code>Summary</code>,
     <code>cancel</code> or <code>Dummy-26-Sep</code> are ignored, and so are past days.</li>
+  <li><b>Speaker list (optional):</b> a tab named <b>Speaker</b> (or <b>Speakers</b>) with a <b>Speaker</b> column. The page offers
+    these names in a dropdown, alphabetically, so people don't retype them. Everyone registered through the page is saved there:
+    a new name gets a new row (with the next Sr. No.), and a known name without a number gets it filled in. The first time, the
+    page adds a <b>Mobile</b> column in the tab's first empty column. Other columns (Language, dates) are never touched.
+    If there's no such tab, the page creates one called <b>Speakers</b>.</li>
   <li><b>Time (for clash checks):</b> a column whose title contains <b>Time</b>. The page reads the <b>start time</b> from
     whatever is typed (<code>10.30 A.M</code>, <code>3:30-4:30 PM</code>, <code>14:00</code>…). If a volunteer tries to take two
     schools that start at the same time on the same day, the second is refused. A blank Time, or text like "to be confirmed",
@@ -200,7 +205,9 @@ PASTE-THE-/exec-LINK-HERE
 1. Type your name and mobile number at the top (only needed the first time).
 2. Choose the date at the top, then tap "Claim" next to a school that still has slots left.
    You can take several schools, just not two at the same time on the same day.
-   Registering a group? Tick "Register others" and list one person per line: name, then 10-digit mobile.
+   Registering a group? Tick "Register others", then tick names under "Choose speakers"
+   (or type new ones, one per line: name, then 10-digit mobile). If a speaker has no number saved yet,
+   you'll be asked for it once; after that it's remembered.
 3. Your row turns green: you're on it, and your name shows in the main sheet.
 4. Changed your mind? Tap "Release".
 The page refreshes every 15 seconds.</pre>
@@ -237,6 +244,8 @@ The page refreshes every 15 seconds.</pre>
   <tr><td>"This school is closed (its total is 0)"</td><td>Its "Total volunteers needed" is 0. Organisers can raise it in the sheet.</td></tr>
   <tr><td>"Line N of "Register others" should be a name then a 10-digit mobile"</td><td>Fix that line (e.g. <code>Ravi 9123456789</code>). Nobody is added until every line is valid.</td></tr>
   <tr><td>"Time clash: Ravi is already on …. Nobody was added."</td><td>Someone in your list already has a school at that time that day. Remove them from the list, or pick another school.</td></tr>
+  <tr><td>"Please enter a 10-digit mobile for … in Choose speakers"</td><td>That speaker has no number saved yet. Type it in the small box next to their name; it's asked only once.</td></tr>
+  <tr><td>"First time: please enter your 10-digit mobile"</td><td>Your name is on the speaker list but has no number yet. Type it once; it will be saved.</td></tr>
   <tr><td>"Only Ravi or Priya can remove Ravi"</td><td>People can remove themselves, and whoever registered them can remove them. Anyone else: ask an organiser to edit the sheet.</td></tr>
   <tr><td>"Your name is not on this row"</td><td>Release only works with the same name used to claim (capitals don't matter).</td></tr>
   <tr><td>"That row was edited or moved…"</td><td>An organiser changed that school's details (including "Total volunteers needed") or re-ordered rows after the page loaded. The page refreshes; check and claim again.</td></tr>

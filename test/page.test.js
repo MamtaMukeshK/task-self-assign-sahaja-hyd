@@ -158,6 +158,7 @@ test('date picker and time-clash label in real browser', { timeout: 60000 }, asy
     await p.waitForSelector('text=Day: 28-Sep');
     assert.equal(await row(2).locator('button:text-is("Claim")').count(), 1, 'same time on another day is fine');
     assert.deepEqual(errs, []);
+    await p.screenshot({ path: path.join(__dirname, 'picker-view.png') });
   } finally { await browser.close(); }
 });
 
@@ -226,5 +227,60 @@ test('register others in real browser: list, over-limit in red, remove with ✕'
     assert.equal(sheet.grid[1][1], 'Ravi 9123456789 (via Priya)\nAsha 9000000002 (via Priya)');
     assert.equal(await p.locator('#grid tr').nth(1).locator('.person.extra').count(), 0, 'no longer over');
     assert.deepEqual(errs, []);
+    await p.screenshot({ path: path.join(__dirname, 'picker-view.png') });
+  } finally { await browser.close(); }
+});
+
+test('speaker picker in real browser: alphabetical, multi-select, and own name fills mobile', { timeout: 60000 }, async () => {
+  const day = makeSheet('28-Sep', 3, [['S No', 'Speaker Name', 'Total volunteers needed', 'Institution name'], ['1', '', '5', 'School A']]);
+  const sp = makeSheet('Speaker', 4, [
+    ['Sr. No.', 'Speaker', 'Language', 'Mobile'],
+    ['1', 'zara Khan', 'Hindi', '9000000012'], ['2', 'Anil Rao', 'Hindi', '9000000011'],
+    ['3', 'Meera Das', 'Telugu', ''], ['4', 'Priya', 'English', '9876543210']]);
+  const gs = load([day, sp], new Date(Date.UTC(2026, 8, 28)));
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
+  try {
+    const p = await (await browser.newContext({ viewport: { width: 1100, height: 800 } })).newPage();
+    p.setDefaultTimeout(8000);
+    const errs = []; p.on('pageerror', e => errs.push(e.message));
+    await p.exposeFunction('gsCall', (fn, a) => { try { return { ok: JSON.parse(JSON.stringify(gs[fn](...a))) }; } catch (e) { return { err: e.message }; } });
+    await p.addInitScript(SHIM);
+    await p.route('http://app.test/', r => r.fulfill({ contentType: 'text/html', body: html }));
+    await p.goto('http://app.test/');
+    await p.waitForSelector('text=Day: 28-Sep');
+
+    await p.fill('#name', 'Priya'); await p.dispatchEvent('#name', 'change');
+    assert.equal(await p.inputValue('#mobile'), '9876543210', 'own mobile filled from the list');
+    assert.deepEqual(await p.$$eval('#speakerNames option', o => o.map(x => x.value)), ['Anil Rao', 'Priya', 'zara Khan']);
+    await p.fill('#mobile', ''); await p.fill('#name', 'Meera Das'); await p.dispatchEvent('#name', 'change');
+    assert.match(await p.textContent('#status'), /First time: please enter your 10-digit mobile/);
+    await p.fill('#name', 'Priya'); await p.dispatchEvent('#name', 'change');
+    assert.equal(await p.inputValue('#mobile'), '9876543210');
+
+    await p.check('#showOthers');
+    await p.click('#picker summary');
+    assert.deepEqual(await p.locator('#pickList label').allTextContents(),
+      [' Anil Rao · 9000000011', ' Meera Das (no mobile saved yet)', ' Priya · 9876543210', ' zara Khan · 9000000012'], 'alphabetical');
+    await p.fill('#pickSearch', 'zar');
+    assert.deepEqual(await p.locator('#pickList label').allTextContents(), [' zara Khan · 9000000012'], 'search');
+    await p.locator('#pickList input[type=checkbox]').first().check();
+    await p.fill('#pickSearch', '');
+    await p.locator('#pickList input[type=checkbox]').first().check();     // Anil
+    await p.locator('#pickList input[type=checkbox]').nth(1).check();      // Meera: no mobile saved yet
+    assert.equal(await p.textContent('#pickCount'), '3');
+    assert.equal(await p.locator('#pickList input.firstmobile').count(), 1, 'asked for Meera\'s number');
+
+    await p.locator('button:text-is("Claim")').click();
+    assert.match(await p.textContent('#status'), /Please enter a 10-digit mobile for Meera Das/);
+    await p.fill('#pickList input.firstmobile', '90000 00013');
+    await p.locator('button:text-is("Claim")').click();
+    await p.waitForSelector('text=Registered');
+    assert.equal(day.grid[1][1], 'Priya 9876543210\nzara Khan 9000000012 (via Priya)\nAnil Rao 9000000011 (via Priya)\nMeera Das 9000000013 (via Priya)');
+    assert.equal(sp.grid[3][3], '9000000013', 'Meera\'s number saved to the Speaker tab');
+    await p.waitForFunction(() => /Meera Das · 9000000013/.test(document.getElementById('pickList').textContent));
+    assert.equal(await p.locator('#pickList input.firstmobile').count(), 0, 'not asked again');
+    assert.equal(await p.textContent('#pickCount'), '3', 'still ticked under the saved entry');
+    assert.deepEqual(errs, []);
+    await p.screenshot({ path: path.join(__dirname, 'picker-view.png') });
   } finally { await browser.close(); }
 });

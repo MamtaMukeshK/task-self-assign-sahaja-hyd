@@ -37,6 +37,13 @@
   button.x { padding:0 7px; margin-left:8px; background:#fff; color:var(--err); border-color:var(--err); font-size:12px; }
   #othersBox { flex-basis:100%; display:flex; flex-wrap:wrap; gap:8px; align-items:flex-start; }
   #othersBox[hidden] { display:none; }
+  #picker summary { cursor:pointer; padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:#fafafa; }
+  #picker[open] summary { border-radius:6px 6px 0 0; }
+  #pickSearch { display:block; width:100%; min-width:0; margin:0; border-radius:0; }
+  #pickList { max-height:260px; overflow:auto; border:1px solid var(--line); border-top:0; border-radius:0 0 6px 6px; padding:4px 0; min-width:280px; }
+  #pickList label { display:block; padding:3px 10px; white-space:nowrap; }
+  #pickList label.nomobile { color:var(--muted); }
+  #pickList input.firstmobile { width:130px; min-width:0; margin-left:8px; padding:2px 6px; }
   textarea { font:inherit; min-width:280px; min-height:64px; padding:6px 8px; border:1px solid var(--line); border-radius:6px; }
 </style>
 </head>
@@ -44,11 +51,16 @@
 <header>
   <h1 id="title">Loading…</h1>
   <label>Date <select id="day"></select></label>
-  <label>Your name <input id="name" autocomplete="name" placeholder="e.g. Priya Shah"></label>
+  <label>Your name <input id="name" autocomplete="off" list="speakerNames" placeholder="type or pick your name"><datalist id="speakerNames"></datalist></label>
   <label>Mobile <input id="mobile" autocomplete="tel" inputmode="tel" placeholder="10 digits" maxlength="16"></label>
   <label><input type="checkbox" id="showOthers"> Register others</label>
   <label><input type="checkbox" id="openOnly"> Open only</label>
   <div id="othersBox" hidden>
+    <details id="picker">
+      <summary>Choose speakers (<span id="pickCount">0</span> selected)</summary>
+      <input id="pickSearch" placeholder="Search names">
+      <div id="pickList"></div>
+    </details>
     <textarea id="others" placeholder="One person per line: name, then 10-digit mobile&#10;Ravi Kumar 9123456789&#10;Asha 9000000002"></textarea>
     <label><input type="checkbox" id="includeMe" checked> Include me too</label>
   </div>
@@ -85,7 +97,86 @@
   othersInput.addEventListener('input', function () { try { localStorage.setItem('selfAssignOthers', othersInput.value); } catch (e) {} render(); });
   showOthers.addEventListener('change', function () { othersBox.hidden = !showOthers.checked; render(); });
   includeMe.addEventListener('change', render);
-  function othersText() { return showOthers.checked ? othersInput.value : ''; }
+  // People ticked in "Choose speakers", keyed 'name|mobile'.
+  var picked = {};
+  var pickList = document.getElementById('pickList');
+  var pickSearch = document.getElementById('pickSearch');
+  pickSearch.addEventListener('input', function () { drawPicker(true); });
+  function digitsOf(v) { var d = String(v).replace(/\D/g, ''); return d.length > 10 ? d.slice(-10) : d; }
+  function pickedLines() { return Object.keys(picked).map(function (k) { return picked[k].name + ' ' + picked[k].mobile; }); }
+  function othersText() {
+    if (!showOthers.checked) return '';
+    // Typed lines first so "Line N" in messages matches the box; ticked speakers follow.
+    return [othersInput.value].concat(pickedLines()).join('\n').trim() ? [othersInput.value].concat(pickedLines()).join('\n') : '';
+  }
+  // Alphabetical speaker list (from the speakers tab) with search and tick boxes.
+  function drawPicker(force) {
+    var speakers = (state && state.speakers) || [];
+    var sig = JSON.stringify(speakers) + '|' + pickSearch.value;
+    if (!force && pickList.dataset.sig === sig) return;
+    pickList.dataset.sig = sig;
+    // Someone ticked without a saved mobile, whose number has since been saved: keep them ticked under the new entry.
+    Object.keys(picked).forEach(function (k) {
+      var p = picked[k];
+      if (/\|$/.test(k) && speakers.some(function (sp) { return sp.mobile && same(sp.name, p.name) && sp.mobile === digitsOf(p.mobile); })) {
+        delete picked[k];
+        picked[p.name.toLowerCase() + '|' + digitsOf(p.mobile)] = { name: p.name, mobile: digitsOf(p.mobile) };
+      }
+    });
+    var q = pickSearch.value.trim().toLowerCase();
+    pickList.textContent = '';
+    speakers.forEach(function (sp) {
+      if (q && sp.name.toLowerCase().indexOf(q) < 0 && sp.mobile.indexOf(q) < 0) return;
+      var key = sp.name.toLowerCase() + '|' + sp.mobile;
+      var label = document.createElement('label');
+      var box = document.createElement('input');
+      box.type = 'checkbox';
+      box.checked = !!picked[key];
+      box.onchange = function () {
+        if (box.checked) picked[key] = { name: sp.name, mobile: sp.mobile }; else delete picked[key];
+        updatePickCount(); drawPicker(true); render();
+      };
+      label.appendChild(box);
+      label.appendChild(document.createTextNode(' ' + sp.name + (sp.mobile ? ' · ' + sp.mobile : ' (no mobile saved yet)')));
+      if (!sp.mobile) {
+        label.className = 'nomobile';
+        // First time only: ask for their number; it is saved to the speakers tab when they are registered.
+        if (picked[key]) {
+          var num = document.createElement('input');
+          num.className = 'firstmobile';
+          num.placeholder = '10-digit mobile';
+          num.inputMode = 'tel';
+          num.value = picked[key].mobile;
+          num.oninput = function () { picked[key].mobile = num.value; };
+          label.appendChild(num);
+        }
+      }
+      pickList.appendChild(label);
+    });
+    if (!pickList.childNodes.length) pickList.textContent = speakers.length ? 'No match.' : 'No speakers saved yet.';
+    var names = document.getElementById('speakerNames');
+    if (names.dataset.sig !== JSON.stringify(speakers)) {
+      names.dataset.sig = JSON.stringify(speakers);
+      names.textContent = '';
+      speakers.forEach(function (sp) { if (sp.mobile) names.appendChild(new Option(sp.name + ' · ' + sp.mobile, sp.name)); });
+    }
+  }
+  function updatePickCount() { document.getElementById('pickCount').textContent = Object.keys(picked).length; }
+  // Picking your own name from the list fills in your saved mobile.
+  nameInput.addEventListener('change', function () {
+    var me = myName();
+    var known = ((state && state.speakers) || []).filter(function (x) { return same(x.name, me); });
+    var sp = known.filter(function (x) { return x.mobile; })[0];
+    if (known.length && !sp && !tenDigits(mobileInput.value)) {
+      setStatus('First time: please enter your 10-digit mobile. It will be saved, so you won\'t be asked again.', true);
+      mobileInput.focus();
+    }
+    if (sp && !tenDigits(mobileInput.value)) {
+      mobileInput.value = sp.mobile;
+      try { localStorage.setItem('selfAssignMobile', sp.mobile); } catch (e) {}
+      render();
+    }
+  });
   function meIncluded() { return !showOthers.checked || includeMe.checked; }
   // Same line rule as the script: a name, then a 10-digit mobile.
   function checkOthers(text) {
@@ -148,6 +239,14 @@
     if (!myName()) { setStatus('Please enter your name first.', true); nameInput.focus(); return; }
     var claiming = fn === 'claimRow';
     if (claiming && meIncluded() && !tenDigits(mobileInput.value)) { setStatus('Please enter a 10-digit mobile number.', true); mobileInput.focus(); return; }
+    if (claiming && showOthers.checked) {
+      var missing = Object.keys(picked).map(function (k) { return picked[k]; }).filter(function (p) { return !tenDigits(p.mobile); })[0];
+      if (missing) {
+        setStatus('Please enter a 10-digit mobile for ' + missing.name + ' in "Choose speakers" (asked once; it will be saved).', true);
+        document.getElementById('picker').open = true;
+        return;
+      }
+    }
     if (claiming) {
       var n = checkOthers(othersText());
       if (typeof n === 'string') { setStatus(n, true); othersInput.focus(); return; }
@@ -195,6 +294,7 @@
     }
     daySelect.value = state.tab;
     document.getElementById('title').textContent = 'Day: ' + state.tab;
+    drawPicker(false);
     var me = myName();
     var t = document.getElementById('grid');
     t.textContent = '';

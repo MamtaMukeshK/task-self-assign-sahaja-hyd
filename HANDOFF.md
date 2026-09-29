@@ -56,6 +56,13 @@ _Last updated: 2026-09-27_
   allowed for the person or their registrar. Schools may exceed their total (row.over); extra people
   shown red "(over limit)", "Over by N"; total 0 = closed. 48 tests.
 
+- 2026-09-29: speaker list. Tab 'Speaker'/'Speakers' (created as 'Speakers' if missing). getState returns
+  speakers [{name, mobile}] sorted case-insensitively. Every person added by a claim is saved there
+  (fill missing mobile for a known name; new row + next Sr. No. otherwise; 'Mobile' header added in the
+  first blank header cell). Page: name datalist fills saved mobile; "Choose speakers" searchable
+  multi-select; a speaker without a saved number gets a one-time mobile box. Checked on the real
+  Speaker tab: 40 names, Mobile column lands in P, no other cell changed. 54 tests.
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.
