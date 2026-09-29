@@ -500,6 +500,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   tr.mine td { background:var(--mine); }
   tr.taken td { background:var(--taken); color:var(--muted); }
   .who { font-weight:600; color:var(--fg); }
+  .person + .person { border-top:1px dashed var(--line); margin-top:4px; padding-top:4px; }
 &lt;/style&gt;
 &lt;/head&gt;
 &lt;body&gt;
@@ -656,7 +657,12 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
       tr.insertCell().textContent = r.remaining + ' of ' + r.total;
       var who = tr.insertCell();
       who.className = 'who';
-      who.textContent = r.assignees.map(function (a) { return a.phone ? a.name + ' · ' + a.phone : a.name; }).join('\n');
+      r.assignees.forEach(function (a, i) {
+        var line = document.createElement('div');
+        line.className = 'person';
+        line.textContent = (r.assignees.length &gt; 1 ? (i + 1) + '. ' : '') + (a.phone ? a.name + ' · ' + a.phone : a.name);
+        who.appendChild(line);
+      });
       r.cells.forEach(function (c, i) {
         var td = tr.insertCell();
         addText(td, c);
