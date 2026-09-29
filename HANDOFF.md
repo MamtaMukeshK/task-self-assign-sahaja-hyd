@@ -63,6 +63,9 @@ _Last updated: 2026-09-27_
   multi-select; a speaker without a saved number gets a one-time mobile box. Checked on the real
   Speaker tab: 40 names, Mobile column lands in P, no other cell changed. 54 tests.
 
+- 2026-09-29: page shows the serial column ('S No' / 'Sl No' / 'Sr. No.') first, titled "Sl.No"; the page's
+  clash label reads "Clashes with Sl.No N". Script messages still use the sheet's own title. 54 tests.
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.

@@ -303,14 +303,17 @@
       ? 'Places per school from column "' + state.slotsHeader.replace(/\s+/g, ' ') + '"'
       : 'No "Total volunteers needed" column on this tab, so each school takes 1 person.';
     // The sheet's own speaker column is left out: "SY Speaker Name" shows the same people, one per line.
-    var shown = function (_, i) { return i !== state.nameIdx; };
-    ['', 'Slots left', 'SY Speaker Name'].concat(state.headers.filter(shown)).forEach(function (h) {
+    // The serial-number column ('S No', 'Sl No', 'Sr. No.') comes first, titled "Sl.No".
+    var snoIdx = -1;
+    state.headers.forEach(function (h, i) { if (snoIdx < 0 && /^s[lr]?\.?\s*no\.?$/i.test(String(h).trim())) snoIdx = i; });
+    var shown = function (_, i) { return i !== state.nameIdx && i !== snoIdx; };
+    (snoIdx >= 0 ? ['Sl.No'] : []).concat(['', 'Slots left', 'SY Speaker Name'], state.headers.filter(shown)).forEach(function (h) {
       var th = document.createElement('th'); th.textContent = h; head.appendChild(th);
     });
     var open = 0;
     function isMine(r) { return !!me && r.assignees.some(function (a) { return same(a.name, me); }); }
     var myStarts = {}; // start time -> first S No I'm on at that time
-    state.rows.forEach(function (r) { if (r.start && isMine(r) && !myStarts[r.start]) myStarts[r.start] = ((state.headers[0] || '').trim() + ' ' + r.cells[0]).trim() || ('row ' + r.row); });
+    state.rows.forEach(function (r) { if (r.start && isMine(r) && !myStarts[r.start]) myStarts[r.start] = snoIdx >= 0 ? 'Sl.No ' + r.cells[snoIdx] : 'row ' + r.row; });
     state.rows.forEach(function (r) {
       var mine = isMine(r);
       var justMe = meIncluded() && !othersText().trim();
@@ -320,6 +323,7 @@
       if (openOnly.checked && !hasRoom && !mine) return;
       var tr = t.insertRow();
       tr.className = mine ? 'mine' : r.over ? 'overrow' : (hasRoom ? '' : 'taken');
+      if (snoIdx >= 0) tr.insertCell().textContent = r.cells[snoIdx];
       var btnCell = tr.insertCell();
       var addButton = function (label, cls, handler) {
         var b = document.createElement('button');

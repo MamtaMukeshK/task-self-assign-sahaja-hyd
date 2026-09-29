@@ -31,8 +31,10 @@ test('two users in real browser', { timeout: 60000 }, async () => {
   const errs = []; for (const p of [a, b]) p.on('pageerror', e => errs.push(e.message));
 
   const heads = await a.locator('th').allTextContents();
-  assert.equal(heads.length, 9, 'button + Slots left + SY Speaker Name + the 6 other sheet columns');
-  assert.equal(heads[2], 'SY Speaker Name');
+  assert.equal(heads.length, 9, 'Sl.No + button + Slots left + SY Speaker Name + the 5 other sheet columns');
+  assert.deepEqual(heads.slice(0, 4), ['Sl.No', '', 'Slots left', 'SY Speaker Name']);
+  assert.ok(!heads.includes('S No'), 'serial column not repeated');
+  assert.equal(await a.locator('#grid tr').nth(1).locator('td').first().textContent(), '1', 'serial number is the first cell');
   assert.ok(!heads.some(h => /Sahaja Yoga\s*Speaker Name/.test(h)), 'sheet speaker column not repeated');
   assert.match(await a.textContent('#note'), /No "Total volunteers needed" column/);
   assert.equal(await a.locator('button:text-is("Claim")').count(), 2);
@@ -150,7 +152,7 @@ test('date picker and time-clash label in real browser', { timeout: 60000 }, asy
     await row(1).locator('button:text-is("Claim")').click(); await p.waitForSelector('text=Registered');
     assert.equal(d30.grid[1][1], 'Priya 9876543210', 'written to the picked day');
     assert.equal(d28.grid[1][1], '', 'today untouched');
-    assert.match(await row(2).textContent(), /Clashes with S No 1 \(10:00\)/);
+    assert.match(await row(2).textContent(), /Clashes with Sl\.No 1 \(10:00\)/);
     assert.equal(await row(2).locator('button').count(), 0, 'no Claim button on a clashing school');
     assert.equal(await row(3).locator('button:text-is("Claim")').count(), 1, 'other times still claimable');
 
