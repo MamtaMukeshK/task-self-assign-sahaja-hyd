@@ -544,3 +544,28 @@ test('speakers: a refused registration saves nobody', () => {
   assert.equal(sp.grid.length, 4);
   assert.equal(sp.grid[0][5], '');
 });
+
+// ---- Testing sheet of 29 Sep: 30-Sep titled "Sl.No"; Speaker tab already has "Mobile" in column C ----
+test('testing-sheet layout: "Sl.No" serial title and an existing Speaker "Mobile" column are used as they are', () => {
+  const day = makeSheet('28-Sep', 90, [
+    ['Sl.No', 'Sahaja Yoga ( IND)\n Speaker Name', 'Local ( HYD) \n Sahaja Yogi', 'Total volunteers needed', 'count of Volunteers still neeeded', 'Institution name', 'Date', 'Time'],
+    ['1', 'Vol A 9000000001\nVol B 9000000002', '', '20', '18', 'School A', '30-Sep-26', ' 2pm to 3pm. (STRICT TIMINGS) '],
+    ['2', 'Vol C 9000000003', '', '6', '5', 'School B', '30-Sep-26', '3:30 to 4:30 pm - 6 sessions'],
+    ['3', 'Vol D 9000000004', '', '12', '11', 'School C', '30-Sep-26', '3:30 to 4:30 pm - 12 sessions'],
+  ]);
+  const sp = makeSheet('Speaker', 91, [
+    ['Sr. No.', 'Speaker', 'Mobile', 'Language', '30-Sep-26', ''],
+    ['1', 'Anil Rao', '', 'Hindi', '', ''],
+    ['42', 'Meera Das', '', 'Telugu', 'school', ''],
+  ]);
+  const gs = load([day, sp], NOW);
+  const s = gs.getState();
+  assert.deepEqual(s.rows.map(r => [r.start, r.remaining]), [['14:00', 18], ['15:30', 5], ['15:30', 11]]);
+  assert.throws(() => gs.claimRow(s.rows[1].row, s.rows[1].fp, 'Vol D', '9000000004'), /Time clash: you are already on Sl\.No 3 \(School C\)/);
+  gs.claimRow(s.rows[1].row, s.rows[1].fp, 'Anil Rao', '9000000011', undefined, 'New Person 9000000012', true);
+  assert.equal(sp.grid[0].filter(h => h === 'Mobile').length, 1, 'no second Mobile column');
+  assert.equal(sp.grid[1][2], '9000000011', 'saved into the existing Mobile column C');
+  assert.deepEqual(Array.from(sp.grid[3].slice(0, 4), v => v ?? ''), [43, 'New Person', '9000000012', ''], 'next Sr. No. after 42');
+  assert.equal(sp.grid[2][4], 'school', 'date columns untouched');
+  assert.equal(day.grid[2][4], 3, 'still-needed for Sl.No 2 = 6 - 3');
+});

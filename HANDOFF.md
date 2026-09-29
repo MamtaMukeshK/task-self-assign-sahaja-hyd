@@ -66,6 +66,13 @@ _Last updated: 2026-09-27_
 - 2026-09-29: page shows the serial column ('S No' / 'Sl No' / 'Sr. No.') first, titled "Sl.No"; the page's
   clash label reads "Clashes with Sl.No N". Script messages still use the sheet's own title. 54 tests.
 
+- 2026-09-29: checked the user's testing workbook (30_Sep_Assignments_-_Testing_Sheet.xlsx; not committed).
+  Differences vs earlier: 30-Sep serial column titled "Sl.No", columns reordered (Date G, Time H, map J,
+  students K); Speaker tab now has an empty "Mobile" column C. Latest code works unchanged: capacity,
+  still-needed (16/1/10 match the sheet), clash check, speaker saving into existing column C. Real use
+  visible: page-format entries in 30-Sep B. Speaker tab has no page-added rows yet => the deployed page
+  predates the speaker-list version. Test added for this layout. 55 tests.
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.
