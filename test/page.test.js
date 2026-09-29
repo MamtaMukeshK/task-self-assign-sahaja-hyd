@@ -399,10 +399,13 @@ test('language switch: opens in English; Telugu and Hindi translate the page and
     await p.goto('http://app.test/');
     await p.waitForSelector('text=Day: 28-Sep');
     assert.equal(await p.inputValue('#lang'), 'en', 'opens in English');
+    assert.equal(await p.textContent('#brand h1'), 'Hyderabad 2026 - Self Realization TourSchedule & Assignments');
+    assert.ok((await p.getAttribute('#logo', 'src')).startsWith('data:image/png;base64,'), 'lotus logo embedded');
     assert.match(await p.textContent('#clock'), /^Sheet time: Mon 28 Sep 05:00 · v\d{4}-\d\d-\d\d\.\d+$/);
 
     await p.selectOption('#lang', 'te');
     assert.equal(await p.textContent('#title'), 'రోజు: 28-Sep');
+    assert.equal(await p.textContent('#brandSub'), 'షెడ్యూల్ & కేటాయింపులు', 'title switches language too');
     assert.deepEqual(await p.$$eval('#day option', o => o.map(x => x.textContent)), ['ఆది 27-Sep (గడిచింది)', 'సోమ 28-Sep (ఈ రోజు)']);
     assert.equal(await p.getAttribute('#mobile', 'placeholder'), '10 అంకెలు');
     assert.deepEqual((await p.locator('th').allTextContents()).slice(0, 4), ['క్ర.సం.', '', 'మిగిలిన స్థానాలు', 'SY వక్త పేరు']);

@@ -9,7 +9,7 @@
  */
 
 // Shown on the page so it's easy to confirm which version is deployed.
-var VERSION = '2026-09-29.4';
+var VERSION = '2026-09-29.5';
 
 var CONFIG = {
   // Time zone for "today" and "now" (which day opens, which slots have ended).
@@ -49,7 +49,7 @@ var CONFIG = {
 
 function doGet() {
   return HtmlService.createHtmlOutputFromFile('Index')
-    .setTitle('Pick your school')
+    .setTitle('Hyderabad 2026 - Self Realization Tour: Schedule & Assignments')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 

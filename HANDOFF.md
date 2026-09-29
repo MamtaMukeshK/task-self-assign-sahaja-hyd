@@ -97,6 +97,12 @@ _Last updated: 2026-09-27_
   deployed side: an older Code.gs, or the testing sheet's time zone not being India. Fix: CONFIG.TIME_ZONE
   = 'Asia/Kolkata' (used for today/now), VERSION constant, page shows "Sheet time: … · v…". 64 tests.
 
+- 2026-09-29: branding from Sahaja_Yoga_Proposal_Final.pptx: header with lotus logo (slide 1 image, cropped +
+  resized to assets/lotus.png, embedded as data URI) and title "Hyderabad 2026 - Self Realization Tour" /
+  "Schedule & Assignments" (translated te/hi, needs review); fonts DM Sans + Instrument Serif (+ Noto
+  Telugu/Devanagari) via Google Fonts; deck colours. VERSION 2026-09-29.5. 64 tests. Real fonts not seen
+  in test screenshots (Google Fonts blocked in the build sandbox).
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.
