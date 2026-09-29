@@ -52,22 +52,25 @@
 </head>
 <body>
 <header>
+  <label><span data-t="language">Language</span> <select id="lang">
+    <option value="en">English</option><option value="te">తెలుగు</option><option value="hi">हिन्दी</option>
+  </select></label>
   <h1 id="title">Loading…</h1>
-  <label>Date <select id="day"></select></label>
-  <label>Your name <input id="name" autocomplete="off" list="speakerNames" placeholder="type or pick your name"><datalist id="speakerNames"></datalist></label>
-  <label>Mobile <input id="mobile" autocomplete="tel" inputmode="tel" placeholder="10 digits" maxlength="16"></label>
-  <label id="showOthersLabel"><input type="checkbox" id="showOthers"> Register others</label>
-  <label><input type="checkbox" id="openOnly"> Open only</label>
+  <label><span data-t="date">Date</span> <select id="day"></select></label>
+  <label><span data-t="yourName">Your name</span> <input id="name" autocomplete="off" list="speakerNames" data-tp="namePh"><datalist id="speakerNames"></datalist></label>
+  <label><span data-t="mobile">Mobile</span> <input id="mobile" autocomplete="tel" inputmode="tel" data-tp="mobilePh" maxlength="16"></label>
+  <label id="showOthersLabel"><input type="checkbox" id="showOthers"> <span data-t="registerOthers">Register others</span></label>
+  <label><input type="checkbox" id="openOnly"> <span data-t="openOnly">Open only</span></label>
   <div id="othersBox" hidden>
     <details id="picker">
-      <summary>Choose speakers (<span id="pickCount">0</span> selected)</summary>
-      <input id="pickSearch" placeholder="Search names">
+      <summary id="pickSummary"></summary>
+      <input id="pickSearch" data-tp="searchNames">
       <div id="pickList"></div>
     </details>
-    <textarea id="others" placeholder="One person per line: name, then 10-digit mobile&#10;Ravi Kumar 9123456789&#10;Asha 9000000002"></textarea>
-    <label><input type="checkbox" id="includeMe" checked> Include me too</label>
+    <textarea id="others" data-tp="othersPh"></textarea>
+    <label><input type="checkbox" id="includeMe" checked> <span data-t="includeMe">Include me too</span></label>
   </div>
-  <div id="pastNote" hidden>This day is over: view only. Pick today or a later date to claim.</div>
+  <div id="pastNote" data-t="pastNote" hidden></div>
   <span id="status"></span>
   <span id="updated"></span>
   <span id="note"></span>
@@ -75,7 +78,173 @@
 <div class="wrap"><table id="grid"></table></div>
 
 <script>
+  // ---- Languages ----------------------------------------------------------
+  // Every piece of page text, in English (en), Telugu (te) and Hindi (hi).
+  // {0}, {1}… are filled in with names, numbers and times. To correct a
+  // translation, edit it here; anything missing falls back to English.
+  var LANG = 'en'; // the page always opens in English
+  var TEXT = {
+    en: {
+      language: 'Language', loading: 'Loading…', day: 'Day: {0}', date: 'Date', yourName: 'Your name',
+      namePh: 'type or pick your name', mobile: 'Mobile', mobilePh: '10 digits', registerOthers: 'Register others',
+      openOnly: 'Open only', chooseSpeakers: 'Choose speakers ({0} selected)', searchNames: 'Search names',
+      othersPh: 'One person per line: name, then 10-digit mobile\nRavi Kumar 9123456789\nAsha 9000000002',
+      includeMe: 'Include me too', pastNote: 'This day is over: view only. Pick today or a later date to claim.',
+      noMobileYet: '(no mobile saved yet)', mobile10Ph: '10-digit mobile', noMatch: 'No match.', noSpeakers: 'No speakers saved yet.',
+      firstTime: "First time: please enter your 10-digit mobile. It will be saved, so you won't be asked again.",
+      lineBad: 'Line {0} of "Register others" should be a name then a 10-digit mobile, like "Ravi 9123456789".',
+      enterName: 'Please enter your name first.', enter10: 'Please enter a 10-digit mobile number.',
+      enter10For: 'Please enter a 10-digit mobile for {0} in "Choose speakers" (asked once; it will be saved).',
+      nobody: 'Nobody to register: tick "Include me too" or add people under "Register others".',
+      registering: 'Registering…', releasing: 'Releasing…', removing: 'Removing…',
+      removed: 'Removed {0}.', released: 'Released.', registered: 'Registered.',
+      overNote: ' Note: this school is now over its limit by {0} (shown in red).',
+      openMap: 'Open map', todayMark: '(today)', pastMark: '(past)', weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+      updated: 'Updated {0}', placesFrom: 'Places per school from column "{0}"',
+      noPlacesCol: 'No "Total volunteers needed" column on this tab, so each school takes 1 person.',
+      slNo: 'Sl.No', slotsLeft: 'Slots left', speakerCol: 'SY Speaker Name',
+      past: 'Past', ended: 'Ended', closed: 'Closed', clashes: 'Clashes with {0} ({1})',
+      claim: 'Claim', claimFull: 'Claim (full)', release: 'Release', overBy: 'Over by {0} (needs {1})', nOfM: '{0} of {1}',
+      overLimit: ' (over limit)', via: ' · via {0}', removeX: 'Remove {0}', freeTitle: '{0} with free slots · {1}',
+      noRows: 'No rows on this tab yet.', or: 'or', row: 'row {0}',
+      srvBusy: 'Lots of people are claiming right now. Please try again.',
+      srvGone: 'That row no longer exists. The list has been refreshed.',
+      srvEdited: 'That row was edited or moved since you loaded it. Please check it and try again.',
+      srvDayOver: '{0} is over, so it can only be viewed now.',
+      srvEnded: 'This slot has already ended ({0}), so it can only be viewed now.',
+      srvClosed: 'This school is closed (its total is 0).',
+      srvClashYou: 'Time clash: you are already on {0} at {1} on {2}. Nobody was added. Release that first, or pick a different time.',
+      srvClashOther: 'Time clash: {3} is already on {0} at {1} on {2}. Nobody was added. Release that first, or pick a different time.',
+      srvNotOnRowMe: 'Your name is not on this row.', srvNotOnRow: '{0} is not on this row.',
+      srvOnlyRemove: 'Only {0} can remove {1}.',
+      srvLineMobile: 'Line {0} of "Register others" ({1}): please enter a 10-digit mobile number.',
+      srvMax: 'Please register at most {0} people at a time.', srvNameLong: 'Name is too long.',
+      srvNameStart: 'Name cannot start with = + - or @.'
+    },
+    te: {
+      language: 'భాష', loading: 'లోడ్ అవుతోంది…', day: 'రోజు: {0}', date: 'తేదీ', yourName: 'మీ పేరు',
+      namePh: 'మీ పేరు టైప్ చేయండి లేదా ఎంచుకోండి', mobile: 'మొబైల్', mobilePh: '10 అంకెలు', registerOthers: 'ఇతరులను నమోదు చేయండి',
+      openOnly: 'ఖాళీలు ఉన్నవి మాత్రమే', chooseSpeakers: 'వక్తలను ఎంచుకోండి ({0} ఎంచుకున్నారు)', searchNames: 'పేర్లు వెతకండి',
+      othersPh: 'ప్రతి లైన్‌లో ఒకరు: పేరు, తర్వాత 10 అంకెల మొబైల్\nRavi Kumar 9123456789\nAsha 9000000002',
+      includeMe: 'నన్ను కూడా చేర్చండి', pastNote: 'ఈ రోజు ముగిసింది: చూడటానికి మాత్రమే. నమోదు కోసం ఈ రోజు లేదా తర్వాతి తేదీని ఎంచుకోండి.',
+      noMobileYet: '(మొబైల్ ఇంకా సేవ్ కాలేదు)', mobile10Ph: '10 అంకెల మొబైల్', noMatch: 'సరిపోలేదు.', noSpeakers: 'ఇంకా వక్తలు సేవ్ కాలేదు.',
+      firstTime: 'మొదటిసారి: దయచేసి మీ 10 అంకెల మొబైల్ నంబర్ ఇవ్వండి. ఇది సేవ్ అవుతుంది, మళ్ళీ అడగము.',
+      lineBad: '"ఇతరులను నమోదు చేయండి"లో లైన్ {0}: పేరు తర్వాత 10 అంకెల మొబైల్ ఉండాలి, ఉదా. "Ravi 9123456789".',
+      enterName: 'దయచేసి ముందుగా మీ పేరు ఇవ్వండి.', enter10: 'దయచేసి 10 అంకెల మొబైల్ నంబర్ ఇవ్వండి.',
+      enter10For: 'దయచేసి "వక్తలను ఎంచుకోండి"లో {0} గారి 10 అంకెల మొబైల్ ఇవ్వండి (ఒక్కసారే అడుగుతాము; ఇది సేవ్ అవుతుంది).',
+      nobody: 'నమోదు చేయడానికి ఎవరూ లేరు: "నన్ను కూడా చేర్చండి" ఎంచుకోండి లేదా "ఇతరులను నమోదు చేయండి"లో పేర్లు చేర్చండి.',
+      registering: 'నమోదు అవుతోంది…', releasing: 'పేరు తీసేస్తోంది…', removing: 'తొలగిస్తోంది…',
+      removed: '{0} తొలగించబడ్డారు.', released: 'మీ పేరు తీసేయబడింది.', registered: 'నమోదు పూర్తయింది.',
+      overNote: ' గమనిక: ఈ పాఠశాలలో ఇప్పుడు పరిమితి కంటే {0} మంది ఎక్కువ ఉన్నారు (ఎరుపు రంగులో).',
+      openMap: 'మ్యాప్ తెరవండి', todayMark: '(ఈ రోజు)', pastMark: '(గడిచింది)', weekdays: ['ఆది', 'సోమ', 'మంగళ', 'బుధ', 'గురు', 'శుక్ర', 'శని'],
+      updated: 'అప్‌డేట్ {0}', placesFrom: 'ప్రతి పాఠశాల స్థానాలు "{0}" కాలమ్ నుండి',
+      noPlacesCol: 'ఈ ట్యాబ్‌లో "Total volunteers needed" కాలమ్ లేదు, కాబట్టి ప్రతి పాఠశాలకు 1 వ్యక్తి.',
+      slNo: 'క్ర.సం.', slotsLeft: 'మిగిలిన స్థానాలు', speakerCol: 'SY వక్త పేరు',
+      past: 'గడిచింది', ended: 'ముగిసింది', closed: 'మూసివేయబడింది', clashes: '{0}తో సమయం కలుస్తోంది ({1})',
+      claim: 'ఎంచుకోండి', claimFull: 'ఎంచుకోండి (నిండింది)', release: 'పేరు తీసేయండి', overBy: 'పరిమితి కంటే {0} ఎక్కువ ({1} కావాలి)', nOfM: '{1}లో {0}',
+      overLimit: ' (పరిమితి మించింది)', via: ' · {0} ద్వారా', removeX: '{0}ను తొలగించండి', freeTitle: '{0} ఖాళీ · {1}',
+      noRows: 'ఈ ట్యాబ్‌లో ఇంకా వరుసలు లేవు.', or: 'లేదా', row: 'వరుస {0}',
+      srvBusy: 'ఇప్పుడు చాలా మంది ఒకేసారి నమోదు చేస్తున్నారు. దయచేసి మళ్ళీ ప్రయత్నించండి.',
+      srvGone: 'ఈ వరుస ఇప్పుడు లేదు. జాబితా రిఫ్రెష్ అయింది.',
+      srvEdited: 'మీరు పేజీ తెరిచిన తర్వాత ఈ వరుస మారింది. దయచేసి చూసి మళ్ళీ ప్రయత్నించండి.',
+      srvDayOver: '{0} ముగిసింది, ఇప్పుడు చూడటానికి మాత్రమే.',
+      srvEnded: 'ఈ సెషన్ ముగిసింది ({0}), ఇప్పుడు చూడటానికి మాత్రమే.',
+      srvClosed: 'ఈ పాఠశాల మూసివేయబడింది (మొత్తం 0).',
+      srvClashYou: 'సమయం కలుస్తోంది: మీరు ఇప్పటికే {0}లో ఉన్నారు ({2}, {1}). ఎవరినీ చేర్చలేదు. ముందు దాన్ని తీసేయండి లేదా వేరే సమయం ఎంచుకోండి.',
+      srvClashOther: 'సమయం కలుస్తోంది: {3} ఇప్పటికే {0}లో ఉన్నారు ({2}, {1}). ఎవరినీ చేర్చలేదు. ముందు దాన్ని తీసేయండి లేదా వేరే సమయం ఎంచుకోండి.',
+      srvNotOnRowMe: 'ఈ వరుసలో మీ పేరు లేదు.', srvNotOnRow: '{0} ఈ వరుసలో లేరు.',
+      srvOnlyRemove: '{0} మాత్రమే {1}ను తొలగించగలరు.',
+      srvLineMobile: '"ఇతరులను నమోదు చేయండి"లో లైన్ {0} ({1}): దయచేసి 10 అంకెల మొబైల్ నంబర్ ఇవ్వండి.',
+      srvMax: 'ఒకేసారి గరిష్ఠంగా {0} మందిని నమోదు చేయండి.', srvNameLong: 'పేరు చాలా పొడవుగా ఉంది.',
+      srvNameStart: 'పేరు = + - లేదా @ తో మొదలవకూడదు.'
+    },
+    hi: {
+      language: 'भाषा', loading: 'लोड हो रहा है…', day: 'दिन: {0}', date: 'तारीख', yourName: 'आपका नाम',
+      namePh: 'अपना नाम लिखें या चुनें', mobile: 'मोबाइल', mobilePh: '10 अंक', registerOthers: 'दूसरों का पंजीकरण करें',
+      openOnly: 'केवल खाली स्थान वाले', chooseSpeakers: 'वक्ता चुनें ({0} चुने गए)', searchNames: 'नाम खोजें',
+      othersPh: 'हर पंक्ति में एक व्यक्ति: नाम, फिर 10 अंकों का मोबाइल\nRavi Kumar 9123456789\nAsha 9000000002',
+      includeMe: 'मुझे भी शामिल करें', pastNote: 'यह दिन बीत चुका है: केवल देखने के लिए। नाम लिखवाने के लिए आज या आगे की तारीख चुनें।',
+      noMobileYet: '(मोबाइल अभी सहेजा नहीं गया)', mobile10Ph: '10 अंकों का मोबाइल', noMatch: 'कोई मेल नहीं मिला।', noSpeakers: 'अभी कोई वक्ता सहेजा नहीं गया।',
+      firstTime: 'पहली बार: कृपया अपना 10 अंकों का मोबाइल नंबर डालें। यह सहेज लिया जाएगा, दोबारा नहीं पूछा जाएगा।',
+      lineBad: '"दूसरों का पंजीकरण करें" की पंक्ति {0} में पहले नाम और फिर 10 अंकों का मोबाइल होना चाहिए, जैसे "Ravi 9123456789"।',
+      enterName: 'कृपया पहले अपना नाम लिखें।', enter10: 'कृपया 10 अंकों का मोबाइल नंबर डालें।',
+      enter10For: 'कृपया "वक्ता चुनें" में {0} का 10 अंकों का मोबाइल डालें (केवल एक बार; यह सहेज लिया जाएगा)।',
+      nobody: 'पंजीकरण के लिए कोई नहीं है: "मुझे भी शामिल करें" चुनें या "दूसरों का पंजीकरण करें" में लोग जोड़ें।',
+      registering: 'पंजीकरण हो रहा है…', releasing: 'नाम हटाया जा रहा है…', removing: 'हटाया जा रहा है…',
+      removed: '{0} को हटा दिया गया।', released: 'आपका नाम हटा दिया गया।', registered: 'पंजीकरण हो गया।',
+      overNote: ' ध्यान दें: इस स्कूल में अब सीमा से {0} अधिक लोग हैं (लाल रंग में)।',
+      openMap: 'नक्शा खोलें', todayMark: '(आज)', pastMark: '(बीता हुआ)', weekdays: ['रवि', 'सोम', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि'],
+      updated: 'अपडेट {0}', placesFrom: 'हर स्कूल के स्थान "{0}" कॉलम से',
+      noPlacesCol: 'इस टैब में "Total volunteers needed" कॉलम नहीं है, इसलिए हर स्कूल में 1 व्यक्ति।',
+      slNo: 'क्र.सं.', slotsLeft: 'बचे स्थान', speakerCol: 'SY वक्ता का नाम',
+      past: 'बीता हुआ', ended: 'समाप्त', closed: 'बंद', clashes: '{0} से समय टकराता है ({1})',
+      claim: 'चुनें', claimFull: 'चुनें (भरा हुआ)', release: 'नाम हटाएँ', overBy: 'सीमा से {0} अधिक ({1} चाहिए)', nOfM: '{1} में से {0}',
+      overLimit: ' (सीमा से अधिक)', via: ' · {0} द्वारा', removeX: '{0} को हटाएँ', freeTitle: '{0} में जगह · {1}',
+      noRows: 'इस टैब में अभी कोई पंक्ति नहीं है।', or: 'या', row: 'पंक्ति {0}',
+      srvBusy: 'अभी बहुत से लोग एक साथ पंजीकरण कर रहे हैं। कृपया फिर से कोशिश करें।',
+      srvGone: 'यह पंक्ति अब मौजूद नहीं है। सूची ताज़ा कर दी गई है।',
+      srvEdited: 'पेज खोलने के बाद इस पंक्ति में बदलाव हुआ है। कृपया देखकर फिर से कोशिश करें।',
+      srvDayOver: '{0} बीत चुका है, अब इसे केवल देखा जा सकता है।',
+      srvEnded: 'यह सत्र समाप्त हो चुका है ({0}), अब इसे केवल देखा जा सकता है।',
+      srvClosed: 'यह स्कूल बंद है (कुल संख्या 0 है)।',
+      srvClashYou: 'समय टकराता है: आप पहले से {0} में हैं ({2}, {1})। किसी को नहीं जोड़ा गया। पहले वह नाम हटाएँ या कोई दूसरा समय चुनें।',
+      srvClashOther: 'समय टकराता है: {3} पहले से {0} में हैं ({2}, {1})। किसी को नहीं जोड़ा गया। पहले वह नाम हटाएँ या कोई दूसरा समय चुनें।',
+      srvNotOnRowMe: 'इस पंक्ति में आपका नाम नहीं है।', srvNotOnRow: '{0} इस पंक्ति में नहीं हैं।',
+      srvOnlyRemove: 'केवल {0} ही {1} को हटा सकते हैं।',
+      srvLineMobile: '"दूसरों का पंजीकरण करें" की पंक्ति {0} ({1}): कृपया 10 अंकों का मोबाइल नंबर डालें।',
+      srvMax: 'एक बार में अधिकतम {0} लोगों का पंजीकरण करें।', srvNameLong: 'नाम बहुत लंबा है।',
+      srvNameStart: 'नाम = + - या @ से शुरू नहीं हो सकता।'
+    }
+  };
+  function t(key) {
+    var s = (TEXT[LANG] && TEXT[LANG][key] != null) ? TEXT[LANG][key] : TEXT.en[key];
+    var args = arguments;
+    return typeof s === 'string' ? s.replace(/\{(\d)\}/g, function (_, n) { return args[+n + 1]; }) : s;
+  }
+  // Messages from the script arrive in English; known ones are shown in the chosen language.
+  var SERVER_TEXT = [
+    [/^Lots of people are claiming right now/, 'srvBusy'],
+    [/^That row no longer exists/, 'srvGone'],
+    [/^That row was edited or moved/, 'srvEdited'],
+    [/^This slot has already ended \(([\s\S]*)\), so it can only be viewed now\.$/, 'srvEnded'],
+    [/^([\s\S]+) is over, so it can only be viewed now\.$/, 'srvDayOver'],
+    [/^This school is closed/, 'srvClosed'],
+    [/^Time clash: you are already on ([\s\S]+?) at ([\s\S]+) on (\S+)\. Nobody was added/, 'srvClashYou'],
+    [/^Time clash: ([\s\S]+?) is already on ([\s\S]+?) at ([\s\S]+) on (\S+)\. Nobody was added/, 'srvClashOther', function (m) { return [m[2], m[3], m[4], m[1]]; }],
+    [/^Your name is not on this row\.$/, 'srvNotOnRowMe'],
+    [/^([\s\S]+) is not on this row\.$/, 'srvNotOnRow'],
+    [/^Only ([\s\S]+?)(?: or ([\s\S]+?))? can remove ([\s\S]+)\.$/, 'srvOnlyRemove', function (m) { return [m[1] + (m[2] ? ' ' + t('or') + ' ' + m[2] : ''), m[3]]; }],
+    [/^Line (\d+) of "Register others" should be/, 'lineBad'],
+    [/^Line (\d+) of "Register others" \(([\s\S]*)\): /, 'srvLineMobile'],
+    [/^Nobody to register/, 'nobody'],
+    [/^Please register at most (\d+)/, 'srvMax'],
+    [/^Please enter your name first/, 'enterName'],
+    [/^Please enter a 10-digit mobile number/, 'enter10'],
+    [/^Name is too long/, 'srvNameLong'],
+    [/^Name cannot start/, 'srvNameStart']
+  ];
+  function translateServer(msg) {
+    for (var i = 0; i < SERVER_TEXT.length; i++) {
+      var m = SERVER_TEXT[i][0].exec(msg);
+      if (m) return t.apply(null, [SERVER_TEXT[i][1]].concat(SERVER_TEXT[i][2] ? SERVER_TEXT[i][2](m) : m.slice(1)));
+    }
+    return msg; // unknown (e.g. set-up problems): shown as sent
+  }
+  // Fixed text on the page: elements marked data-t (text) or data-tp (placeholder).
+  function applyStaticText() {
+    document.documentElement.lang = LANG;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-t]'), function (el) { el.textContent = t(el.getAttribute('data-t')); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-tp]'), function (el) { el.placeholder = t(el.getAttribute('data-tp')); });
+    updatePickCount();
+  }
+  // "Mon 28-Sep (today)" from the script -> the chosen language.
+  function dayLabel(d) {
+    var wd = TEXT.en.weekdays.indexOf(String(d.label).slice(0, 3));
+    return (wd >= 0 ? t('weekdays')[wd] + ' ' : '') + d.name + (d.today ? ' ' + t('todayMark') : d.past ? ' ' + t('pastMark') : '');
+  }
+
   var POLL_MS = 15000;
+  var lastUpdated = '';
   var state = null;
   var seq = 0;      // ignore responses older than the newest one already shown
   var shownSeq = 0;
@@ -141,14 +310,14 @@
         updatePickCount(); drawPicker(true); render();
       };
       label.appendChild(box);
-      label.appendChild(document.createTextNode(' ' + sp.name + (sp.mobile ? ' · ' + sp.mobile : ' (no mobile saved yet)')));
+      label.appendChild(document.createTextNode(' ' + sp.name + (sp.mobile ? ' · ' + sp.mobile : ' ' + t('noMobileYet'))));
       if (!sp.mobile) {
         label.className = 'nomobile';
         // First time only: ask for their number; it is saved to the speakers tab when they are registered.
         if (picked[key]) {
           var num = document.createElement('input');
           num.className = 'firstmobile';
-          num.placeholder = '10-digit mobile';
+          num.placeholder = t('mobile10Ph');
           num.inputMode = 'tel';
           num.value = picked[key].mobile;
           num.oninput = function () { picked[key].mobile = num.value; };
@@ -157,7 +326,7 @@
       }
       pickList.appendChild(label);
     });
-    if (!pickList.childNodes.length) pickList.textContent = speakers.length ? 'No match.' : 'No speakers saved yet.';
+    if (!pickList.childNodes.length) pickList.textContent = speakers.length ? t('noMatch') : t('noSpeakers');
     var names = document.getElementById('speakerNames');
     if (names.dataset.sig !== JSON.stringify(speakers)) {
       names.dataset.sig = JSON.stringify(speakers);
@@ -165,14 +334,24 @@
       speakers.forEach(function (sp) { if (sp.mobile) names.appendChild(new Option(sp.name + ' · ' + sp.mobile, sp.name)); });
     }
   }
-  function updatePickCount() { document.getElementById('pickCount').textContent = Object.keys(picked).length; }
+  function updatePickCount() {
+    // "Choose speakers (N selected)" in the chosen language, with N in its own span.
+    var parts = t('chooseSpeakers', '\u0000').split('\u0000');
+    var summary = document.getElementById('pickSummary');
+    summary.textContent = parts[0];
+    var n = document.createElement('span');
+    n.id = 'pickCount';
+    n.textContent = Object.keys(picked).length;
+    summary.appendChild(n);
+    summary.appendChild(document.createTextNode(parts[1] || ''));
+  }
   // Picking your own name from the list fills in your saved mobile.
   nameInput.addEventListener('change', function () {
     var me = myName();
     var known = ((state && state.speakers) || []).filter(function (x) { return same(x.name, me); });
     var sp = known.filter(function (x) { return x.mobile; })[0];
     if (known.length && !sp && !tenDigits(mobileInput.value)) {
-      setStatus('First time: please enter your 10-digit mobile. It will be saved, so you won\'t be asked again.', true);
+      setStatus(t('firstTime'), true);
       mobileInput.focus();
     }
     if (sp && !tenDigits(mobileInput.value)) {
@@ -189,7 +368,7 @@
       var line = lines[i].trim();
       if (!line) continue;
       var m = /^(.*?)[\s,:\-]*((?:\+?91|0)?[\d\s\-().]{10,})$/.exec(line);
-      if (!m || !m[1].trim() || !tenDigits(m[2])) return 'Line ' + (i + 1) + ' of "Register others" should be a name then a 10-digit mobile, like "Ravi 9123456789".';
+      if (!m || !m[1].trim() || !tenDigits(m[2])) return t('lineBad', i + 1);
       n++;
     }
     return n;
@@ -213,12 +392,13 @@
         if (mySeq < shownSeq) return;
         shownSeq = mySeq; state = s; busyRow = null;
         render();
-        document.getElementById('updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+        lastUpdated = new Date().toLocaleTimeString();
+        document.getElementById('updated').textContent = t('updated', lastUpdated);
         if (okMsg) setStatus(typeof okMsg === 'function' ? okMsg(s) : okMsg);
       })
       .withFailureHandler(function (err) {
         busyRow = null;
-        setStatus(err.message || String(err), true);
+        setStatus(translateServer(err.message || String(err)), true);
         if (fn !== 'getState') refresh(); // show the latest truth after a failed claim
         else render();
       });
@@ -235,7 +415,7 @@
     shownSeq = ++seq; // ignore answers still on their way for the previous day
     state = null; busyRow = null;
     document.getElementById('grid').textContent = '';
-    document.getElementById('title').textContent = 'Loading…';
+    document.getElementById('title').textContent = t('loading');
     setStatus('');
     refresh();
   });
@@ -243,13 +423,13 @@
   function refresh() { call('getState', [pickedDay]); }
 
   function act(fn, r, verb, target) {
-    if (!myName()) { setStatus('Please enter your name first.', true); nameInput.focus(); return; }
+    if (!myName()) { setStatus(t('enterName'), true); nameInput.focus(); return; }
     var claiming = fn === 'claimRow';
-    if (claiming && meIncluded() && !tenDigits(mobileInput.value)) { setStatus('Please enter a 10-digit mobile number.', true); mobileInput.focus(); return; }
+    if (claiming && meIncluded() && !tenDigits(mobileInput.value)) { setStatus(t('enter10'), true); mobileInput.focus(); return; }
     if (claiming && showOthers.checked) {
       var missing = Object.keys(picked).map(function (k) { return picked[k]; }).filter(function (p) { return !tenDigits(p.mobile); })[0];
       if (missing) {
-        setStatus('Please enter a 10-digit mobile for ' + missing.name + ' in "Choose speakers" (asked once; it will be saved).', true);
+        setStatus(t('enter10For', missing.name), true);
         document.getElementById('picker').open = true;
         return;
       }
@@ -257,18 +437,18 @@
     if (claiming) {
       var n = checkOthers(othersText());
       if (typeof n === 'string') { setStatus(n, true); othersInput.focus(); return; }
-      if (!n && !meIncluded()) { setStatus('Nobody to register: tick "Include me too" or add people under "Register others".', true); return; }
+      if (!n && !meIncluded()) { setStatus(t('nobody'), true); return; }
     }
     busyRow = r.row;
     render();
-    setStatus(verb + '…');
+    setStatus(t(verb));
     var args = claiming ? [r.row, r.fp, myName(), mobileInput.value, state.tab, othersText(), meIncluded()]
       : fn === 'removePerson' ? [r.row, r.fp, myName(), target, state.tab]
       : [r.row, r.fp, myName(), state.tab];
     call(fn, args, function (s) {
-      if (!claiming) return fn === 'removePerson' ? 'Removed ' + target + '.' : 'Released.';
+      if (!claiming) return fn === 'removePerson' ? t('removed', target) : t('released');
       var now = s.rows.filter(function (x) { return x.row === r.row; })[0];
-      return 'Registered.' + (now && now.over ? ' Note: this school is now over its limit by ' + now.over + ' (shown in red).' : '');
+      return t('registered') + (now && now.over ? t('overNote', now.over) : '');
     });
   }
 
@@ -283,7 +463,7 @@
       a.href = m[0];
       a.target = '_blank';
       a.rel = 'noopener noreferrer';
-      a.textContent = /maps\.google\.|google\.[a-z.]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps/i.test(m[0]) ? 'Open map' : m[0];
+      a.textContent = /maps\.google\.|google\.[a-z.]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps/i.test(m[0]) ? t('openMap') : m[0];
       el.appendChild(a);
       last = m.index + m[0].length;
     }
@@ -293,37 +473,36 @@
   function render() {
     if (!state) return;
     var days = state.days || [];
-    if (daySelect.dataset.list !== JSON.stringify(days)) {
-      daySelect.dataset.list = JSON.stringify(days);
+    if (daySelect.dataset.list !== LANG + JSON.stringify(days)) {
+      daySelect.dataset.list = LANG + JSON.stringify(days);
       daySelect.textContent = '';
-      days.forEach(function (d) { daySelect.add(new Option(d.label, d.name)); });
+      days.forEach(function (d) { daySelect.add(new Option(dayLabel(d), d.name)); });
     }
     daySelect.value = state.tab;
-    document.getElementById('title').textContent = 'Day: ' + state.tab;
+    document.getElementById('title').textContent = t('day', state.tab);
     // A past day is view-only: no claiming and no registering others.
     document.getElementById('pastNote').hidden = !state.pastDay;
     document.getElementById('showOthersLabel').hidden = !!state.pastDay;
     othersBox.hidden = !!state.pastDay || !showOthers.checked;
     drawPicker(false);
     var me = myName();
-    var t = document.getElementById('grid');
-    t.textContent = '';
-    var head = t.insertRow();
+    var grid = document.getElementById('grid');
+    grid.textContent = '';
+    var head = grid.insertRow();
     document.getElementById('note').textContent = state.slotsHeader
-      ? 'Places per school from column "' + state.slotsHeader.replace(/\s+/g, ' ') + '"'
-      : 'No "Total volunteers needed" column on this tab, so each school takes 1 person.';
+      ? t('placesFrom', state.slotsHeader.replace(/\s+/g, ' ')) : t('noPlacesCol');
     // The sheet's own speaker column is left out: "SY Speaker Name" shows the same people, one per line.
     // The serial-number column ('S No', 'Sl No', 'Sr. No.') comes first, titled "Sl.No".
     var snoIdx = -1;
     state.headers.forEach(function (h, i) { if (snoIdx < 0 && /^s[lr]?\.?\s*no\.?$/i.test(String(h).trim())) snoIdx = i; });
     var shown = function (_, i) { return i !== state.nameIdx && i !== snoIdx; };
-    (snoIdx >= 0 ? ['Sl.No'] : []).concat(['', 'Slots left', 'SY Speaker Name'], state.headers.filter(shown)).forEach(function (h) {
+    (snoIdx >= 0 ? [t('slNo')] : []).concat(['', t('slotsLeft'), t('speakerCol')], state.headers.filter(shown)).forEach(function (h) {
       var th = document.createElement('th'); th.textContent = h; head.appendChild(th);
     });
     var open = 0;
     function isMine(r) { return !!me && r.assignees.some(function (a) { return same(a.name, me); }); }
     var myStarts = {}; // start time -> first S No I'm on at that time
-    state.rows.forEach(function (r) { if (r.start && isMine(r) && !myStarts[r.start]) myStarts[r.start] = snoIdx >= 0 ? 'Sl.No ' + r.cells[snoIdx] : 'row ' + r.row; });
+    state.rows.forEach(function (r) { if (r.start && isMine(r) && !myStarts[r.start]) myStarts[r.start] = snoIdx >= 0 ? t('slNo') + ' ' + r.cells[snoIdx] : t('row', r.row); });
     state.rows.forEach(function (r) {
       var mine = isMine(r);
       var justMe = meIncluded() && !othersText().trim();
@@ -331,7 +510,7 @@
       var hasRoom = r.remaining > 0;
       if (hasRoom && !r.past) open++;
       if (openOnly.checked && (r.past || (!hasRoom && !mine))) return; // "Open only" never shows ended slots
-      var tr = t.insertRow();
+      var tr = grid.insertRow();
       tr.className = r.past ? 'past' : mine ? 'mine' : r.over ? 'overrow' : (hasRoom ? '' : 'taken');
       if (snoIdx >= 0) tr.insertCell().textContent = r.cells[snoIdx];
       var btnCell = tr.insertCell();
@@ -344,22 +523,22 @@
         btnCell.appendChild(b);
       };
       if (r.past) {
-        btnCell.textContent = state.pastDay ? 'Past' : 'Ended';
+        btnCell.textContent = state.pastDay ? t('past') : t('ended');
       } else if (r.total <= 0) {
-        btnCell.textContent = 'Closed';
+        btnCell.textContent = t('closed');
       } else if (clashWith) {
         var note = document.createElement('span');
         note.className = 'clash';
-        note.textContent = 'Clashes with ' + clashWith + ' (' + r.start + ')';
+        note.textContent = t('clashes', clashWith, r.start);
         btnCell.appendChild(note);
       } else if (!mine || !justMe) {
         // A full school can still take more; the extra people show in red.
-        addButton(hasRoom ? 'Claim' : 'Claim (full)', hasRoom ? '' : 'warn', function () { act('claimRow', r, 'Registering'); });
+        addButton(hasRoom ? t('claim') : t('claimFull'), hasRoom ? '' : 'warn', function () { act('claimRow', r, 'registering'); });
       }
-      if (mine && !r.past) addButton('Release', 'release', function () { act('releaseRow', r, 'Releasing'); });
+      if (mine && !r.past) addButton(t('release'), 'release', function () { act('releaseRow', r, 'releasing'); });
       var slots = tr.insertCell();
-      if (r.over) { slots.className = 'overcount'; slots.textContent = 'Over by ' + r.over + ' (needs ' + r.total + ')'; }
-      else slots.textContent = r.remaining + ' of ' + r.total;
+      if (r.over) { slots.className = 'overcount'; slots.textContent = t('overBy', r.over, r.total); }
+      else slots.textContent = t('nOfM', r.remaining, r.total);
       var who = tr.insertCell();
       who.className = 'who';
       r.assignees.forEach(function (a, i) {
@@ -368,20 +547,20 @@
         var extra = i >= r.total;
         if (extra) line.className += ' extra';
         line.textContent = (r.assignees.length > 1 ? (i + 1) + '. ' : '') + (a.phone ? a.name + ' · ' + a.phone : a.name) +
-          (extra ? ' (over limit)' : '');
+          (extra ? t('overLimit') : '');
         if (a.by) {
           var via = document.createElement('span');
           via.className = 'via';
-          via.textContent = ' · via ' + a.by;
+          via.textContent = t('via', a.by);
           line.appendChild(via);
         }
         if (!r.past && me && a.by && same(a.by, me) && !same(a.name, me)) {
           var x = document.createElement('button');
           x.className = 'x';
           x.textContent = '✕';
-          x.title = 'Remove ' + a.name;
+          x.title = t('removeX', a.name);
           x.disabled = busyRow !== null;
-          x.onclick = function () { act('removePerson', r, 'Removing', a.name); };
+          x.onclick = function () { act('removePerson', r, 'removing', a.name); };
           line.appendChild(x);
         }
         who.appendChild(line);
@@ -391,9 +570,22 @@
         addText(td, c);
       });
     });
-    document.title = open + ' with free slots · ' + state.tab;
-    if (!state.rows.length) t.insertRow().insertCell().textContent = 'No rows on this tab yet.';
+    document.title = t('freeTitle', open, state.tab);
+    if (!state.rows.length) grid.insertRow().insertCell().textContent = t('noRows');
   }
+
+  // Language: English when the page opens; switching redraws everything in the chosen language.
+  var langSelect = document.getElementById('lang');
+  langSelect.value = LANG;
+  langSelect.addEventListener('change', function () {
+    LANG = langSelect.value;
+    applyStaticText();
+    setStatus('');
+    if (lastUpdated) document.getElementById('updated').textContent = t('updated', lastUpdated);
+    pickList.dataset.sig = '';
+    if (state) { drawPicker(true); render(); } else document.getElementById('title').textContent = t('loading');
+  });
+  applyStaticText();
 
   refresh();
   setInterval(function () { if (!document.hidden && busyRow === null) refresh(); }, POLL_MS);

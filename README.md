@@ -111,6 +111,9 @@ At midnight India time the page automatically switches to the new day's tab.
   `Name mobile (via Registrar)`; the registrar (or the person) can remove them with ✕.
   Every person is validated and time-clash checked; if any fails, nobody is added.
 - A person can claim as many rows as they like, but not two with the same start time on a day.
+- **Language:** English (default on every open), Telugu or Hindi, from the dropdown at the top. All page
+  text and the script's messages switch; sheet contents stay as typed. Translations live in the `TEXT`
+  table in `Index.html` (have a native speaker review them).
 - **Speaker list:** names come from the **Speaker**/**Speakers** tab (created if missing), shown
   alphabetically: as suggestions in "Your name" (picking one fills the saved mobile) and as a
   searchable multi-select "Choose speakers" under Register others. Everyone registered is saved

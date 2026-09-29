@@ -85,6 +85,13 @@ _Last updated: 2026-09-27_
   unless another date was picked; picking the default entry = follow it. 61 tests.
   If a deployed page opens on a fixed date, check TAB_NAME_OVERRIDE is '' in Code.gs.
 
+- 2026-09-29: languages. Index.html has a TEXT table (en/te/hi) + t(key, ...args); static elements use
+  data-t / data-tp; script error messages are matched by regex (SERVER_TEXT) and shown translated
+  (unknown ones stay English). Always opens in English (not remembered). Day labels rebuilt client-side
+  (weekday + today/past marks). Browser test covers te/hi switching and a translated clash message. 62 tests.
+  NOT VERIFIED: Telugu/Hindi wording by a native speaker; Telugu glyph rendering (test browser lacks a
+  Telugu font, so screenshots show unjoined letters; real phones should render correctly).
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.

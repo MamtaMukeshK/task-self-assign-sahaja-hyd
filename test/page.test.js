@@ -380,3 +380,48 @@ test('when today is over the page opens on the next day, and today can still be 
     assert.match(await p.locator('#grid tr').nth(1).textContent(), /Ended/);
   } finally { await browser.close(); }
 });
+
+test('language switch: opens in English; Telugu and Hindi translate the page and script messages', { timeout: 60000 }, async () => {
+  const grid = () => [
+    ['S No', 'Speaker Name', 'Total volunteers needed', 'Institution name', 'Time'],
+    ['1', 'Vol A 9000000001', '1', 'School A', '10.00 A.M'],
+    ['2', '', '2', 'School B', '10:00:00'],
+  ];
+  const gs = load([makeSheet('27-Sep', 1, grid()), makeSheet('28-Sep', 2, grid())], new Date(Date.UTC(2026, 8, 28, 5)));
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
+  try {
+    const p = await (await browser.newContext({ viewport: { width: 1200, height: 700 } })).newPage();
+    p.setDefaultTimeout(8000);
+    const errs = []; p.on('pageerror', e => errs.push(e.message));
+    await p.exposeFunction('gsCall', (fn, a) => { try { return { ok: JSON.parse(JSON.stringify(gs[fn](...a))) }; } catch (e) { return { err: e.message }; } });
+    await p.addInitScript(SHIM);
+    await p.route('http://app.test/', r => r.fulfill({ contentType: 'text/html', body: html }));
+    await p.goto('http://app.test/');
+    await p.waitForSelector('text=Day: 28-Sep');
+    assert.equal(await p.inputValue('#lang'), 'en', 'opens in English');
+
+    await p.selectOption('#lang', 'te');
+    assert.equal(await p.textContent('#title'), 'రోజు: 28-Sep');
+    assert.deepEqual(await p.$$eval('#day option', o => o.map(x => x.textContent)), ['ఆది 27-Sep (గడిచింది)', 'సోమ 28-Sep (ఈ రోజు)']);
+    assert.equal(await p.getAttribute('#mobile', 'placeholder'), '10 అంకెలు');
+    assert.deepEqual((await p.locator('th').allTextContents()).slice(0, 4), ['క్ర.సం.', '', 'మిగిలిన స్థానాలు', 'SY వక్త పేరు']);
+    assert.equal(await p.locator('#grid tr').nth(2).locator('button').textContent(), 'ఎంచుకోండి');
+    assert.match(await p.textContent('#pickSummary'), /^వక్తలను ఎంచుకోండి \(0 ఎంచుకున్నారు\)$/);
+
+    // Vol A is on School A at 10:00; School B is also 10:00 -> the script refuses; message shown in Hindi.
+    await p.selectOption('#lang', 'hi');
+    await p.fill('#name', 'Vol A'); await p.fill('#mobile', '9000000001');
+    await p.check('#showOthers'); await p.fill('#others', 'Vol B 9000000002');   // registering others: no clash label, script checks
+    await p.locator('#grid tr').nth(2).locator('button').click();
+    await p.waitForSelector('#status.err');
+    assert.equal(await p.textContent('#status'),
+      'समय टकराता है: आप पहले से S No 1 (School A) में हैं (28-Sep, 10.00 A.M)। किसी को नहीं जोड़ा गया। पहले वह नाम हटाएँ या कोई दूसरा समय चुनें।');
+    assert.equal(await p.textContent('#title'), 'दिन: 28-Sep');
+
+    await p.selectOption('#lang', 'en');
+    assert.equal(await p.textContent('#title'), 'Day: 28-Sep');
+    assert.equal(await p.locator('#grid tr').nth(2).locator('button').textContent(), 'Claim');
+    assert.match(await p.textContent('#updated'), /^Updated /, 'every line switches, including "Updated"');
+    assert.deepEqual(errs, []);
+  } finally { await browser.close(); }
+});
