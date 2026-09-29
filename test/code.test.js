@@ -565,7 +565,7 @@ test('testing-sheet layout: "Sl.No" serial title and an existing Speaker "Mobile
   gs.claimRow(s.rows[1].row, s.rows[1].fp, 'Anil Rao', '9000000011', undefined, 'New Person 9000000012', true);
   assert.equal(sp.grid[0].filter(h => h === 'Mobile').length, 1, 'no second Mobile column');
   assert.equal(sp.grid[1][2], '9000000011', 'saved into the existing Mobile column C');
-  assert.deepEqual(Array.from(sp.grid[3].slice(0, 4), v => v ?? ''), [43, 'New Person', '9000000012', ''], 'next Sr. No. after 42');
+  assert.deepEqual([0, 1, 2, 3].map(j => sp.grid[3][j] ?? ''), [43, 'New Person', '9000000012', ''], 'next Sr. No. after 42');
   assert.equal(sp.grid[2][4], 'school', 'date columns untouched');
   assert.equal(day.grid[2][4], 3, 'still-needed for Sl.No 2 = 6 - 3');
 });
