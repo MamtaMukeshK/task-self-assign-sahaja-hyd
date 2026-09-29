@@ -42,7 +42,7 @@ _Last updated: 2026-09-27_
 - 2026-09-29: http(s) addresses in any cell are rendered as links (new tab, noopener); Google Maps
   links read "Open map". Non-http text (e.g. javascript:) stays plain text. 41 tests.
 
-- 2026-09-29: "Assigned" column lists each person on its own numbered line with a dashed divider. 41 tests.
+- 2026-09-29: "Assigned" column lists each person on its own numbered line (name + number kept on one line, column widens) with a solid 2px divider. 41 tests.
 
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access

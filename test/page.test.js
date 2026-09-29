@@ -96,7 +96,9 @@ test('multi-slot school in real browser: two join, third sees it full, one leave
     assert.match(await row1(b).textContent(), /0 of 3/);
     assert.deepEqual(await row1(b).locator('.person').allTextContents(),
       ['1. Ramesh · 9000000001', '2. Priya · 9876543210', '3. Ravi · 9123456789'], 'one numbered, separated line per person');
-    assert.equal(await row1(b).locator('.person').nth(1).evaluate(e => getComputedStyle(e).borderTopStyle), 'dashed');
+    assert.deepEqual(await row1(b).locator('.person').nth(1).evaluate(e => { const c = getComputedStyle(e); return [c.borderTopStyle, c.borderTopWidth, c.whiteSpace]; }), ['solid', '2px', 'nowrap']);
+    for (const box of await row1(b).locator('.person').evaluateAll(ps => ps.map(p => p.getClientRects().length && p.scrollHeight <= parseFloat(getComputedStyle(p).lineHeight) * 1.5)))
+      assert.ok(box, 'each person fits on a single line');
     assert.equal(sheet.grid[1][4], 0, 'still-needed column updated');
 
     const c = await user('Neha', '9000000003');

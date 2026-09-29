@@ -27,7 +27,8 @@
   tr.mine td { background:var(--mine); }
   tr.taken td { background:var(--taken); color:var(--muted); }
   .who { font-weight:600; color:var(--fg); }
-  .person + .person { border-top:1px dashed var(--line); margin-top:4px; padding-top:4px; }
+  .person { white-space:nowrap; }  /* name and number stay on one line; the column widens to fit */
+  .person + .person { border-top:2px solid #9aa0a6; margin-top:6px; padding-top:6px; }
 </style>
 </head>
 <body>
