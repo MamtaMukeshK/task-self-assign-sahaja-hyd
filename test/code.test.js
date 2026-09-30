@@ -638,7 +638,7 @@ test('29-Sep pattern: opens on the next day once the last slot (4:30-6:30 PM) is
   assert.equal(at(18, 29).tab, '29-Sep');
   assert.equal(at(18, 30).tab, '30-Sep');
   const late = at(23, 19);
-  assert.deepEqual([late.tab, late.clock, late.version], ['30-Sep', 'Tue 29 Sep 23:19', '2026-09-30.4']);
+  assert.deepEqual([late.tab, late.clock, late.version], ['30-Sep', 'Tue 29 Sep 23:19', '2026-09-30.5']);
 });
 test('time zone: India by default, the sheet\'s own setting only if TIME_ZONE is emptied', () => {
   const gs = load([makeSheet('28-Sep', 3, [['S No']])], NOW);
@@ -647,4 +647,30 @@ test('time zone: India by default, the sheet\'s own setting only if TIME_ZONE is
   assert.equal(gs.timeZone_(ss), 'Asia/Kolkata');
   gs.CONFIG.TIME_ZONE = '';
   assert.equal(gs.timeZone_(ss), 'America/New_York');
+});
+
+test('speed: the page arrives with its first day inside; sheet text cannot break out of the script', () => {
+  const sheet = makeSheet('28-Sep', 1, [['S No', 'Speaker Name', 'Institution name'], ['1', '', 'School </script><b>x']]);
+  const gs = load([sheet], new Date(Date.UTC(2026, 8, 28, 5)));
+  const html = gs.doGet().getContent();
+  assert.ok(!html.includes('/*INITIAL_STATE*/null'), 'placeholder filled');
+  const m = /var INITIAL_STATE = (.*);\n/.exec(html);
+  assert.ok(m, 'data is in the page');
+  assert.ok(!m[1].includes('</script>'), 'no raw </script> from the sheet');
+  const initial = JSON.parse(m[1]);
+  assert.equal(initial.tab, '28-Sep');
+  assert.equal(initial.rows[0].cells[2], 'School </script><b>x', 'text itself unchanged');
+});
+
+test('speed: cache is shared, cleared by typed edits, and re-read when rows are inserted', () => {
+  const sheet = makeSheet('28-Sep', 1, [['S No', 'Speaker Name', 'Institution name'], ['1', '', 'School A']]);
+  const gs = load([sheet], new Date(Date.UTC(2026, 8, 28, 5)));
+  assert.equal(gs.getState('').rows[0].cells[2], 'School A');
+  sheet.grid[1][2] = 'School A (renamed)';            // typed in the sheet, before onEdit runs
+  assert.equal(gs.getState('').rows[0].cells[2], 'School A', 'served from the shared cache');
+  gs.onEdit({ range: { getSheet: () => sheet } });
+  assert.equal(gs.getState('').rows[0].cells[2], 'School A (renamed)', 'typed edit shows at once');
+  sheet.grid.push(['2', '', 'School B']);              // like inserting a row: no edit event
+  assert.equal(gs.getState('').rows.length, 2, 'size change forces a fresh read');
+  assert.doesNotThrow(() => gs.onEdit(undefined), 'onEdit never fails');
 });

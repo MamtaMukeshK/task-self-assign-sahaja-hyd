@@ -1,6 +1,6 @@
 # Handoff / status
 
-_Last updated: 2026-09-30 (version 2026-09-30.4)_
+_Last updated: 2026-09-30 (version 2026-09-30.5)_
 
 ## Start here (for a new session)
 - **What this is:** a Google Apps Script web page for the "Hyderabad 2026 - Self Realization Tour" sheet.
@@ -8,11 +8,11 @@ _Last updated: 2026-09-30 (version 2026-09-30.4)_
   Release places; the speaker cell of the day tab is updated. Details of every feature: the dated log below.
 - **Live:** the organiser's own Apps Script deployment of `Code.gs` + `Index.html` (paste from
   `SETUP_GUIDE.html`, then Deploy -> Manage deployments -> New version). The page footer shows the version.
-  Latest pushed: 2026-09-30.4. Ask the user which version is live before assuming.
+  Latest pushed: 2026-09-30.5. Ask the user which version is live before assuming.
 - **Demo video:** `docs/demo.mp4` (74 s, phone screen, Indian English female voice). The page's demo button
   opens the organiser's Google Drive copy (file id 1L1A_FmlOukDZMTnOXa73RlzQfdaHS9Zg); they replace it via
   Drive -> Manage versions after every re-record.
-- **Tests:** `cd test && npm install && npm test` (67 tests; browser tests need Chromium at
+- **Tests:** `cd test && npm install && npm test` (70 tests; browser tests need Chromium at
   `/opt/pw-browsers/chromium`). Rebuild the guide after any code change: `python3 tools/build_guide.py`.
   Bump `VERSION` in `Code.gs` (and the matching string in `test/code.test.js`) for every page change.
 - **Re-record the demo:** in `tools/`: `npm i playwright-core ffmpeg-static @fontsource/dm-sans
@@ -171,6 +171,16 @@ _Last updated: 2026-09-30 (version 2026-09-30.4)_
 - 2026-09-30: demo re-recorded for My Registrations (step 3 caption + voice line s2 mention the card moving up).
   Video commit d7ad93f; GitHub fallback links re-pinned. VERSION 2026-09-30.4. Drive copy must be replaced again.
 
+- 2026-09-30: speed. (1) doGet puts the first day's state into the page (placeholder `/*INITIAL_STATE*/null` in
+  Index.html, `<` escaped), so the first view needs no second server trip; falls back to asking if that fails.
+  (2) Shared cache 5 s -> 30 s (user asked to stay close to 5 s), cleared at once on claim/release and by a new
+  simple `onEdit` trigger when someone types in the sheet; a changed sheet size (rows/columns inserted or
+  deleted) also forces a fresh read. (3) Days already viewed show at once when picked again, then refresh.
+  (4) Fonts no longer hold up drawing. (5) "Loading schools…" with a spinner whenever nothing can be shown yet;
+  footer shows "loaded in N s". VERSION 2026-09-30.5. 70 tests.
+  NOT VERIFIED on real Google: that the simple onEdit trigger may use CacheService (if not, typed edits show
+  within 30 s instead of at once); real load times (read the footer on a phone before/after).
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.
@@ -187,7 +197,8 @@ _Last updated: 2026-09-30 (version 2026-09-30.4)_
   if not, the page errors loudly rather than guessing.
 
 ## Next step
-- User: deploy 2026-09-30.4 (My Registrations + Open only fix) and replace the Drive demo video.
+- User: deploy 2026-09-30.5 (My Registrations, Open only fix, speed) and replace the Drive demo video;
+  report the footer's "loaded in N s" on a phone.
 - Open ideas, not started: reminders one hour before a slot (free options: "add to my calendar" button, or an
   organiser list with one-tap WhatsApp links; automatic SMS/WhatsApp needs paid providers + registration);
   optional alignment of the two laptop tables' columns.

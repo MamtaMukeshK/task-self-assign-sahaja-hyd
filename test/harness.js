@@ -52,7 +52,10 @@ function load(sheets, now) {
     CacheService: { getScriptCache: () => ({ get: k => store[k] || null, put: (k, v) => { store[k] = v; }, remove: k => { delete store[k]; }, removeAll: ks => ks.forEach(k => { delete store[k]; }) }) },
     Utilities: { formatDate: (d, tz, f) => formatDate(d, tz, f), DigestAlgorithm: { MD5: 'md5' }, Charset: { UTF_8: 'utf8' },
       computeDigest: (a, s) => crypto.createHash('md5').update(s, 'utf8').digest(), base64Encode: b => Buffer.from(b).toString('base64') },
-    HtmlService: {}, JSON, Date: fakeDate(now), String, Number, Math, Error, _cache: store
+    HtmlService: (() => {
+      const out = html => { const o = { getContent: () => html, setTitle: () => o, addMetaTag: () => o }; return o; };
+      return { createHtmlOutputFromFile: () => out(fs.readFileSync(path.join(__dirname, '..', 'Index.html'), 'utf8')), createHtmlOutput: out };
+    })(), JSON, Date: fakeDate(now), String, Number, Math, Error, _cache: store
   };
   vm.createContext(ctx);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'Code.gs'), 'utf8'), ctx);

@@ -6,7 +6,8 @@
 <!-- Fonts from the Sahaja Yoga proposal deck (DM Sans, Instrument Serif), plus Noto for Telugu and Hindi. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Instrument+Serif:ital@0;1&family=Noto+Sans+Devanagari:wght@400;600&family=Noto+Sans+Telugu:wght@400;600&display=swap" rel="stylesheet">
+<!-- media="print" + onload: the page is drawn without waiting for the fonts, which swap in when ready. -->
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Instrument+Serif:ital@0;1&family=Noto+Sans+Devanagari:wght@400;600&family=Noto+Sans+Telugu:wght@400;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
   /* Colours from the deck: navy #1A3A5C, slate #34485F, blue #4A6FA5, gold #C9A84C, pale blue #E1F0FB, cream #FBFAF6. */
   :root { --navy:#1A3A5C; --fg:#34485F; --muted:#5A6B82; --line:#D9E6F2; --bg:#FBFAF6; --band:#E1F0FB; --gold:#C9A84C;
@@ -81,6 +82,11 @@
   @keyframes flashbg { from { background:#fff3b0; } }
   tr.flash { animation:ring 2s ease-out; }
   @media (min-width: 1101px) { tr.flash td { animation:flashbg 2s ease-out; } }
+  #loadingBox { display:flex; align-items:center; gap:10px; padding:18px 14px; margin:8px 0; border:1px solid var(--line); border-radius:12px;
+                background:#fff; color:var(--navy); font-weight:600; }
+  #loadingBox[hidden] { display:none; }
+  .spin { width:20px; height:20px; border:3px solid var(--line); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; flex:none; }
+  @keyframes spin { to { transform:rotate(360deg); } }
   td.c-toggle { display:none; }                            /* the "Details" button is for the phone cards only */
   /* Sl.No, the button and "Slots left" stay put while the table scrolls sideways (left set by pinColumns). */
   th.stick, td.stick { position:sticky; z-index:1; }
@@ -175,6 +181,7 @@
   <span id="note"></span>
   <span id="clock"></span>
 </header>
+<div id="loadingBox" role="status"><span class="spin"></span><span data-t="loadingSchools">Loading schools…</span></div>
 <section id="mineBox" hidden><h3 id="mineTitle" class="sect"></h3><div class="wrap"><table id="mine" class="grid"></table></div></section>
 <h3 id="allTitle" class="sect" hidden></h3>
 <div class="wrap"><table id="grid" class="grid"></table></div>
@@ -206,7 +213,7 @@
       openMap: 'Open map', todayMark: '(today)', pastMark: '(past)', weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
       updated: 'Updated {0}', placesFrom: 'Places per school from column "{0}"',
       noPlacesCol: 'No "Total volunteers needed" column on this tab, so each school takes 1 person.',
-      slNo: 'Sl.No', slotsLeft: 'Slots left', speakerCol: 'SY Speaker Name', details: 'Details ▾', hideDetails: 'Hide details ▴', myRegs: 'My Registrations ({0})', allSchools: 'All Schools',
+      slNo: 'Sl.No', slotsLeft: 'Slots left', speakerCol: 'SY Speaker Name', details: 'Details ▾', hideDetails: 'Hide details ▴', myRegs: 'My Registrations ({0})', allSchools: 'All Schools', loadingSchools: 'Loading schools…', loadedIn: 'loaded in {0} s',
       movedUp: ' It is now at the top, under "My Registrations".',
       past: 'Past', ended: 'Ended', closed: 'Closed', clashes: 'Clashes with {0} ({1})',
       claim: 'Claim', claimFull: 'Claim (full)', release: 'Release', overBy: 'Over by {0} (needs {1})', nOfM: '{0} of {1}',
@@ -246,7 +253,7 @@
       openMap: 'మ్యాప్ తెరవండి', todayMark: '(ఈ రోజు)', pastMark: '(గడిచింది)', weekdays: ['ఆది', 'సోమ', 'మంగళ', 'బుధ', 'గురు', 'శుక్ర', 'శని'],
       updated: 'అప్‌డేట్ {0}', placesFrom: 'ప్రతి పాఠశాల స్థానాలు "{0}" కాలమ్ నుండి',
       noPlacesCol: 'ఈ ట్యాబ్‌లో "Total volunteers needed" కాలమ్ లేదు, కాబట్టి ప్రతి పాఠశాలకు 1 వ్యక్తి.',
-      slNo: 'క్ర.సం.', slotsLeft: 'మిగిలిన స్థానాలు', speakerCol: 'SY వక్త పేరు', details: 'వివరాలు ▾', hideDetails: 'వివరాలు దాచు ▴', myRegs: 'నా నమోదులు ({0})', allSchools: 'అన్ని పాఠశాలలు',
+      slNo: 'క్ర.సం.', slotsLeft: 'మిగిలిన స్థానాలు', speakerCol: 'SY వక్త పేరు', details: 'వివరాలు ▾', hideDetails: 'వివరాలు దాచు ▴', myRegs: 'నా నమోదులు ({0})', allSchools: 'అన్ని పాఠశాలలు', loadingSchools: 'పాఠశాలలు లోడ్ అవుతున్నాయి…', loadedIn: '{0} సెకన్లలో లోడ్ అయింది',
       movedUp: ' ఇది ఇప్పుడు పైన "నా నమోదులు" కింద ఉంది.',
       past: 'గడిచింది', ended: 'ముగిసింది', closed: 'మూసివేయబడింది', clashes: '{0}తో సమయం కలుస్తోంది ({1})',
       claim: 'ఎంచుకోండి', claimFull: 'ఎంచుకోండి (నిండింది)', release: 'పేరు తీసేయండి', overBy: 'పరిమితి కంటే {0} ఎక్కువ ({1} కావాలి)', nOfM: '{1}లో {0}',
@@ -286,7 +293,7 @@
       openMap: 'नक्शा खोलें', todayMark: '(आज)', pastMark: '(बीता हुआ)', weekdays: ['रवि', 'सोम', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि'],
       updated: 'अपडेट {0}', placesFrom: 'हर स्कूल के स्थान "{0}" कॉलम से',
       noPlacesCol: 'इस टैब में "Total volunteers needed" कॉलम नहीं है, इसलिए हर स्कूल में 1 व्यक्ति।',
-      slNo: 'क्र.सं.', slotsLeft: 'बचे स्थान', speakerCol: 'SY वक्ता का नाम', details: 'विवरण ▾', hideDetails: 'विवरण छिपाएँ ▴', myRegs: 'मेरे पंजीकरण ({0})', allSchools: 'सभी स्कूल',
+      slNo: 'क्र.सं.', slotsLeft: 'बचे स्थान', speakerCol: 'SY वक्ता का नाम', details: 'विवरण ▾', hideDetails: 'विवरण छिपाएँ ▴', myRegs: 'मेरे पंजीकरण ({0})', allSchools: 'सभी स्कूल', loadingSchools: 'स्कूल लोड हो रहे हैं…', loadedIn: '{0} सेकंड में लोड',
       movedUp: ' यह अब ऊपर "मेरे पंजीकरण" में है।',
       past: 'बीता हुआ', ended: 'समाप्त', closed: 'बंद', clashes: '{0} से समय टकराता है ({1})',
       claim: 'चुनें', claimFull: 'चुनें (भरा हुआ)', release: 'नाम हटाएँ', overBy: 'सीमा से {0} अधिक ({1} चाहिए)', nOfM: '{1} में से {0}',
@@ -503,15 +510,25 @@
     el.className = isErr ? 'err' : '';
   }
 
+  // Load time shown in the footer: from opening the page (or picking a date) until its schools are drawn.
+  var loadSecs = 0, loadingSince = null; // null = not timing; 0 = since the page started opening
+  var dayCache = {}; // each day's last copy, so going back to a day shows it at once while it refreshes
+  function show(s) {
+    if (loadingSince !== null && window.performance) { loadSecs = (performance.now() - loadingSince) / 1000; loadingSince = null; }
+    state = s; busyRow = null;
+    if (s && s.tab) dayCache[s.tab] = s;
+    render();
+    lastUpdated = new Date().toLocaleTimeString();
+    document.getElementById('updated').textContent = t('updated', lastUpdated);
+  }
+
   function call(fn, args, okMsg) {
     var mySeq = ++seq;
     var runner = google.script.run
       .withSuccessHandler(function (s) {
         if (mySeq < shownSeq) return;
-        shownSeq = mySeq; state = s; busyRow = null;
-        render();
-        lastUpdated = new Date().toLocaleTimeString();
-        document.getElementById('updated').textContent = t('updated', lastUpdated);
+        shownSeq = mySeq;
+        show(s);
         if (okMsg) setStatus(typeof okMsg === 'function' ? okMsg(s) : okMsg);
       })
       .withFailureHandler(function (err) {
@@ -531,13 +548,21 @@
     var chosen = ((state && state.days) || []).filter(function (d) { return d.name === daySelect.value; })[0];
     pickedDay = chosen && chosen.name === state.defaultDay ? '' : daySelect.value;
     shownSeq = ++seq; // ignore answers still on their way for the previous day
-    state = null; busyRow = null;
-    document.getElementById('grid').textContent = '';
-    document.getElementById('mine').textContent = '';
-    document.getElementById('mineBox').hidden = true;
-    document.getElementById('allTitle').hidden = true;
-    document.getElementById('title').textContent = t('loading');
+    busyRow = null;
     setStatus('');
+    loadingSince = window.performance ? performance.now() : null;
+    var seen = dayCache[daySelect.value];
+    if (seen) {
+      state = seen; render();                               // last copy at once; the fresh one follows
+    } else {
+      state = null;
+      document.getElementById('grid').textContent = '';
+      document.getElementById('mine').textContent = '';
+      document.getElementById('mineBox').hidden = true;
+      document.getElementById('allTitle').hidden = true;
+      document.getElementById('loadingBox').hidden = false;
+      document.getElementById('title').textContent = t('loading');
+    }
     refresh();
   });
 
@@ -607,7 +632,9 @@
     daySelect.value = state.tab;
     document.getElementById('title').textContent = t('day', state.tab);
     // What the script thinks "now" is (India time) and which version is deployed, to make checks easy.
-    document.getElementById('clock').textContent = state.clock ? t('sheetTime', state.clock) + ' · v' + state.version : '';
+    document.getElementById('clock').textContent = state.clock ? t('sheetTime', state.clock) + ' · v' + state.version +
+      (loadSecs ? ' · ' + t('loadedIn', loadSecs.toFixed(1)) : '') : '';
+    document.getElementById('loadingBox').hidden = true;
     // A past day is view-only: no claiming and no registering others.
     document.getElementById('pastNote').hidden = !state.pastDay;
     document.getElementById('showOthersLabel').hidden = !!state.pastDay;
@@ -810,7 +837,10 @@
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !box.hidden) close(); });
   })();
 
-  refresh();
+  // The server puts the first day's data into the page (see doGet); without it, ask for it.
+  var INITIAL_STATE = /*INITIAL_STATE*/null;
+  loadingSince = 0;
+  if (INITIAL_STATE) show(INITIAL_STATE); else refresh();
   setInterval(function () { if (!document.hidden && busyRow === null) refresh(); }, POLL_MS);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(); });
 </script>

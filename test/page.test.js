@@ -410,7 +410,7 @@ test('language switch: opens in English; Telugu and Hindi translate the page and
     assert.equal(await p.inputValue('#lang'), 'en', 'opens in English');
     assert.equal(await p.textContent('#brand h1'), 'Hyderabad 2026 - Self Realization TourSchedule & Assignments');
     assert.ok((await p.getAttribute('#logo', 'src')).startsWith('data:image/png;base64,'), 'lotus logo embedded');
-    assert.match(await p.textContent('#clock'), /^Sheet time: Mon 28 Sep 05:00 · v\d{4}-\d\d-\d\d\.\d+$/);
+    assert.match(await p.textContent('#clock'), /^Sheet time: Mon 28 Sep 05:00 · v\d{4}-\d\d-\d\d\.\d+ · loaded in \d+\.\d s$/);
 
     await p.selectOption('#lang', 'te');
     assert.equal(await p.textContent('#title'), 'రోజు: 28-Sep');
@@ -586,5 +586,44 @@ test('My Registrations: your schools and the ones you registered others for move
     await p.fill('#name', 'Neha');
     assert.equal(await p.isVisible('#mineBox'), false, 'someone with nothing registered sees no section');
     assert.equal(await p.isVisible('#allTitle'), false);
+  } finally { await browser.close(); }
+});
+
+test('speed: first view needs no server trip; loading message only while there is nothing to show; days seen before show at once', { timeout: 60000 }, async () => {
+  const grid = () => [['S No', 'Speaker Name', 'Institution name'], ['1', '', 'School A']];
+  const gs = load([makeSheet('28-Sep', 1, grid()), makeSheet('29-Sep', 2, grid())], new Date(Date.UTC(2026, 8, 28, 5)));
+  const served = gs.doGet().getContent();                  // what doGet sends: page + first day
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
+  try {
+    const p = await (await browser.newContext({ viewport: { width: 390, height: 800 } })).newPage();
+    p.setDefaultTimeout(8000);
+    const calls = [];
+    let hold = null;                                       // lets the test keep a server answer waiting
+    await p.exposeFunction('gsCall', async (fn, a) => {
+      calls.push(fn + ':' + (a[0] || ''));
+      if (hold) await hold;
+      try { return { ok: JSON.parse(JSON.stringify(gs[fn](...a))) }; } catch (e) { return { err: e.message }; }
+    });
+    await p.addInitScript(SHIM);
+    await p.route('http://app.test/', r => r.fulfill({ contentType: 'text/html', body: served }));
+    await p.goto('http://app.test/');
+    await p.waitForSelector('text=Day: 28-Sep');
+    assert.deepEqual(calls, [], 'first day drawn without asking the server');
+    assert.equal(await p.isVisible('#loadingBox'), false);
+    assert.match(await p.textContent('#clock'), /loaded in \d+\.\d s/);
+
+    let release; hold = new Promise(r => { release = r; });
+    await p.selectOption('#day', '29-Sep');
+    assert.equal(await p.isVisible('#loadingBox'), true, 'new day: clear loading message');
+    assert.match(await p.textContent('#loadingBox'), /Loading schools…/);
+    release(); hold = null;
+    await p.waitForSelector('text=Day: 29-Sep');
+    assert.equal(await p.isVisible('#loadingBox'), false);
+
+    hold = new Promise(r => { release = r; });
+    await p.selectOption('#day', '28-Sep');
+    assert.equal(await p.textContent('#title'), 'Day: 28-Sep', 'a day seen before shows at once');
+    assert.equal(await p.isVisible('#loadingBox'), false);
+    release(); hold = null;
   } finally { await browser.close(); }
 });

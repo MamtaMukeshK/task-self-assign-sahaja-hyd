@@ -9,7 +9,7 @@
  */
 
 // Shown on the page so it's easy to confirm which version is deployed.
-var VERSION = '2026-09-30.4';
+var VERSION = '2026-09-30.5';
 
 var CONFIG = {
   // Time zone for "today" and "now" (which day opens, which slots have ended).
@@ -35,7 +35,7 @@ var CONFIG = {
   TIME_HEADER_WORDS: ['time'],
   TAB_NAME_OVERRIDE: '',                          // e.g. '28-Sep' to force a tab while testing
 
-  CACHE_SECONDS: 5,    // shared read cache so many viewers don't hammer the sheet
+  CACHE_SECONDS: 30,   // shared read cache; also cleared at once on every claim/release and on edits typed in the sheet
   LOCK_WAIT_MS: 10000, // how long a claim waits for its turn
   MAX_NAME_LENGTH: 60,
   MAX_PEOPLE_PER_CLAIM: 30,
@@ -47,8 +47,15 @@ var CONFIG = {
   SPEAKERS_MOBILE_HEADER: 'Mobile'
 };
 
+// The first day's data is put straight into the page, so it shows without a second trip to the server.
+// If that fails for any reason, the page asks for it as usual.
 function doGet() {
-  return HtmlService.createHtmlOutputFromFile('Index')
+  var html = HtmlService.createHtmlOutputFromFile('Index').getContent();
+  var initial = 'null';
+  try {
+    initial = JSON.stringify(getState('')).replace(/</g, '\\u003c'); // sheet text can't close the <script>
+  } catch (e) {}
+  return HtmlService.createHtmlOutput(html.replace('/*INITIAL_STATE*/null', function () { return initial; }))
     .setTitle('Hyderabad 2026 - Self Realization Tour: Schedule & Assignments')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
@@ -68,9 +75,15 @@ function getState(tabName) {
 function cachedState_(sheet) {
   var cache = CacheService.getScriptCache();
   var key = cacheKey_(sheet);
+  // Inserting or deleting rows/columns doesn't count as an edit, so a size change also means "read again".
+  var size = sheet.getLastRow() + 'x' + sheet.getLastColumn();
   var hit = cache.get(key);
-  if (hit) return JSON.parse(hit);
+  if (hit) {
+    var cached = JSON.parse(hit);
+    if (cached.size === size) return cached;
+  }
   var state = buildState_(sheet);
+  state.size = size;
   try {
     cache.put(key, JSON.stringify(state), CONFIG.CACHE_SECONDS);
   } catch (e) {
@@ -342,6 +355,15 @@ function dayIsOver_(sheet, now) {
 }
 
 /** Marks a past day, and today's slots whose end time has passed, as view-only. */
+// Runs by itself whenever someone types in the sheet: forget the cached copy so the page shows it at once.
+function onEdit(e) {
+  try {
+    var keys = ['speakers'];
+    if (e && e.range) keys.push(cacheKey_(e.range.getSheet()));
+    CacheService.getScriptCache().removeAll(keys);
+  } catch (err) {}
+}
+
 function markPast_(state, day) {
   state.clock = day.clock;
   state.version = VERSION;
