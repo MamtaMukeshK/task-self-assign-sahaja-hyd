@@ -1,6 +1,30 @@
 # Handoff / status
 
-_Last updated: 2026-09-27_
+_Last updated: 2026-09-30 (version 2026-09-30.4)_
+
+## Start here (for a new session)
+- **What this is:** a Google Apps Script web page for the "Hyderabad 2026 - Self Realization Tour" sheet.
+  Volunteers pick a date, see each school as a card (phones/tablets) or a table (laptops), and Claim /
+  Release places; the speaker cell of the day tab is updated. Details of every feature: the dated log below.
+- **Live:** the organiser's own Apps Script deployment of `Code.gs` + `Index.html` (paste from
+  `SETUP_GUIDE.html`, then Deploy -> Manage deployments -> New version). The page footer shows the version.
+  Latest pushed: 2026-09-30.4. Ask the user which version is live before assuming.
+- **Demo video:** `docs/demo.mp4` (74 s, phone screen, Indian English female voice). The page's demo button
+  opens the organiser's Google Drive copy (file id 1L1A_FmlOukDZMTnOXa73RlzQfdaHS9Zg); they replace it via
+  Drive -> Manage versions after every re-record.
+- **Tests:** `cd test && npm install && npm test` (67 tests; browser tests need Chromium at
+  `/opt/pw-browsers/chromium`). Rebuild the guide after any code change: `python3 tools/build_guide.py`.
+  Bump `VERSION` in `Code.gs` (and the matching string in `test/code.test.js`) for every page change.
+- **Re-record the demo:** in `tools/`: `npm i playwright-core ffmpeg-static @fontsource/dm-sans
+  @fontsource/instrument-serif @fontsource/noto-sans-telugu @fontsource/noto-sans-devanagari`; voice lines
+  are in `tools/voiceover/lines.json` (make_voice.py needs `pip install sherpa-onnx soundfile` and the
+  kokoro-multi-lang-v1_0 model from github.com/k2-fsa/sherpa-onnx/releases, tag tts-models, untarred into
+  tools/voiceover/); then `node record_demo.js` and `cd voiceover && python3 mix.py <ffmpeg path>`.
+  After committing the video, re-pin the two GitHub URLs in `DEMO_VIDEO_URLS` (Index.html) to that commit.
+- **Not in the repository on purpose:** the real sheet data (volunteers' phone numbers). Ask the user for
+  an .xlsx export or screenshots when a question depends on the real layout.
+- **User preferences:** plain language, no unexplained abbreviations, state confidence, keep changes small,
+  report token use against their budget (100,000 per task).
 
 ## Done
 - `Code.gs` + `Index.html`: Apps Script web app that opens today's tab (named like `28-Sep`)
@@ -163,7 +187,7 @@ _Last updated: 2026-09-27_
   if not, the page errors loudly rather than guessing.
 
 ## Next step
-- Organisers fill "Total volunteers needed" on 30-Sep (all blank as of 2026-09-29) and add the two columns to the Oct tabs if wanted; move "12 sessions"/"6 sessions" notes (30-Sep S No 32, 34) out of the Speaker Name column. Re-test on a copy, then update the live deployment (Manage deployments → New version).
-0. Check the 29-Sep, 30-Sep and 1-Oct tab layouts (user sending screenshots).
-Sheet editor follows README Steps 1–5 and sends back the `/exec` link. Then fix anything the
-live run reveals (most likely: header text or tab-name differences).
+- User: deploy 2026-09-30.4 (My Registrations + Open only fix) and replace the Drive demo video.
+- Open ideas, not started: reminders one hour before a slot (free options: "add to my calendar" button, or an
+  organiser list with one-tap WhatsApp links; automatic SMS/WhatsApp needs paid providers + registration);
+  optional alignment of the two laptop tables' columns.
