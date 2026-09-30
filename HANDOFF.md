@@ -131,6 +131,11 @@ _Last updated: 2026-09-27_
   NOT VERIFIED on real phones/tablets (only Chromium at 390 / 820 / 1150 / 1280 pixels wide); Telugu/Hindi
   "Details" wording needs a native speaker's check.
 
+- 2026-09-30: demo re-recorded on a phone screen (390 px frame beside the sheet panel) to show the card layout:
+  new step 2 "Each school is a card. Tap Details..." (voice line "cards"), "row" -> "card" in step 3, intro says
+  "in about a minute". 74 s, peak -1.9 dB. Video commit c404ead; GitHub fallback links in Index.html re-pinned to
+  it. VERSION 2026-09-30.2. Drive copy must be replaced again via Manage versions. Voice not listened to by a human.
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.
