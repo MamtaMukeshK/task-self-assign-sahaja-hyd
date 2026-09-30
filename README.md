@@ -110,7 +110,9 @@ At midnight India time the page automatically switches to the new day's tab.
   with a free slot.
 - Web addresses in any cell are clickable; Google Maps links show as **Open map** and open in a new tab.
 - They type their name and mobile once; the browser remembers both.
-- **Open only** tick box hides full schools.
+- **My Registrations** at the top lists the schools you're on, and those where you registered someone else
+  (matched by the name typed in "Your name"). Everything else is under **All Schools**.
+- **Open only** tick box hides full and ended schools from "All Schools" (your own stay under My Registrations).
 - Their own rows are green with a **Release** button, which removes only their line.
 - A school takes people up to its **Total volunteers needed** (any column title
   containing "total" and "volunteer"). Blank or no such column = 1 person; 0 = closed.

@@ -30,11 +30,11 @@ test('two users in real browser', { timeout: 60000 }, async () => {
   const b = await user('Ravi', '9123456789');
   const errs = []; for (const p of [a, b]) p.on('pageerror', e => errs.push(e.message));
 
-  const heads = await a.locator('th').allTextContents();
+  const heads = await a.locator('#grid th').allTextContents();
   assert.equal(heads.length, 9, 'Sl.No + button + Slots left + SY Speaker Name + the 5 other sheet columns');
   assert.deepEqual(heads.slice(0, 4), ['Sl.No', '', 'Slots left', 'SY Speaker Name']);
   assert.ok(!heads.includes('S No'), 'serial column not repeated');
-  assert.equal(await a.locator('#grid tr').nth(1).locator('td').first().textContent(), '1', 'serial number is the first cell');
+  assert.equal(await a.locator('tr[data-row="2"]').locator('td').first().textContent(), '1', 'serial number is the first cell');
   assert.ok(!heads.some(h => /Sahaja Yoga\s*Speaker Name/.test(h)), 'sheet speaker column not repeated');
   assert.match(await a.textContent('#note'), /No "Total volunteers needed" column/);
   assert.equal(await a.locator('button:text-is("Claim")').count(), 2);
@@ -48,15 +48,23 @@ test('two users in real browser', { timeout: 60000 }, async () => {
   await b.locator('button:text-is("Claim")').first().click();
   await b.waitForSelector('text=over its limit by 1');
   assert.equal(sheet.grid[3][1], 'Priya 9876543210\nRavi 9123456789');
-  assert.match(await b.locator('#grid tr').nth(3).textContent(), /Over by 1/);
+  assert.match(await b.locator('tr[data-row="4"]').textContent(), /Over by 1/);
   assert.equal(await b.locator('.person.extra').count(), 1);
   assert.match(await b.locator('.person.extra').textContent(), /Ravi · 9123456789 \(over limit\)/);
   assert.equal(await b.locator('.person.extra').evaluate(e => getComputedStyle(e).color), 'rgb(179, 38, 30)', 'red');
-  await b.locator('#grid tr').nth(3).locator('button:text("Release")').click();
+  await b.locator('tr[data-row="4"]').locator('button:text("Release")').click();
   await b.waitForSelector('text=Released.');
 
   await b.check('#openOnly');
-  assert.equal(await b.locator('tr').count(), 2, 'header + 1 open row');
+  assert.equal(await b.locator('#grid tr').count(), 2, 'header + 1 open row');
+
+  // Priya's own school is full: it sits under "My Registrations" (with Release), never in "All Schools".
+  await a.check('#openOnly');
+  assert.equal(await a.textContent('#mineTitle'), 'My Registrations (1)');
+  assert.equal(await a.locator('#mine tr[data-row="4"] button:text("Release")').count(), 1, 'still releasable');
+  assert.equal(await a.locator('#grid tr[data-row="4"]').count(), 0, 'not repeated in All Schools');
+  assert.equal(await a.locator('#grid tr').count(), 2, 'Open only: header + the one open school');
+  await a.uncheck('#openOnly');
 
   await a.locator('button:text("Release")').click();
   await a.waitForSelector('text=Released.');
@@ -95,7 +103,7 @@ test('multi-slot school in real browser: two join, third sees it full, one leave
       await p.fill('#name', name); await p.fill('#mobile', mobile);
       return p;
     };
-    const row1 = p => p.locator('#grid tr').nth(1);
+    const row1 = p => p.locator('tr[data-row="2"]');   // sheet row 2, in whichever section it is
     const a = await user('Priya', '9876543210');
     assert.match(await a.textContent('#note'), /Places per school from column "Total volunteers needed"/);
     assert.match(await row1(a).textContent(), /2 of 3/);
@@ -148,7 +156,7 @@ test('date picker and time-clash label in real browser', { timeout: 60000 }, asy
 
     await p.selectOption('#day', '30-Sep');
     await p.waitForSelector('text=Day: 30-Sep');
-    const row = n => p.locator('#grid tr').nth(n);
+    const row = n => p.locator('tr[data-row="' + (n + 1) + '"]');   // n-th school = sheet row n + 1
     await row(1).locator('button:text-is("Claim")').click(); await p.waitForSelector('text=Registered');
     assert.equal(d30.grid[1][1], 'Priya 9876543210', 'written to the picked day');
     assert.equal(d28.grid[1][1], '', 'today untouched');
@@ -186,8 +194,8 @@ test('map and web links in cells are clickable, other text stays plain', { timeo
       ['https://example.org/info', 'https://example.org/info', '_blank', 'noopener noreferrer'],
       ['Open map', 'https://maps.google.com/maps?q=17.4652273%2C78.3084288&z=17&hl=en', '_blank', 'noopener noreferrer'],
     ]);
-    assert.match(await p.locator('#grid tr').nth(1).textContent(), /see https:\/\/example\.org\/info for details/);
-    assert.match(await p.locator('#grid tr').nth(2).textContent(), /javascript:alert\(1\)/, 'shown as plain text, not a link');
+    assert.match(await p.locator('tr[data-row="2"]').textContent(), /see https:\/\/example\.org\/info for details/);
+    assert.match(await p.locator('tr[data-row="3"]').textContent(), /javascript:alert\(1\)/, 'shown as plain text, not a link');
   } finally { await browser.close(); }
 });
 
@@ -219,7 +227,7 @@ test('register others in real browser: list, over-limit in red, remove with ✕'
     await p.locator('button:text-is("Claim")').click();
     await p.waitForSelector('text=over its limit by 1');
     assert.equal(sheet.grid[1][1], 'Ravi 9123456789 (via Priya)\nAsha 9000000002 (via Priya)\nNeha 9000000003 (via Priya)');
-    const row = p.locator('#grid tr').nth(1);
+    const row = p.locator('tr[data-row="2"]');
     assert.match(await row.textContent(), /Over by 1 \(needs 2\)/);
     assert.deepEqual(await row.locator('.person.extra').allTextContents(), ['3. Neha · 9000000003 (over limit) · via Priya✕']);
     assert.equal(await row.locator('button.x').count(), 3, 'Priya can remove all three she added');
@@ -227,7 +235,7 @@ test('register others in real browser: list, over-limit in red, remove with ✕'
     await row.locator('.person').nth(2).locator('button.x').click();
     await p.waitForSelector('text=Removed Neha.');
     assert.equal(sheet.grid[1][1], 'Ravi 9123456789 (via Priya)\nAsha 9000000002 (via Priya)');
-    assert.equal(await p.locator('#grid tr').nth(1).locator('.person.extra').count(), 0, 'no longer over');
+    assert.equal(await p.locator('tr[data-row="2"]').locator('.person.extra').count(), 0, 'no longer over');
     assert.deepEqual(errs, []);
     await p.screenshot({ path: path.join(__dirname, 'picker-view.png') });
   } finally { await browser.close(); }
@@ -309,17 +317,18 @@ test('past day and ended slots in real browser: greyed out, no buttons, hidden b
     assert.match(await rows().nth(1).getAttribute('class'), /past/);
     assert.equal(await rows().nth(1).locator('button').count(), 0, 'ended slot: no buttons');
     assert.match(await rows().nth(1).textContent(), /Ended/);
-    assert.equal(await rows().nth(2).locator('button:text-is("Release")').count(), 1, 'later slot still usable');
+    assert.equal(await p.locator('#mine tr[data-row="3"] button:text-is("Release")').count(), 1, 'later slot still usable, under My Registrations');
     await p.check('#openOnly');
-    assert.deepEqual(await rows().evaluateAll(tr => tr.slice(1).map(r => r.cells[0].textContent)), ['2'], 'Open only hides the ended slot');
+    assert.equal(await rows().count(), 1, 'Open only hides the ended slot from All Schools');
+    assert.equal(await p.locator('#mine tr[data-row="3"]').isVisible(), true, 'your own school stays visible');
     await p.uncheck('#openOnly');
 
     await p.selectOption('#day', '27-Sep');
     await p.waitForSelector('text=Day: 27-Sep');
     assert.equal(await p.isVisible('#pastNote'), true);
     assert.equal(await p.isVisible('#showOthers'), false, 'no Register others on a past day');
-    assert.equal(await p.locator('#grid button').count(), 0, 'no buttons at all');
-    assert.equal(await p.locator('#grid tr.past').count(), 2);
+    assert.equal(await p.locator('table.grid button').count(), 0, 'no buttons at all');
+    assert.equal(await p.locator('table.grid tr.past').count(), 2);
     await p.screenshot({ path: path.join(__dirname, 'past-view.png') });
     await p.check('#openOnly');
     assert.equal(await rows().count(), 1, 'Open only shows nothing from a past day');
@@ -377,7 +386,7 @@ test('when today is over the page opens on the next day, and today can still be 
     await p.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));   // a refresh
     await p.waitForTimeout(500);
     assert.equal(await p.inputValue('#day'), '28-Sep', 'stays on today when picked on purpose');
-    assert.match(await p.locator('#grid tr').nth(1).textContent(), /Ended/);
+    assert.match(await p.locator('tr[data-row="2"]').textContent(), /Ended/);
   } finally { await browser.close(); }
 });
 
@@ -409,14 +418,14 @@ test('language switch: opens in English; Telugu and Hindi translate the page and
     assert.deepEqual(await p.$$eval('#day option', o => o.map(x => x.textContent)), ['ఆది 27-Sep (గడిచింది)', 'సోమ 28-Sep (ఈ రోజు)']);
     assert.equal(await p.getAttribute('#mobile', 'placeholder'), '10 అంకెలు');
     assert.deepEqual((await p.locator('th').allTextContents()).slice(0, 4), ['క్ర.సం.', '', 'మిగిలిన స్థానాలు', 'SY వక్త పేరు']);
-    assert.equal(await p.locator('#grid tr').nth(2).locator('button').textContent(), 'ఎంచుకోండి');
+    assert.equal(await p.locator('tr[data-row="3"]').locator('button').textContent(), 'ఎంచుకోండి');
     assert.match(await p.textContent('#pickSummary'), /^వక్తలను ఎంచుకోండి \(0 ఎంచుకున్నారు\)$/);
 
     // Vol A is on School A at 10:00; School B is also 10:00 -> the script refuses; message shown in Hindi.
     await p.selectOption('#lang', 'hi');
     await p.fill('#name', 'Vol A'); await p.fill('#mobile', '9000000001');
     await p.check('#showOthers'); await p.fill('#others', 'Vol B 9000000002');   // registering others: no clash label, script checks
-    await p.locator('#grid tr').nth(2).locator('button').click();
+    await p.locator('tr[data-row="3"]').locator('button').click();
     await p.waitForSelector('#status.err');
     assert.equal(await p.textContent('#status'),
       'समय टकराता है: आप पहले से S No 1 (School A) में हैं (28-Sep, 10.00 A.M)। किसी को नहीं जोड़ा गया। पहले वह नाम हटाएँ या कोई दूसरा समय चुनें।');
@@ -424,7 +433,7 @@ test('language switch: opens in English; Telugu and Hindi translate the page and
 
     await p.selectOption('#lang', 'en');
     assert.equal(await p.textContent('#title'), 'Day: 28-Sep');
-    assert.equal(await p.locator('#grid tr').nth(2).locator('button').textContent(), 'Claim');
+    assert.equal(await p.locator('tr[data-row="3"]').locator('button').textContent(), 'Claim');
     assert.match(await p.textContent('#updated'), /^Updated /, 'every line switches, including "Updated"');
     assert.deepEqual(errs, []);
   } finally { await browser.close(); }
@@ -502,7 +511,7 @@ test('adaptive layout: phone cards (no sideways scroll, duplicates hidden, Detai
   try {
     const p = await open(390, 844);
     assert.equal(await p.evaluate(() => document.documentElement.scrollWidth), 390, 'nothing wider than the phone');
-    const card = p.locator('#grid tr').nth(1);
+    const card = p.locator('tr[data-row="2"]');
     assert.equal(await card.evaluate(tr => getComputedStyle(tr).display), 'flex', 'rows are cards');
     assert.equal(await p.isVisible('#grid tr >> nth=0'), false, 'column titles hidden');
     for (const [cls, visible] of [['c-school', true], ['c-time', true], ['c-slots', true], ['c-addr', true], ['c-map', true], ['c-dup', false], ['c-more', false]]) {
@@ -510,33 +519,72 @@ test('adaptive layout: phone cards (no sideways scroll, duplicates hidden, Detai
     }
     assert.equal(await card.locator('td.c-dup').count(), 3, 'both volunteer counts and Date are the duplicates');
     assert.equal(await card.locator('td.c-addr').getAttribute('data-label'), 'Address');
-    assert.equal(await p.locator('#grid tr').nth(2).locator('td.c-toggle').count(), 0, 'no Details button when there are no details');
+    assert.equal(await p.locator('tr[data-row="3"]').locator('td.c-toggle').count(), 0, 'no Details button when there are no details');
     await card.locator('td.c-toggle button').click();
     assert.equal(await card.locator('td.c-more', { hasText: 'Mr. Rao' }).isVisible(), true);
     assert.equal(await card.locator('td.c-toggle button').textContent(), 'Hide details ▴');
     await p.evaluate(() => refresh());
     await p.waitForTimeout(300);
-    assert.equal(await p.locator('#grid tr').nth(1).locator('td.c-more', { hasText: 'Mr. Rao' }).isVisible(), true, 'still open after the automatic refresh');
+    assert.equal(await p.locator('tr[data-row="2"]').locator('td.c-more', { hasText: 'Mr. Rao' }).isVisible(), true, 'still open after the automatic refresh');
     await p.selectOption('#lang', 'hi');
-    assert.equal(await p.locator('#grid tr').nth(1).locator('td.c-toggle button').textContent(), 'विवरण छिपाएँ ▴');
+    assert.equal(await p.locator('tr[data-row="2"]').locator('td.c-toggle button').textContent(), 'विवरण छिपाएँ ▴');
 
     const tablet = await open(820, 1180);
     assert.equal(await tablet.evaluate(() => document.documentElement.scrollWidth), 820, 'nothing wider than the tablet');
-    const tcard = tablet.locator('#grid tr').nth(1);
+    const tcard = tablet.locator('tr[data-row="2"]');
     assert.equal(await tcard.evaluate(tr => getComputedStyle(tr).display), 'flex', 'tablets get cards too');
     assert.equal(await tcard.locator('td.c-more', { hasText: 'Mr. Rao' }).isVisible(), true, 'details shown without a tap');
     assert.equal(await tcard.locator('td.c-toggle').isVisible(), false, 'no Details button on tablets');
     assert.equal(await tcard.locator('td.c-dup').first().isVisible(), false, 'duplicates still hidden');
 
     const tab = await open(1150, 800);
-    assert.equal(await tab.locator('#grid tr').nth(1).evaluate(tr => getComputedStyle(tr).display), 'table-row', 'laptops keep the table');
+    assert.equal(await tab.locator('tr[data-row="2"]').evaluate(tr => getComputedStyle(tr).display), 'table-row', 'laptops keep the table');
     assert.equal(await tab.isVisible('td.c-toggle'), false);
     const xs = () => tab.evaluate(() => [...document.querySelectorAll('#grid tr:nth-child(2) td')].slice(0, 3).map(td => Math.round(td.getBoundingClientRect().left)));
     const before = await xs();
-    await tab.evaluate(() => { document.querySelector('.wrap').scrollLeft = 200; });
-    assert.ok(await tab.evaluate(() => document.querySelector('.wrap').scrollLeft) > 0, 'the table does scroll sideways');
+    await tab.evaluate(() => { document.getElementById('grid').parentNode.scrollLeft = 200; });
+    assert.ok(await tab.evaluate(() => document.getElementById('grid').parentNode.scrollLeft) > 0, 'the table does scroll sideways');
     assert.deepEqual(await xs(), before, 'Sl.No, button and Slots left stay put');
     const lefts = await tab.evaluate(() => [...document.querySelectorAll('#grid th.stick')].map(th => [parseFloat(th.style.left), th.offsetWidth]));
     lefts.slice(1).forEach(([left], i) => assert.equal(left, lefts[i][0] + lefts[i][1], 'frozen columns sit edge to edge (no gaps)'));
+  } finally { await browser.close(); }
+});
+
+test('My Registrations: your schools and the ones you registered others for move to the top section', { timeout: 60000 }, async () => {
+  const sheet = makeSheet('28-Sep', 1, [['S No', 'Speaker Name', 'Total volunteers needed', 'Institution name'],
+    ['1', '', '2', 'School A'], ['2', '', '2', 'School B'], ['3', 'Ravi 9123456789 (via Priya)', '2', 'School C']]);
+  const gs = load([sheet], new Date(Date.UTC(2026, 8, 28, 5)));
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
+  try {
+    const p = await (await browser.newContext({ viewport: { width: 390, height: 800 } })).newPage();
+    p.setDefaultTimeout(8000);
+    await p.exposeFunction('gsCall', (fn, a) => { try { return { ok: JSON.parse(JSON.stringify(gs[fn](...a))) }; } catch (e) { return { err: e.message }; } });
+    await p.addInitScript(SHIM);
+    await p.route('http://app.test/', r => r.fulfill({ contentType: 'text/html', body: html }));
+    await p.goto('http://app.test/');
+    await p.waitForSelector('text=Day: 28-Sep');
+    assert.equal(await p.isVisible('#mineBox'), false, 'no name yet: no section');
+    await p.fill('#name', 'Priya'); await p.fill('#mobile', '9876543210');
+    assert.equal(await p.textContent('#mineTitle'), 'My Registrations (1)', 'School C: Priya registered Ravi there');
+    assert.equal(await p.locator('#mine tr[data-row="4"] button.x').count(), 1, 'her ✕ for Ravi is in the section');
+    assert.equal(await p.isVisible('#allTitle'), true);
+
+    await p.locator('#grid tr[data-row="2"] button:text-is("Claim")').click();
+    await p.waitForSelector('text=Registered');
+    assert.match(await p.textContent('#status'), /now at the top, under "My Registrations"/);
+    assert.equal(await p.textContent('#mineTitle'), 'My Registrations (2)');
+    assert.equal(await p.locator('#mine tr[data-row="2"]').count(), 1, 'moved to the top');
+    assert.equal(await p.locator('#grid tr[data-row="2"]').count(), 0, 'and not repeated below');
+    assert.match(await p.locator('#mine tr[data-row="2"]').getAttribute('class'), /flash/, 'highlighted where it went');
+    await p.selectOption('#lang', 'te');
+    assert.equal(await p.textContent('#mineTitle'), 'నా నమోదులు (2)');
+    await p.selectOption('#lang', 'en');
+
+    await p.locator('#mine tr[data-row="2"] button:text("Release")').click();
+    await p.waitForSelector('text=Released.');
+    assert.equal(await p.locator('#grid tr[data-row="2"]').count(), 1, 'back under All Schools');
+    await p.fill('#name', 'Neha');
+    assert.equal(await p.isVisible('#mineBox'), false, 'someone with nothing registered sees no section');
+    assert.equal(await p.isVisible('#allTitle'), false);
   } finally { await browser.close(); }
 });

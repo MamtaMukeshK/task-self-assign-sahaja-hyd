@@ -147,7 +147,7 @@ Takes about 15 minutes on a laptop or desktop computer (not a phone).</p>
  */
 
 // Shown on the page so it's easy to confirm which version is deployed.
-var VERSION = '2026-09-30.2';
+var VERSION = '2026-09-30.3';
 
 var CONFIG = {
   // Time zone for "today" and "now" (which day opens, which slots have ended).
@@ -767,6 +767,13 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   #pickList input.firstmobile { width:130px; min-width:0; margin-left:8px; padding:2px 6px; }
   textarea { font:inherit; min-width:280px; min-height:64px; padding:6px 8px; border:1px solid var(--line); border-radius:8px; background:#fff; }
   td { background:#fff; }
+  h3.sect { font:400 21px/1.2 'Instrument Serif', 'Noto Sans Telugu', 'Noto Sans Devanagari', serif; color:var(--navy); margin:14px 0 8px; }
+  h3.sect[hidden], #mineBox[hidden] { display:none; }
+  #mineBox .wrap { border-color:#2e7d32; }
+  @keyframes ring { from { box-shadow:0 0 0 4px var(--gold); } to { box-shadow:0 0 0 0 rgba(201,168,76,0); } }
+  @keyframes flashbg { from { background:#fff3b0; } }
+  tr.flash { animation:ring 2s ease-out; }
+  @media (min-width: 1101px) { tr.flash td { animation:flashbg 2s ease-out; } }
   td.c-toggle { display:none; }                            /* the "Details" button is for the phone cards only */
   /* Sl.No, the button and "Slots left" stay put while the table scrolls sideways (left set by pinColumns). */
   th.stick, td.stick { position:sticky; z-index:1; }
@@ -786,40 +793,40 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   /* Phones and tablets: each school becomes a card; no sideways scrolling. Laptops keep the full table. */
   @media (max-width: 1100px) {
     .wrap { overflow:visible; border:0; background:transparent; }
-    #grid, #grid tbody { display:block; }
-    #grid tr:first-child { display:none; }                     /* the column titles become labels inside each card */
-    #grid tr { display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; background:#fff; border:1px solid var(--line);
+    table.grid, table.grid tbody { display:block; }
+    table.grid tr:first-child { display:none; }                     /* the column titles become labels inside each card */
+    table.grid tr { display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; background:#fff; border:1px solid var(--line);
                border-left:5px solid var(--blue); border-radius:12px; padding:12px 14px; margin-bottom:12px; box-shadow:0 1px 3px rgba(26,58,92,.08); }
-    #grid tr.mine { border-left-color:#2e7d32; background:var(--mine); }
-    #grid tr.taken { background:var(--taken); }
-    #grid tr.overrow { border-left-color:var(--err); background:#fdecea; }
-    #grid tr.past { border-left-color:#bbb; background:#eee; }
-    #grid td { display:block; min-width:0; padding:0; border:0; background:transparent; position:static; box-shadow:none; }
-    #grid tr.past td, #grid tr.past td * { background:transparent !important; }
-    #grid td.c-sno { order:1; font-weight:700; color:#fff; background:var(--navy); border-radius:12px; padding:1px 9px; font-size:13px; }
-    #grid tr.past td.c-sno { background:#bbb !important; color:#fff !important; }
-    #grid td.c-school { order:2; flex:1; font:700 17px/1.25 'DM Sans', 'Noto Sans Telugu', 'Noto Sans Devanagari', sans-serif; color:var(--navy); }
-    #grid td.c-time { order:3; width:100%; color:var(--slate); font-weight:500; }
-    #grid td.c-slots { order:4; font-weight:700; color:var(--navy); background:#E6EEF7; border-radius:12px; padding:2px 10px; font-size:13px; }
-    #grid td.c-slots.overcount { color:var(--err); background:#fff; }
-    #grid td.c-btn { order:5; margin-left:auto; display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-end; }
-    #grid td.c-btn button { padding:9px 18px; font-size:15px; border-radius:10px; }
-    #grid td.c-who { order:6; width:100%; border-top:1px solid var(--line); padding-top:8px; margin-top:4px; }
-    #grid td.c-who:empty { display:none; }
-    #grid td.c-who .person { white-space:normal; }
-    #grid td.c-addr, #grid td.c-map, #grid td.c-more { order:7; width:100%; display:flex; gap:8px; font-size:14px; color:var(--slate); }
-    #grid td.c-map { order:8; } #grid td.c-more { order:10; }
-    #grid td.c-addr::before, #grid td.c-map::before, #grid td.c-more::before { content:attr(data-label); flex:0 0 38%; color:var(--muted); font-size:13px; }
-    #grid td.c-dup, #grid td.c-more, #grid td.c-blank { display:none; }   /* duplicates of the badge / the chosen date; the rest sit behind "Details" */
-    #grid tr.open td.c-more:not(.c-blank) { display:flex; }
-    #grid td.c-toggle { display:block; order:11; width:100%; }
-    #grid td.c-toggle button { background:#fff; color:var(--blue); border-color:var(--line); padding:6px 12px; }
+    table.grid tr.mine { border-left-color:#2e7d32; background:var(--mine); }
+    table.grid tr.taken { background:var(--taken); }
+    table.grid tr.overrow { border-left-color:var(--err); background:#fdecea; }
+    table.grid tr.past { border-left-color:#bbb; background:#eee; }
+    table.grid td { display:block; min-width:0; padding:0; border:0; background:transparent; position:static; box-shadow:none; }
+    table.grid tr.past td, table.grid tr.past td * { background:transparent !important; }
+    table.grid td.c-sno { order:1; font-weight:700; color:#fff; background:var(--navy); border-radius:12px; padding:1px 9px; font-size:13px; }
+    table.grid tr.past td.c-sno { background:#bbb !important; color:#fff !important; }
+    table.grid td.c-school { order:2; flex:1; font:700 17px/1.25 'DM Sans', 'Noto Sans Telugu', 'Noto Sans Devanagari', sans-serif; color:var(--navy); }
+    table.grid td.c-time { order:3; width:100%; color:var(--slate); font-weight:500; }
+    table.grid td.c-slots { order:4; font-weight:700; color:var(--navy); background:#E6EEF7; border-radius:12px; padding:2px 10px; font-size:13px; }
+    table.grid td.c-slots.overcount { color:var(--err); background:#fff; }
+    table.grid td.c-btn { order:5; margin-left:auto; display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-end; }
+    table.grid td.c-btn button { padding:9px 18px; font-size:15px; border-radius:10px; }
+    table.grid td.c-who { order:6; width:100%; border-top:1px solid var(--line); padding-top:8px; margin-top:4px; }
+    table.grid td.c-who:empty { display:none; }
+    table.grid td.c-who .person { white-space:normal; }
+    table.grid td.c-addr, table.grid td.c-map, table.grid td.c-more { order:7; width:100%; display:flex; gap:8px; font-size:14px; color:var(--slate); }
+    table.grid td.c-map { order:8; } table.grid td.c-more { order:10; }
+    table.grid td.c-addr::before, table.grid td.c-map::before, table.grid td.c-more::before { content:attr(data-label); flex:0 0 38%; color:var(--muted); font-size:13px; }
+    table.grid td.c-dup, table.grid td.c-more, table.grid td.c-blank { display:none; }   /* duplicates of the badge / the chosen date; the rest sit behind "Details" */
+    table.grid tr.open td.c-more:not(.c-blank) { display:flex; }
+    table.grid td.c-toggle { display:block; order:11; width:100%; }
+    table.grid td.c-toggle button { background:#fff; color:var(--blue); border-color:var(--line); padding:6px 12px; }
   }
   /* Tablets: room for everything, so contacts and remarks show without "Details", two lines side by side. */
   @media (min-width: 701px) and (max-width: 1100px) {
-    #grid tr td.c-more:not(.c-blank) { display:flex; }
-    #grid td.c-toggle { display:none; }
-    #grid td.c-addr, #grid td.c-map, #grid td.c-more { width:calc(50% - 5px); }
+    table.grid tr td.c-more:not(.c-blank) { display:flex; }
+    table.grid td.c-toggle { display:none; }
+    table.grid td.c-addr, table.grid td.c-map, table.grid td.c-more { width:calc(50% - 5px); }
   }
 &lt;/style&gt;
 &lt;/head&gt;
@@ -861,7 +868,9 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   &lt;span id="note"&gt;&lt;/span&gt;
   &lt;span id="clock"&gt;&lt;/span&gt;
 &lt;/header&gt;
-&lt;div class="wrap"&gt;&lt;table id="grid"&gt;&lt;/table&gt;&lt;/div&gt;
+&lt;section id="mineBox" hidden&gt;&lt;h3 id="mineTitle" class="sect"&gt;&lt;/h3&gt;&lt;div class="wrap"&gt;&lt;table id="mine" class="grid"&gt;&lt;/table&gt;&lt;/div&gt;&lt;/section&gt;
+&lt;h3 id="allTitle" class="sect" hidden&gt;&lt;/h3&gt;
+&lt;div class="wrap"&gt;&lt;table id="grid" class="grid"&gt;&lt;/table&gt;&lt;/div&gt;
 
 &lt;script&gt;
   // ---- Languages ----------------------------------------------------------
@@ -890,7 +899,8 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
       openMap: 'Open map', todayMark: '(today)', pastMark: '(past)', weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
       updated: 'Updated {0}', placesFrom: 'Places per school from column "{0}"',
       noPlacesCol: 'No "Total volunteers needed" column on this tab, so each school takes 1 person.',
-      slNo: 'Sl.No', slotsLeft: 'Slots left', speakerCol: 'SY Speaker Name', details: 'Details ▾', hideDetails: 'Hide details ▴',
+      slNo: 'Sl.No', slotsLeft: 'Slots left', speakerCol: 'SY Speaker Name', details: 'Details ▾', hideDetails: 'Hide details ▴', myRegs: 'My Registrations ({0})', allSchools: 'All Schools',
+      movedUp: ' It is now at the top, under "My Registrations".',
       past: 'Past', ended: 'Ended', closed: 'Closed', clashes: 'Clashes with {0} ({1})',
       claim: 'Claim', claimFull: 'Claim (full)', release: 'Release', overBy: 'Over by {0} (needs {1})', nOfM: '{0} of {1}',
       overLimit: ' (over limit)', via: ' · via {0}', removeX: 'Remove {0}', freeTitle: '{0} with free slots · {1}',
@@ -929,7 +939,8 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
       openMap: 'మ్యాప్ తెరవండి', todayMark: '(ఈ రోజు)', pastMark: '(గడిచింది)', weekdays: ['ఆది', 'సోమ', 'మంగళ', 'బుధ', 'గురు', 'శుక్ర', 'శని'],
       updated: 'అప్‌డేట్ {0}', placesFrom: 'ప్రతి పాఠశాల స్థానాలు "{0}" కాలమ్ నుండి',
       noPlacesCol: 'ఈ ట్యాబ్‌లో "Total volunteers needed" కాలమ్ లేదు, కాబట్టి ప్రతి పాఠశాలకు 1 వ్యక్తి.',
-      slNo: 'క్ర.సం.', slotsLeft: 'మిగిలిన స్థానాలు', speakerCol: 'SY వక్త పేరు', details: 'వివరాలు ▾', hideDetails: 'వివరాలు దాచు ▴',
+      slNo: 'క్ర.సం.', slotsLeft: 'మిగిలిన స్థానాలు', speakerCol: 'SY వక్త పేరు', details: 'వివరాలు ▾', hideDetails: 'వివరాలు దాచు ▴', myRegs: 'నా నమోదులు ({0})', allSchools: 'అన్ని పాఠశాలలు',
+      movedUp: ' ఇది ఇప్పుడు పైన "నా నమోదులు" కింద ఉంది.',
       past: 'గడిచింది', ended: 'ముగిసింది', closed: 'మూసివేయబడింది', clashes: '{0}తో సమయం కలుస్తోంది ({1})',
       claim: 'ఎంచుకోండి', claimFull: 'ఎంచుకోండి (నిండింది)', release: 'పేరు తీసేయండి', overBy: 'పరిమితి కంటే {0} ఎక్కువ ({1} కావాలి)', nOfM: '{1}లో {0}',
       overLimit: ' (పరిమితి మించింది)', via: ' · {0} ద్వారా', removeX: '{0}ను తొలగించండి', freeTitle: '{0} ఖాళీ · {1}',
@@ -968,7 +979,8 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
       openMap: 'नक्शा खोलें', todayMark: '(आज)', pastMark: '(बीता हुआ)', weekdays: ['रवि', 'सोम', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि'],
       updated: 'अपडेट {0}', placesFrom: 'हर स्कूल के स्थान "{0}" कॉलम से',
       noPlacesCol: 'इस टैब में "Total volunteers needed" कॉलम नहीं है, इसलिए हर स्कूल में 1 व्यक्ति।',
-      slNo: 'क्र.सं.', slotsLeft: 'बचे स्थान', speakerCol: 'SY वक्ता का नाम', details: 'विवरण ▾', hideDetails: 'विवरण छिपाएँ ▴',
+      slNo: 'क्र.सं.', slotsLeft: 'बचे स्थान', speakerCol: 'SY वक्ता का नाम', details: 'विवरण ▾', hideDetails: 'विवरण छिपाएँ ▴', myRegs: 'मेरे पंजीकरण ({0})', allSchools: 'सभी स्कूल',
+      movedUp: ' यह अब ऊपर "मेरे पंजीकरण" में है।',
       past: 'बीता हुआ', ended: 'समाप्त', closed: 'बंद', clashes: '{0} से समय टकराता है ({1})',
       claim: 'चुनें', claimFull: 'चुनें (भरा हुआ)', release: 'नाम हटाएँ', overBy: 'सीमा से {0} अधिक ({1} चाहिए)', nOfM: '{1} में से {0}',
       overLimit: ' (सीमा से अधिक)', via: ' · {0} द्वारा', removeX: '{0} को हटाएँ', freeTitle: '{0} में जगह · {1}',
@@ -1214,6 +1226,9 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
     shownSeq = ++seq; // ignore answers still on their way for the previous day
     state = null; busyRow = null;
     document.getElementById('grid').textContent = '';
+    document.getElementById('mine').textContent = '';
+    document.getElementById('mineBox').hidden = true;
+    document.getElementById('allTitle').hidden = true;
     document.getElementById('title').textContent = t('loading');
     setStatus('');
     refresh();
@@ -1247,7 +1262,12 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
     call(fn, args, function (s) {
       if (!claiming) return fn === 'removePerson' ? t('removed', target) : t('released');
       var now = s.rows.filter(function (x) { return x.row === r.row; })[0];
-      return t('registered') + (now &amp;&amp; now.over ? t('overNote', now.over) : '');
+      var card = document.querySelector('#mine tr[data-row="' + r.row + '"]');
+      if (card) {
+        card.classList.add('flash');
+        if (card.scrollIntoView) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return t('registered') + (now &amp;&amp; now.over ? t('overNote', now.over) : '') + (card ? t('movedUp') : '');
     });
   }
 
@@ -1287,9 +1307,8 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
     othersBox.hidden = !!state.pastDay || !showOthers.checked;
     drawPicker(false);
     var me = myName();
-    var grid = document.getElementById('grid');
-    grid.textContent = '';
-    var head = grid.insertRow();
+    var grid = document.getElementById('grid'), mineGrid = document.getElementById('mine');
+    grid.textContent = ''; mineGrid.textContent = '';
     document.getElementById('note').textContent = state.slotsHeader
       ? t('placesFrom', state.slotsHeader.replace(/\s+/g, ' ')) : t('noPlacesCol');
     // The sheet's own speaker column is left out: "SY Speaker Name" shows the same people, one per line.
@@ -1309,12 +1328,18 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
     };
     var kinds = state.headers.map(kind);
     var fixed = (snoIdx &gt;= 0 ? ['c-sno'] : []).concat(['c-btn', 'c-slots']);
-    (snoIdx &gt;= 0 ? [t('slNo')] : []).concat(['', t('slotsLeft'), t('speakerCol')], state.headers.filter(shown)).forEach(function (h, i) {
-      var th = document.createElement('th'); th.textContent = h; head.appendChild(th);
-      if (i &lt; fixed.length) th.className = 'stick' + (i === fixed.length - 1 ? ' stick-last' : '');
+    [mineGrid, grid].forEach(function (table) {
+      var head = table.insertRow();
+      (snoIdx &gt;= 0 ? [t('slNo')] : []).concat(['', t('slotsLeft'), t('speakerCol')], state.headers.filter(shown)).forEach(function (h, i) {
+        var th = document.createElement('th'); th.textContent = h; head.appendChild(th);
+        if (i &lt; fixed.length) th.className = 'stick' + (i === fixed.length - 1 ? ' stick-last' : '');
+      });
     });
     var open = 0;
     function isMine(r) { return !!me &amp;&amp; r.assignees.some(function (a) { return same(a.name, me); }); }
+    // "My Registrations": schools you are on, or where you registered someone else.
+    function isMyReg(r) { return isMine(r) || (!!me &amp;&amp; r.assignees.some(function (a) { return a.by &amp;&amp; same(a.by, me); })); }
+    var myCount = 0;
     var myStarts = {}; // start time -&gt; first S No I'm on at that time
     state.rows.forEach(function (r) { if (r.start &amp;&amp; isMine(r) &amp;&amp; !myStarts[r.start]) myStarts[r.start] = snoIdx &gt;= 0 ? t('slNo') + ' ' + r.cells[snoIdx] : t('row', r.row); });
     state.rows.forEach(function (r) {
@@ -1323,8 +1348,12 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
       var clashWith = justMe &amp;&amp; !mine &amp;&amp; r.start ? myStarts[r.start] : '';
       var hasRoom = r.remaining &gt; 0;
       if (hasRoom &amp;&amp; !r.past) open++;
-      if (openOnly.checked &amp;&amp; (r.past || (!hasRoom &amp;&amp; !mine))) return; // "Open only" never shows ended slots
-      var tr = grid.insertRow();
+      var myReg = isMyReg(r);
+      if (myReg) myCount++;
+      // "Open only" filters "All Schools": no ended slots and no full schools. Your own always stay under "My Registrations".
+      else if (openOnly.checked &amp;&amp; (r.past || !hasRoom)) return;
+      var tr = (myReg ? mineGrid : grid).insertRow();
+      tr.setAttribute('data-row', r.row);
       tr.className = r.past ? 'past' : mine ? 'mine' : r.over ? 'overrow' : (hasRoom ? '' : 'taken');
       if (snoIdx &gt;= 0) { var sno = tr.insertCell(); sno.textContent = r.cells[snoIdx]; sno.className = 'c-sno'; }
       var btnCell = tr.insertCell();
@@ -1404,6 +1433,10 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
         tg.appendChild(tb);
       }
     });
+    document.getElementById('mineBox').hidden = !myCount;
+    document.getElementById('mineTitle').textContent = t('myRegs', myCount);
+    document.getElementById('allTitle').hidden = !myCount;
+    document.getElementById('allTitle').textContent = t('allSchools');
     pinColumns();
     document.title = t('freeTitle', open, state.tab);
     if (!state.rows.length) grid.insertRow().insertCell().textContent = t('noRows');
@@ -1412,8 +1445,8 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   var openDetails = {}; // sheet rows whose "Details" are open on a phone; kept across the 15-second refresh
 
   // Keep the first columns (Sl.No, button, Slots left) in view while the table scrolls sideways.
-  function pinColumns() {
-    var grid = document.getElementById('grid');
+  function pinColumns() { ['mine', 'grid'].forEach(function (id) { pinTable(document.getElementById(id)); }); }
+  function pinTable(grid) {
     if (!grid.rows.length) return;
     var lefts = [], x = 0;
     [].forEach.call(grid.rows[0].cells, function (th) { if (/\bstick\b/.test(th.className)) { lefts.push(x); x += th.offsetWidth; } });
@@ -1428,7 +1461,10 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
     });
   }
   // Widths change after the web fonts load or the window resizes, so measure again then.
-  if (window.ResizeObserver) new ResizeObserver(function () { pinColumns(); }).observe(document.getElementById('grid'));
+  if (window.ResizeObserver) {
+    var ro = new ResizeObserver(function () { pinColumns(); });
+    ro.observe(document.getElementById('grid')); ro.observe(document.getElementById('mine'));
+  }
   else window.addEventListener('resize', pinColumns);
 
   // Language: English when the page opens; switching redraws everything in the chosen language.

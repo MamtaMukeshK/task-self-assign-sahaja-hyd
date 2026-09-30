@@ -136,6 +136,14 @@ _Last updated: 2026-09-27_
   "in about a minute". 74 s, peak -1.9 dB. Video commit c404ead; GitHub fallback links in Index.html re-pinned to
   it. VERSION 2026-09-30.2. Drive copy must be replaced again via Manage versions. Voice not listened to by a human.
 
+- 2026-09-30: "My Registrations" section (Index.html render): schools where the typed name is on the row, or
+  where that name registered someone ("via"), are drawn in a separate table #mine above "All Schools" (#grid);
+  never in both. After Claim the page scrolls to the card there, outlines it in gold and says so. "Open only"
+  now hides every full or ended school from All Schools (earlier it kept your own full ones, which looked like a
+  bug); your own always stay under My Registrations. Chosen day only. Both tables share the card/frozen-column
+  styles (table.grid). Tests now find schools by sheet row (tr[data-row]). VERSION 2026-09-30.3. 67 tests.
+  Known limit: matching is by typed name, so a different spelling won't show in My Registrations.
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.
