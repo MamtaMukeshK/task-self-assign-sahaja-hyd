@@ -85,7 +85,7 @@ test('multi-slot school in real browser: two join, third sees it full, one leave
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
   try {
     const user = async (name, mobile) => {
-      const p = await (await browser.newContext({ viewport: { width: 1000, height: 700 } })).newPage();
+      const p = await (await browser.newContext({ viewport: { width: 1280, height: 700 } })).newPage();
       p.setDefaultTimeout(8000);
       await p.exposeFunction('gsCall', (fn, a) => { try { return { ok: JSON.parse(JSON.stringify(gs[fn](...a))) }; } catch (e) { return { err: e.message }; } });
       await p.addInitScript(SHIM);
@@ -477,5 +477,66 @@ test('demo video button: prominent, opens the Drive video in a new tab; without 
     assert.equal(await p.isVisible('#demoBox'), false);
     await p.click('#demoBtn'); await p.click('#demoClose');
     assert.equal(await p.isVisible('#demoBox'), false);
+  } finally { await browser.close(); }
+});
+
+test('adaptive layout: phone cards (no sideways scroll, duplicates hidden, Details survives refresh); tablet cards show all; frozen columns on laptops', { timeout: 60000 }, async () => {
+  const H = ['Sl.No', 'Speaker Name', 'Total volunteers needed', 'count of Volunteers still neeeded', 'Institution name', 'Date', 'Time',
+    'Address', 'Google map', 'Contact Person', 'Contact Mobile', 'Remarks'];
+  const gs = load([makeSheet('28-Sep', 1, [H,
+    ['1', 'Ramesh 9000000001', '3', '2', 'School Y with a rather long name', '28-Sep-26', '2pm to 3pm', 'Plot 12, Madhapur', 'https://maps.app.goo.gl/abc', 'Mr. Rao', '9000000201', 'Hall on 2nd floor'],
+    ['2', '', '1', '1', 'School X', '28-Sep-26', '4pm to 5pm', 'Kondapur', '', '', '', '']])], new Date(Date.UTC(2026, 8, 28, 5)));
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
+  const body = html.replace('<head>', '<head><meta name="viewport" content="width=device-width, initial-scale=1">'); // added by doGet
+  const open = async (width, height) => {
+    const ctx = await browser.newContext({ viewport: { width, height }, isMobile: width < 700, hasTouch: width < 700 });
+    const p = await ctx.newPage();
+    p.setDefaultTimeout(8000);
+    await p.exposeFunction('gsCall', (fn, a) => { try { return { ok: JSON.parse(JSON.stringify(gs[fn](...a))) }; } catch (e) { return { err: e.message }; } });
+    await p.addInitScript(SHIM);
+    await p.route('http://app.test/', r => r.fulfill({ contentType: 'text/html', body }));
+    await p.goto('http://app.test/');
+    await p.waitForSelector('text=Day: 28-Sep');
+    return p;
+  };
+  try {
+    const p = await open(390, 844);
+    assert.equal(await p.evaluate(() => document.documentElement.scrollWidth), 390, 'nothing wider than the phone');
+    const card = p.locator('#grid tr').nth(1);
+    assert.equal(await card.evaluate(tr => getComputedStyle(tr).display), 'flex', 'rows are cards');
+    assert.equal(await p.isVisible('#grid tr >> nth=0'), false, 'column titles hidden');
+    for (const [cls, visible] of [['c-school', true], ['c-time', true], ['c-slots', true], ['c-addr', true], ['c-map', true], ['c-dup', false], ['c-more', false]]) {
+      assert.equal(await card.locator('td.' + cls).first().isVisible(), visible, cls);
+    }
+    assert.equal(await card.locator('td.c-dup').count(), 3, 'both volunteer counts and Date are the duplicates');
+    assert.equal(await card.locator('td.c-addr').getAttribute('data-label'), 'Address');
+    assert.equal(await p.locator('#grid tr').nth(2).locator('td.c-toggle').count(), 0, 'no Details button when there are no details');
+    await card.locator('td.c-toggle button').click();
+    assert.equal(await card.locator('td.c-more', { hasText: 'Mr. Rao' }).isVisible(), true);
+    assert.equal(await card.locator('td.c-toggle button').textContent(), 'Hide details ▴');
+    await p.evaluate(() => refresh());
+    await p.waitForTimeout(300);
+    assert.equal(await p.locator('#grid tr').nth(1).locator('td.c-more', { hasText: 'Mr. Rao' }).isVisible(), true, 'still open after the automatic refresh');
+    await p.selectOption('#lang', 'hi');
+    assert.equal(await p.locator('#grid tr').nth(1).locator('td.c-toggle button').textContent(), 'विवरण छिपाएँ ▴');
+
+    const tablet = await open(820, 1180);
+    assert.equal(await tablet.evaluate(() => document.documentElement.scrollWidth), 820, 'nothing wider than the tablet');
+    const tcard = tablet.locator('#grid tr').nth(1);
+    assert.equal(await tcard.evaluate(tr => getComputedStyle(tr).display), 'flex', 'tablets get cards too');
+    assert.equal(await tcard.locator('td.c-more', { hasText: 'Mr. Rao' }).isVisible(), true, 'details shown without a tap');
+    assert.equal(await tcard.locator('td.c-toggle').isVisible(), false, 'no Details button on tablets');
+    assert.equal(await tcard.locator('td.c-dup').first().isVisible(), false, 'duplicates still hidden');
+
+    const tab = await open(1150, 800);
+    assert.equal(await tab.locator('#grid tr').nth(1).evaluate(tr => getComputedStyle(tr).display), 'table-row', 'laptops keep the table');
+    assert.equal(await tab.isVisible('td.c-toggle'), false);
+    const xs = () => tab.evaluate(() => [...document.querySelectorAll('#grid tr:nth-child(2) td')].slice(0, 3).map(td => Math.round(td.getBoundingClientRect().left)));
+    const before = await xs();
+    await tab.evaluate(() => { document.querySelector('.wrap').scrollLeft = 200; });
+    assert.ok(await tab.evaluate(() => document.querySelector('.wrap').scrollLeft) > 0, 'the table does scroll sideways');
+    assert.deepEqual(await xs(), before, 'Sl.No, button and Slots left stay put');
+    const lefts = await tab.evaluate(() => [...document.querySelectorAll('#grid th.stick')].map(th => [parseFloat(th.style.left), th.offsetWidth]));
+    lefts.slice(1).forEach(([left], i) => assert.equal(left, lefts[i][0] + lefts[i][1], 'frozen columns sit edge to edge (no gaps)'));
   } finally { await browser.close(); }
 });

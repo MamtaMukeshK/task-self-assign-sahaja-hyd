@@ -103,6 +103,8 @@ At midnight India time the page automatically switches to the new day's tab.
 
 ## What volunteers see
 
+- **Adapts to the screen:** on phones and tablets each school is a card (no sideways scrolling); on phones,
+  contacts and remarks open with a **Details** tap. Laptops see the full table, with the first columns frozen.
 - A **Date** picker (today and later days), and that day's tab with **all columns**, plus **Slots left** (e.g. "1 of 3") and **SY Speaker Name**
   (everyone on the school, with phone numbers). A **Claim** button shows on each school
   with a free slot.

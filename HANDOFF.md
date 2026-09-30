@@ -120,6 +120,17 @@ _Last updated: 2026-09-27_
   VERSION .7. 65 tests. NOT VERIFIED: nobody has listened to the voice yet (the build machine can't play audio);
   the Drive file must be replaced with the voiced video via Manage versions (it still holds the silent one).
 
+- 2026-09-30: adaptive layout (Index.html styles + render()). Phones and tablets (<=1100px wide) show each school as a
+  card: Sl.No + school name, time, slots-left badge + Claim/Release, speakers, then Address and Google map as
+  label: value lines. Hidden in cards (duplicates of the badge / chosen date): "Total volunteers needed", "still
+  needed", "Date". Phones (<=700px) put the other columns (contacts, remarks...) behind a "Details" tap that stays
+  open across the 15-second refresh; tablets show them all, two per line. Laptops (>1100px) keep the full table
+  with Sl.No, button and Slots left frozen while it scrolls sideways (pinColumns, re-measured by a ResizeObserver
+  after fonts load). Cell kinds come from header words (institution/school, time, address, map/location).
+  Table now border-collapse:separate (needed for clean frozen columns). VERSION 2026-09-30.1. 66 tests.
+  NOT VERIFIED on real phones/tablets (only Chromium at 390 / 820 / 1150 / 1280 pixels wide); Telugu/Hindi
+  "Details" wording needs a native speaker's check.
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.
