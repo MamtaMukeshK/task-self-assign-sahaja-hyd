@@ -123,19 +123,19 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
   await wait(600);
   await say('cards'); await caption('Step 2', 'Each school is a card. Tap Details for the contact person and remarks.');
   await wait(900);
-  await tap(app.locator('#grid tr').nth(1).locator('td.c-toggle button'));
+  await tap(app.locator('#grid tr[data-row="2"] td.c-toggle button'));
   await wait(2200);
-  await tap(app.locator('#grid tr').nth(1).locator('td.c-toggle button'));
+  await tap(app.locator('#grid tr[data-row="2"] td.c-toggle button'));
   await wait(500);
-  await say('s2'); await caption('Step 3', 'Tap Claim on a school. Your card turns green and the sheet updates.');
+  await say('s2'); await caption('Step 3', 'Tap Claim: your card turns green, moves up to "My Registrations", and the sheet updates.');
   await wait(1200);
-  await tap(app.locator('#grid tr').nth(3).locator('button:text-is("Claim")'));
+  await tap(app.locator('#grid tr[data-row="4"] button:text-is("Claim")'));
   await settle(); await wait(2600);
 
   // ---- 2. Release ----
   await say('s3'); await caption('Step 4', 'Changed your mind? Tap Release. Your line is removed from the sheet.');
   await wait(1000);
-  await tap(app.locator('#grid tr').nth(3).locator('button:text-is("Release")'));
+  await tap(app.locator('#mine tr[data-row="4"] button:text-is("Release")'));
   await settle(); await wait(2200);
 
   // ---- 3. Register others from the list ----
@@ -151,7 +151,7 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
   await say('s5'); await caption('Step 6', 'Tap Claim: you and everyone ticked are added together, marked "via" you.');
   await tap(app.locator('#picker summary'));
   await wait(400);
-  await tap(app.locator('#grid tr').nth(3).locator('button:text-is("Claim")'));
+  await tap(app.locator('#grid tr[data-row="4"] button:text-is("Claim")'));
   await settle(); await wait(3000);
 
   // ---- 4. Language ----
