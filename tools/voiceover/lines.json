@@ -1,7 +1,8 @@
 [
- ["intro", "Welcome to the Hyderabad twenty twenty-six Self Realization Tour. Here is how to pick your school, in under a minute."],
+ ["intro", "Welcome to the Hyderabad twenty twenty-six Self Realization Tour. Here is how to pick your school, in about a minute."],
  ["s1", "Open the link. Today's schools are listed. Type your name and mobile number once. The page remembers them."],
- ["s2", "Tap Claim next to a school. Your row turns green, and your name goes straight into the sheet."],
+ ["cards", "Each school is a card. Tap Details to see the contact person and remarks."],
+ ["s2", "Tap Claim on a school. Your card turns green, and your name goes straight into the sheet."],
  ["s3", "Changed your mind? Tap Release, and your name is removed."],
  ["s4", "Registering a group? Tick Register others, and choose speakers from the list."],
  ["s5", "Now tap Claim. You, and everyone you ticked, are added together."],

@@ -3,3 +3,5 @@ package-lock.json
 test/*.png
 tools/demo.webm
 tools/raw/
+tools/voiceover/kokoro-multi-lang-v1_0
+tools/node_modules

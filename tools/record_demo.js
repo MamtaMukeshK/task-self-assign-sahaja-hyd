@@ -10,13 +10,13 @@ const FS = __dirname + '/node_modules/@fontsource/';  // npm i playwright-core @
 
 // ---- Demo data: real 30-Sep schools/times/map links; made-up volunteers and numbers ----
 const H = ['Sl.No', 'Sahaja Yoga ( IND)\n Speaker Name', 'Total volunteers needed', 'count of Volunteers still neeeded',
-  'Institution name', 'Date', 'Time', 'Google map'];
+  'Institution name', 'Date', 'Time', 'Google map', 'Contact Person', 'Contact Mobile', 'Remarks'];
 const day30 = makeSheet('30-Sep', 1, [H,
-  ['1', 'Anita Sharma 9000000101', '20', '19', 'Sri Chaitanya DR BS Rao', '30-Sep-26', ' 2pm to 3pm. (STRICT TIMINGS) ', 'https://maps.app.goo.gl/dnAqPMzUPHFdHdCu6'],
-  ['2', 'Suresh Reddy 9000000102\nLakshmi Devi 9000000103', '6', '4', 'Sri Chaitanya College', '30-Sep-26', '3:30 to 4:30 pm - 6 sessions', 'https://maps.google.com/maps?q=17.4652273%2C78.3084288&z=17'],
-  ['3', '', '12', '12', 'Sri Chaitanya College Bharati Bhavan', '30-Sep-26', '11:00 AM to 12:00 PM', 'https://maps.app.goo.gl/25VDmkCw6exXCtVU7'],
+  ['1', 'Anita Sharma 9000000101', '20', '19', 'Sri Chaitanya DR BS Rao', '30-Sep-26', ' 2pm to 3pm. (STRICT TIMINGS) ', 'https://maps.app.goo.gl/dnAqPMzUPHFdHdCu6', 'Mr. Rao (Principal)', '9000000201', 'Hall on 2nd floor'],
+  ['2', 'Suresh Reddy 9000000102\nLakshmi Devi 9000000103', '6', '4', 'Sri Chaitanya College', '30-Sep-26', '3:30 to 4:30 pm - 6 sessions', 'https://maps.google.com/maps?q=17.4652273%2C78.3084288&z=17', 'Ms. Latha', '9000000202', ''],
+  ['3', '', '12', '12', 'Sri Chaitanya College Bharati Bhavan', '30-Sep-26', '11:00 AM to 12:00 PM', 'https://maps.app.goo.gl/25VDmkCw6exXCtVU7', 'Mr. Kumar', '9000000203', 'Bring the projector'],
 ]);
-const day01 = makeSheet('01-Oct', 2, [H, ['1', '', '4', '4', 'Demo School', '01-Oct-26', '10:00 AM to 11:00 AM', '']]);
+const day01 = makeSheet('01-Oct', 2, [H, ['1', '', '4', '4', 'Demo School', '01-Oct-26', '10:00 AM to 11:00 AM', '', '', '', '']]);
 const speakers = makeSheet('Speaker', 3, [['Sr. No.', 'Speaker', 'Mobile', 'Language'],
   ['1', 'Anita Sharma', '9000000101', 'English, Hindi'], ['2', 'Arjun Varma', '9000000104', 'Telugu'],
   ['3', 'Kiran Rao', '9000000105', 'Telugu, English'], ['4', 'Lakshmi Devi', '9000000103', 'Telugu'],
@@ -47,7 +47,9 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
  #step{background:#C9A84C;color:#1A3A5C;font-weight:700;border-radius:20px;padding:4px 12px;font-size:15px;white-space:nowrap}
  #text{font-size:21px;font-weight:500}
  #main{display:flex;height:653px}
- #app{width:830px;height:100%;border:0;background:#FBFAF6}
+ #stage{width:560px;display:flex;justify-content:center;align-items:center;background:linear-gradient(180deg,#E1F0FB,#FBFAF6)}
+ #phone{width:390px;height:625px;border:10px solid #1b1f24;border-radius:34px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.35);background:#FBFAF6}
+ #app{width:390px;height:100%;border:0;background:#FBFAF6;display:block}
  #sheet{flex:1;background:#fff;border-left:4px solid #C9A84C;overflow:hidden;font-size:12px;color:#222}
  #sheet h3{margin:0;padding:10px 12px;background:#e8f0e8;color:#1e6b3a;font-size:14px;border-bottom:1px solid #cfd8cf}
  #sheet h3 small{display:block;font-weight:400;color:#5b6b5b;font-size:11px}
@@ -62,7 +64,7 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
  #card img{height:90px}
 </style></head><body>
 <div id="cap"><span id="step">Demo</span><span id="text"></span></div>
-<div id="main"><iframe id="app" src="http://app.test/"></iframe><div id="sheet"></div></div>
+<div id="main"><div id="stage"><div id="phone"><iframe id="app" src="http://app.test/"></iframe></div></div><div id="sheet"></div></div>
 <div id="cursor"></div><div id="card"></div></body></html>`;
 
 (async () => {
@@ -100,7 +102,7 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
   };
   const caption = (step, text) => p.evaluate(([s, t]) => { document.getElementById('step').textContent = s; document.getElementById('text').textContent = t; }, [step, text]);
   const card = (show, inner) => p.evaluate(([sh, h]) => { const c = document.getElementById('card'); if (h) c.innerHTML = h; c.style.opacity = sh ? 1 : 0; c.style.pointerEvents = sh ? 'auto' : 'none'; }, [show, inner || '']);
-  const moveTo = async loc => { const b = await loc.boundingBox(); await p.evaluate(([x, y]) => { const c = document.getElementById('cursor'); c.style.left = x + 'px'; c.style.top = y + 'px'; }, [b.x + b.width / 2, b.y + b.height / 2]); await wait(650); };
+  const moveTo = async loc => { await loc.evaluate(e => e.scrollIntoView({ behavior: 'smooth', block: 'center' })); await wait(700); const b = await loc.boundingBox(); await p.evaluate(([x, y]) => { const c = document.getElementById('cursor'); c.style.left = x + 'px'; c.style.top = y + 'px'; }, [b.x + b.width / 2, b.y + b.height / 2]); await wait(650); };
   const tap = async loc => { await moveTo(loc); await p.evaluate(() => { const c = document.getElementById('cursor'); c.classList.remove('click'); void c.offsetWidth; c.classList.add('click'); }); await loc.click(); await wait(350); };
   const type = async (loc, text) => { await tap(loc); await loc.pressSequentially(text, { delay: 70 }); };
   const settle = async () => { await wait(900); await drawSheet(); };
@@ -108,7 +110,7 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
   // ---- Title card ----
   const logo = await app.locator('#logo').getAttribute('src').catch(() => '');
   await drawSheet();
-  await card(true, `<img src="${logo}"><h1>Hyderabad 2026 · Self Realization Tour</h1><p>How to pick your school in under a minute</p>`);
+  await card(true, `<img src="${logo}"><h1>Hyderabad 2026 · Self Realization Tour</h1><p>How to pick your school in about a minute</p>`);
   await wait(500); await say('intro');
   await wait(3200); await say('s1'); await card(false); await wait(700);
 
@@ -119,19 +121,25 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
   await type(app.locator('#name'), 'Priya Nair');
   await type(app.locator('#mobile'), '9000000108');
   await wait(600);
-  await say('s2'); await caption('Step 2', 'Tap Claim next to a school. Your row turns green and the sheet updates.');
+  await say('cards'); await caption('Step 2', 'Each school is a card. Tap Details for the contact person and remarks.');
+  await wait(900);
+  await tap(app.locator('#grid tr').nth(1).locator('td.c-toggle button'));
+  await wait(2200);
+  await tap(app.locator('#grid tr').nth(1).locator('td.c-toggle button'));
+  await wait(500);
+  await say('s2'); await caption('Step 3', 'Tap Claim on a school. Your card turns green and the sheet updates.');
   await wait(1200);
   await tap(app.locator('#grid tr').nth(3).locator('button:text-is("Claim")'));
   await settle(); await wait(2600);
 
   // ---- 2. Release ----
-  await say('s3'); await caption('Step 3', 'Changed your mind? Tap Release. Your line is removed from the sheet.');
+  await say('s3'); await caption('Step 4', 'Changed your mind? Tap Release. Your line is removed from the sheet.');
   await wait(1000);
   await tap(app.locator('#grid tr').nth(3).locator('button:text-is("Release")'));
   await settle(); await wait(2200);
 
   // ---- 3. Register others from the list ----
-  await say('s4'); await caption('Step 4', 'Registering a group? Tick "Register others" and choose speakers from the list.');
+  await say('s4'); await caption('Step 5', 'Registering a group? Tick "Register others" and choose speakers from the list.');
   await wait(1000);
   await tap(app.locator('#showOthers'));
   await tap(app.locator('#picker summary'));
@@ -140,14 +148,14 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
   await tap(app.locator('#pickList label', { hasText: 'Ravi Kumar' }).locator('input'));
   await tap(app.locator('#pickList label', { hasText: 'Arjun Varma' }).locator('input'));
   await wait(800);
-  await say('s5'); await caption('Step 5', 'Tap Claim: you and everyone ticked are added together, marked "via" you.');
+  await say('s5'); await caption('Step 6', 'Tap Claim: you and everyone ticked are added together, marked "via" you.');
   await tap(app.locator('#picker summary'));
   await wait(400);
   await tap(app.locator('#grid tr').nth(3).locator('button:text-is("Claim")'));
   await settle(); await wait(3000);
 
   // ---- 4. Language ----
-  await say('s6'); await caption('Step 6', 'Prefer Telugu or Hindi? Choose a language at the top.');
+  await say('s6'); await caption('Step 7', 'Prefer Telugu or Hindi? Choose a language at the top.');
   await wait(900);
   await tap(app.locator('#lang')); await app.locator('#lang').selectOption('te'); await wait(2600);
   await tap(app.locator('#lang')); await app.locator('#lang').selectOption('hi'); await wait(2600);
