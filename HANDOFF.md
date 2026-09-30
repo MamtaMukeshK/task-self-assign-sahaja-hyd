@@ -144,6 +144,9 @@ _Last updated: 2026-09-27_
   styles (table.grid). Tests now find schools by sheet row (tr[data-row]). VERSION 2026-09-30.3. 67 tests.
   Known limit: matching is by typed name, so a different spelling won't show in My Registrations.
 
+- 2026-09-30: demo re-recorded for My Registrations (step 3 caption + voice line s2 mention the card moving up).
+  Video commit d7ad93f; GitHub fallback links re-pinned. VERSION 2026-09-30.4. Drive copy must be replaced again.
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.
