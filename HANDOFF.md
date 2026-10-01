@@ -8,7 +8,7 @@ _Last updated: 2026-10-01 (version 2026-10-01.4)_
   Release places; the speaker cell of the day tab is updated. Details of every feature: the dated log below.
 - **Live:** the organiser's own Apps Script deployment of `Code.gs` + `Index.html` (paste from
   `SETUP_GUIDE.html`, then Deploy -> Manage deployments -> New version). The page footer shows the version.
-  Latest pushed: 2026-10-01.4 (merged into main). Live (confirmed by the user 2026-10-01): 2026-10-01.2. Ask the user which version is
+  Latest pushed: 2026-10-01.4 (merged into main). Live (confirmed by the user 2026-10-01 16:47): 2026-10-01.4. Ask the user which version is
   live before assuming.
 - **Demo videos:** `docs/demo.mp4` (English, 75 s, phone screen, Indian English female voice), `docs/demo-te.mp4`
   (Telugu, 78 s) and `docs/demo-hi.mp4` (Hindi, 84 s). The demo button plays the one for the page's language
@@ -224,6 +224,11 @@ _Last updated: 2026-10-01 (version 2026-10-01.4)_
   with a normal merge (keeps the pinned video commit 081cbcd reachable).
   NOT VERIFIED: that the two Drive files are shared as "Anyone with the link" (Google is blocked from the sandbox).
 
+- 2026-10-01: user deployed 2026-10-01.4 (footer confirms it on a computer and a phone). First real load times from
+  the footer: computer 2.3 s, phone 2.4 s. No earlier number exists to compare with. The timer runs from when the
+  page's own frame starts loading until the schools are drawn, so Google's own start-up before that is not counted.
+  Nearly equal times on both devices suggest the wait is mostly network/Google, not the device.
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.
@@ -242,8 +247,11 @@ _Last updated: 2026-10-01 (version 2026-10-01.4)_
 ## Next step
 - Done by the user 2026-10-01: version 2026-10-01.2 is LIVE, and the Drive demo video was replaced with the latest
   75 s English video (still current: the English video did not change in 2026-10-01.3).
-- User: deploy 2026-10-01.4 from SETUP_GUIDE.html on main (Telugu/Hindi button rename + per-language demo videos);
-  check the demo button in all three languages on a phone; report the footer's "loaded in N s".
+- User: on a phone, check the demo button opens the right video in all three languages (Telugu/Hindi Drive files
+  must be shared "Anyone with the link"). Not yet reported.
+- Open question to the user: on a fresh open, does "Loading schools…" with a spinner appear before the schools? If
+  yes, the built-in first-day data (doGet's INITIAL_STATE) is not reaching the page and the 2.3 s includes an extra
+  server trip worth investigating; if the schools appear straight away, it works and nothing needs doing.
 - User: listen to `docs/demo-te.mp4` and `docs/demo-hi.mp4` and, ideally, have a native Telugu and a native Hindi
   speaker check them (and the page's Telugu/Hindi words). Corrections -> edit lines/captions and re-record.
 - Other ideas, not started: reminders one hour before a slot (free: "add to my calendar" button, or an organiser
