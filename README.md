@@ -81,7 +81,7 @@ In the sheet: **File → Settings → Time zone** must be
 
 ## Step 5 — Try it once
 
-On the page: type a test name and mobile, click **Claim** on an open row, and
+On the page: type a test name and mobile, click **Register** on an open row, and
 check the name appears in the speaker-name column of today's tab, with the mobile on the
 line below it. No other column is touched.
 Then click **Release** and check both cells are empty again.
@@ -93,7 +93,7 @@ Then click **Release** and check both cells are empty again.
 | Rule | Why |
 |---|---|
 | Name each day's tab like `28-Sep` (or `5-Oct` / `05-Oct`). | The page finds today's tab by this name. Tabs like `Dummy-26-Sep` or `Summary` are ignored. |
-| Past days are view-only. | They stay in the date list marked "(past)" but show greyed out with no Claim/Register. Today's slots turn grey ("Ended") once their end time passes (end = time after "to"/dash, else start + 1 hour; blank or "to be confirmed" never ends). The script refuses changes to both, and "Open only" hides them. |
+| Past days are view-only. | They stay in the date list marked "(past)" but show greyed out with no Register buttons. Today's slots turn grey ("Ended") once their end time passes (end = time after "to"/dash, else start + 1 hour; blank or "to be confirmed" never ends). The script refuses changes to both, and "Open only" hides them. |
 | Fill in a **Time** column (title containing "Time"). | The page reads each school's start time from free text and refuses a second school at the same start time on the same day for the same person. Blank/"to be confirmed" can't be checked. Without AM/PM, 1–5 o'clock = afternoon. |
 | Row 1 is the header row. Exactly one header must contain the words **Speaker** and **Name** (e.g. "Sahaja Yoga ( IND) Speaker Name"). | The page writes "name, new line, mobile" into that cell only, the same way organisers already type it. Every other column (including "Local Sahaja Yogi" / "Speaker Mobile") is never touched. |
 | A school has room while it has fewer people than its **Total volunteers needed** (1 if blank). | To remove someone, delete their line from the Speaker Name cell. Keep notes like "12 sessions" out of that column: they count as a person. |
@@ -106,7 +106,7 @@ At midnight India time the page automatically switches to the new day's tab.
 - **Adapts to the screen:** on phones and tablets each school is a card (no sideways scrolling); on phones,
   contacts and remarks open with a **Details** tap. Laptops see the full table, with the first columns frozen.
 - A **Date** picker (today and later days), and that day's tab with **all columns**, plus **Slots left** (e.g. "1 of 3") and **SY Speaker Name**
-  (everyone on the school, with phone numbers). A **Claim** button shows on each school
+  (everyone on the school, with phone numbers). A **Register** button shows on each school
   with a free slot.
 - Web addresses in any cell are clickable; Google Maps links show as **Open map** and open in a new tab.
 - They type their name and mobile once; the browser remembers both.
@@ -121,7 +121,7 @@ At midnight India time the page automatically switches to the new day's tab.
 - A school can go **over** its total: everyone is added, the extra people show in red
   "(over limit)" and "Slots left" reads "Over by N". A total of 0 closes the school.
 - **Register others:** tick it, list one person per line (name then 10-digit mobile),
-  optionally untick "Include me too", then Claim. They're written to the sheet as
+  optionally untick "Include me too", then Register. They're written to the sheet as
   `Name mobile (via Registrar)`; the registrar (or the person) can remove them with ✕.
   Every person is validated and time-clash checked; if any fails, nobody is added.
 - A person can claim as many rows as they like, but not two with the same start time on a day.
@@ -160,7 +160,7 @@ deployment" instead would create a **new** URL.)
   about 30 script runs at the same moment per account, and each page refresh is a
   short run served from a 5-second shared cache.
 - **Safety check:** if someone inserts, deletes or edits a row between a volunteer
-  loading the page and clicking Claim, the claim is refused ("edited or moved")
+  loading the page and clicking Register, the request is refused ("edited or moved")
   instead of landing on the wrong school.
 - To test on a copy first: **File → Make a copy** of the sheet *after* Step 2. The copy
   carries its own copy of the script, attached to the copy, so deploy that one to test.

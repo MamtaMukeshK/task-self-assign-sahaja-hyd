@@ -50,7 +50,7 @@ Takes about 15 minutes on a laptop or desktop computer (not a phone).</p>
 
 <div class="box">
   <b>What this sets up:</b> a web page where volunteers open one link, <b>pick a date</b> (today or any later day),
-  see that day's tab of the "Hyd 2026 permission" Google Sheet (every column), and tap <b>Claim</b> on a school that still has free slots.
+  see that day's tab of the "Hyd 2026 permission" Google Sheet (every column), and tap <b>Register</b> on a school that still has free slots.
   They can take as many schools as they like, as long as two of them don't start at the same time on the same day.
   A school can take several people, up to its "Total volunteers needed", and the page shows how many places are left and who is already on it.
   Their name and mobile are written straight into that row of the sheet, so the sheet and the page always show the same
@@ -1604,15 +1604,15 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
 <ol>
   <li>Open the <code>/exec</code> link in a new browser tab. You should see <b>"Day: [date]"</b> with a <b>Date</b> picker next to it, every column
     of that day's tab, plus two extra columns at the left: <b>Slots left</b> and <b>SY Speaker Name</b> (who is on it, with phone numbers; the sheet's own Speaker Name column isn't repeated).
-    Each school with a free slot has a blue <b>Claim</b> button.
+    Each school with a free slot has a blue <b>Register</b> button.
     <span class="sub">A grey Google bar at the top ("created by a Google Apps Script user") is normal and can't be removed.</span></li>
-  <li>Type a test name and a 10-digit mobile, then click <b>Claim</b> on one open row. It turns green.</li>
+  <li>Type a test name and a 10-digit mobile, then click <b>Register</b> on one open row. It turns green.</li>
   <li>In the sheet, that row's Speaker Name cell now has a new line with the name and mobile, below anyone already there.
     No other cell changed.</li>
   <li>Back on the page, click <b>Release</b>. Only your line disappears from the cell; anyone else stays.</li>
   <li>Optional: open the link on your phone too, and try to claim the same row from both at the same time.
     Both are added: a school can go over its total, and anyone beyond it shows <b>in red, marked "over limit"</b>.</li>
-  <li>Tick <b>Register others</b>, list one person per line (name then 10-digit mobile), and click <b>Claim</b>. They're added
+  <li>Tick <b>Register others</b>, list one person per line (name then 10-digit mobile), and click <b>Register</b>. They're added
     as <code>Ravi 9123456789 (via [your name])</code>, and you can remove them with the ✕ next to their name.</li>
 </ol>
 <div class="box ok"><b>All good?</b> Then it's live. Share the link (Part 9).</div>
@@ -1624,7 +1624,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
 PASTE-THE-/exec-LINK-HERE
 
 1. Type your name and mobile number at the top (only needed the first time).
-2. Choose the date at the top, then tap "Claim" next to a school that still has slots left.
+2. Choose the date at the top, then tap "Register" next to a school that still has slots left.
    You can take several schools, just not two at the same time on the same day.
    Registering a group? Tick "Register others", then tick names under "Choose speakers"
    (or type new ones, one per line: name, then 10-digit mobile). If a speaker has no number saved yet,
@@ -1660,7 +1660,7 @@ The page refreshes every 15 seconds.</pre>
   <tr><td>A grey page: "This day is over: view only"</td><td>You picked a past date (marked "(past)" in the list). It can be looked at but not changed.</td></tr>
   <tr><td>A grey row marked "Ended"</td><td>That slot's end time today has passed, so it can't be claimed or changed. "Open only" hides these.</td></tr>
   <tr><td>"Time clash: you are already on …"</td><td>You already have a school starting at the same time that day. Release it first, or pick another time.</td></tr>
-  <tr><td>"Clashes with S No …" instead of a Claim button</td><td>Same as above, shown before you click.</td></tr>
+  <tr><td>"Clashes with S No …" instead of a Register button</td><td>Same as above, shown before you click.</td></tr>
   <tr><td>"…has no column in row 1 whose header contains "speaker" and "name""</td><td>That day's tab has no Speaker Name title in row 1. Add or fix the title.</td></tr>
   <tr><td>"…has several columns whose header contains…"</td><td>Two titles contain both words. Rename one so only one does.</td></tr>
   <tr><td>"Cannot read properties of null (reading …)"</td><td>The script was created at script.google.com instead of from the sheet. Redo Part 3 from the sheet's Extensions menu.</td></tr>
