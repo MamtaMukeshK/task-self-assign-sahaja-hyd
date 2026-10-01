@@ -1,6 +1,6 @@
 # Handoff / status
 
-_Last updated: 2026-10-01 (version 2026-10-01.3)_
+_Last updated: 2026-10-01 (version 2026-10-01.4)_
 
 ## Start here (for a new session)
 - **What this is:** a Google Apps Script web page for the "Hyderabad 2026 - Self Realization Tour" sheet.
@@ -8,13 +8,14 @@ _Last updated: 2026-10-01 (version 2026-10-01.3)_
   Release places; the speaker cell of the day tab is updated. Details of every feature: the dated log below.
 - **Live:** the organiser's own Apps Script deployment of `Code.gs` + `Index.html` (paste from
   `SETUP_GUIDE.html`, then Deploy -> Manage deployments -> New version). The page footer shows the version.
-  Latest pushed: 2026-10-01.3. Live (confirmed by the user 2026-10-01): 2026-10-01.2. Ask the user which version is
+  Latest pushed: 2026-10-01.4 (merged into main). Live (confirmed by the user 2026-10-01): 2026-10-01.2. Ask the user which version is
   live before assuming.
 - **Demo videos:** `docs/demo.mp4` (English, 75 s, phone screen, Indian English female voice), `docs/demo-te.mp4`
   (Telugu, 78 s) and `docs/demo-hi.mp4` (Hindi, 84 s). The demo button plays the one for the page's language
-  (`DEMO_VIDEO_URLS.en/.te/.hi` in Index.html). English opens the organiser's Google Drive copy (file id
-  1L1A_FmlOukDZMTnOXa73RlzQfdaHS9Zg; they replace it via Drive -> Manage versions after every re-record);
-  Telugu/Hindi play the GitHub copies until the user sends Drive links for them (then put each first in its list).
+  (`DEMO_VIDEO_URLS.en/.te/.hi` in Index.html), each opening the organiser's Google Drive copy: English
+  1L1A_FmlOukDZMTnOXa73RlzQfdaHS9Zg, Telugu 1ut0WKW9gVrnG0qRQltc7qC3P2O5GCybq, Hindi 1Hf3clK7tYRimgm3ispbHwCw4RvTKPJIM.
+  The user replaces a Drive file via Drive -> Manage versions after every re-record (the link stays the same).
+  The GitHub copies after each Drive link are only used if that Drive link is removed.
 - **Tests:** `cd test && npm install && npm test` (70 tests; browser tests need Chromium at
   `/opt/pw-browsers/chromium`). Rebuild the guide after any code change: `python3 tools/build_guide.py`.
   Bump `VERSION` in `Code.gs` (and the matching string in `test/code.test.js`) for every page change.
@@ -216,6 +217,13 @@ _Last updated: 2026-10-01 (version 2026-10-01.3)_
   NOT VERIFIED: nobody has listened to the Telugu or Hindi voices (the build machine can't play audio); wording not
   checked by a native speaker; GitHub delivery of the videos to real phones.
 
+- 2026-10-01: Telugu and Hindi Drive links from the user put first in `DEMO_VIDEO_URLS.te` / `.hi`, so every language
+  now opens its own video in Drive's player. Demo button test rewritten: as shipped, each language opens its own
+  Drive link (and back to English); with all Drive links removed, each language plays its own GitHub copy in the page
+  (checked to fail when the page ignores the language). VERSION 2026-10-01.4. 70 tests. Branch merged into main
+  with a normal merge (keeps the pinned video commit 081cbcd reachable).
+  NOT VERIFIED: that the two Drive files are shared as "Anyone with the link" (Google is blocked from the sandbox).
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.
@@ -234,11 +242,10 @@ _Last updated: 2026-10-01 (version 2026-10-01.3)_
 ## Next step
 - Done by the user 2026-10-01: version 2026-10-01.2 is LIVE, and the Drive demo video was replaced with the latest
   75 s English video (still current: the English video did not change in 2026-10-01.3).
-- User: deploy 2026-10-01.3 (Telugu/Hindi button rename + per-language demo videos); report the footer's
-  "loaded in N s" from a real phone.
+- User: deploy 2026-10-01.4 from SETUP_GUIDE.html on main (Telugu/Hindi button rename + per-language demo videos);
+  check the demo button in all three languages on a phone; report the footer's "loaded in N s".
 - User: listen to `docs/demo-te.mp4` and `docs/demo-hi.mp4` and, ideally, have a native Telugu and a native Hindi
   speaker check them (and the page's Telugu/Hindi words). Corrections -> edit lines/captions and re-record.
-- Optional: upload the Telugu/Hindi videos to Drive and send the links; put each first in `DEMO_VIDEO_URLS.te/.hi`.
 - Other ideas, not started: reminders one hour before a slot (free: "add to my calendar" button, or an organiser
   list with one-tap WhatsApp links; automatic SMS/WhatsApp needs paid providers + registration); aligning the
   columns of the two laptop tables.

@@ -439,10 +439,12 @@ test('language switch: opens in English; Telugu and Hindi translate the page and
   } finally { await browser.close(); }
 });
 
-test('demo video button: prominent, opens the Drive video in a new tab; Telugu/Hindi play their own video; without Drive, plays here with fallback', { timeout: 60000 }, async () => {
+test('demo video button: prominent; opens the Drive video for the page language (English, Telugu, Hindi) in a new tab; without Drive, plays that language here with fallback', { timeout: 60000 }, async () => {
   const gs = load([makeSheet('28-Sep', 1, [['S No', 'Speaker Name', 'Institution name'], ['1', '', 'School A']])], new Date(Date.UTC(2026, 8, 28, 5)));
-  const DRIVE = /^\s*'https:\/\/drive\.google\.com\/[^']*',\n/m;
-  assert.match(html, DRIVE, 'the Google Drive link is listed first');
+  const DRIVE = /^\s*'https:\/\/drive\.google\.com\/[^']*',\n/gm;
+  assert.equal((html.match(DRIVE) || []).length, 3, 'a Google Drive link for English, Telugu and Hindi');
+  const first = lang => html.match(new RegExp('\\b' + lang + ": \\[\\s*'([^']+)'"))[1];
+  assert.equal(new Set(['en', 'te', 'hi'].map(first)).size, 3, 'each language has its own video');
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
   try {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 800 } });
@@ -460,48 +462,47 @@ test('demo video button: prominent, opens the Drive video in a new tab; Telugu/H
       await p.waitForSelector('text=Day: 28-Sep');
       return p;
     };
-    // As shipped: Drive first -> Drive's own player in a new tab, no in-page player.
+    // As shipped: each language opens its own Drive video in Drive's player in a new tab; no in-page player.
     let p = await open(html);
     assert.match(await p.textContent('#demoBtn'), /Watch the 1-minute demo/);
     const btn = await p.locator('#demoBtn').boundingBox();
     assert.ok(btn.width > 300 && btn.height >= 36, 'full-width, easy to tap on a phone');
-    const [tab] = await Promise.all([ctx.waitForEvent('page'), p.click('#demoBtn')]);
-    await tab.waitForLoadState();
-    assert.match(tab.url(), /^https:\/\/drive\.google\.com\/file\/d\/[\w-]+\/view/);
-    assert.equal(await p.isVisible('#demoBox'), false);
-    assert.deepEqual(hits, ['drive']);
-    await tab.close();
+    const driveTab = async () => {
+      const [tab] = await Promise.all([ctx.waitForEvent('page'), p.click('#demoBtn')]);
+      await tab.waitForLoadState();
+      const url = tab.url(); await tab.close(); return url;
+    };
+    assert.equal(await driveTab(), first('en'));
     await p.selectOption('#lang', 'hi');
     assert.match(await p.textContent('#demoBtn'), /1 मिनट का डेमो देखें/);
-    // Hindi / Telugu: that language's own video plays here (GitHub copies), not the English one on Drive.
-    hits.length = 0;
-    await p.click('#demoBtn');
-    await p.waitForFunction(() => /^https:\/\/raw\.githubusercontent\.com\/.*\/docs\/demo-hi\.mp4$/.test(document.getElementById('demoVideo').src));
-    assert.deepEqual([...new Set(hits)], ['jsdelivr', 'raw'], 'Hindi copies tried in order, Drive not opened');
-    assert.match(await p.getAttribute('#demoLink', 'href'), /^https:\/\/cdn\.jsdelivr\.net\/gh\/MamtaMukeshK\/task-self-assign-sahaja-hyd@[0-9a-f]{40}\/docs\/demo-hi\.mp4$/);
-    await p.click('#demoClose');
+    assert.equal(await driveTab(), first('hi'), 'Hindi page: the Hindi video');
     await p.selectOption('#lang', 'te');
-    await p.click('#demoBtn');
-    await p.waitForFunction(() => /^https:\/\/raw\.githubusercontent\.com\/.*\/docs\/demo-te\.mp4$/.test(document.getElementById('demoVideo').src));
-    await p.click('#demoClose');
+    assert.equal(await driveTab(), first('te'), 'Telugu page: the Telugu video');
     await p.selectOption('#lang', 'en');
-    const [tab2] = await Promise.all([ctx.waitForEvent('page'), p.click('#demoBtn')]);
-    await tab2.waitForLoadState();
-    assert.match(tab2.url(), /^https:\/\/drive\.google\.com\/file\/d\/[\w-]+\/view/, 'back in English: the Drive video again');
-    await tab2.close();
-    // Drive link removed: plays in the page, falling back to the second copy.
+    assert.equal(await driveTab(), first('en'), 'back in English: the English video again');
+    assert.equal(await p.isVisible('#demoBox'), false);
+    assert.deepEqual([...new Set(hits)], ['drive']);
+    // Drive links removed: plays in the page, falling back to the second copy, in the page's language.
     hits.length = 0;
     p = await open(html.replace(DRIVE, ''));
     await p.click('#demoBtn');
     assert.equal(await p.isVisible('#demoVideo'), true);
-    await p.waitForFunction(() => /raw\.githubusercontent\.com/.test(document.getElementById('demoVideo').src));
+    await p.waitForFunction(() => /^https:\/\/raw\.githubusercontent\.com\/.*\/docs\/demo\.mp4$/.test(document.getElementById('demoVideo').src));
     assert.deepEqual([...new Set(hits)], ['jsdelivr', 'raw'], 'tried the first copy, then the second');
     assert.match(await p.getAttribute('#demoLink', 'href'), /^https:\/\/cdn\.jsdelivr\.net\/gh\/MamtaMukeshK\/task-self-assign-sahaja-hyd@[0-9a-f]{40}\/docs\/demo\.mp4$/);
     assert.equal(await p.getAttribute('#demoVideo', 'playsinline'), '', 'plays inline on iPhones');
     await p.keyboard.press('Escape');
     assert.equal(await p.isVisible('#demoBox'), false);
-    await p.click('#demoBtn'); await p.click('#demoClose');
+    await p.selectOption('#lang', 'hi');
+    await p.click('#demoBtn');
+    await p.waitForFunction(() => /^https:\/\/raw\.githubusercontent\.com\/.*\/docs\/demo-hi\.mp4$/.test(document.getElementById('demoVideo').src));
+    assert.match(await p.getAttribute('#demoLink', 'href'), /^https:\/\/cdn\.jsdelivr\.net\/gh\/MamtaMukeshK\/task-self-assign-sahaja-hyd@[0-9a-f]{40}\/docs\/demo-hi\.mp4$/);
+    await p.click('#demoClose');
     assert.equal(await p.isVisible('#demoBox'), false);
+    await p.selectOption('#lang', 'te');
+    await p.click('#demoBtn');
+    await p.waitForFunction(() => /^https:\/\/raw\.githubusercontent\.com\/.*\/docs\/demo-te\.mp4$/.test(document.getElementById('demoVideo').src));
+    await p.click('#demoClose');
   } finally { await browser.close(); }
 });
 
