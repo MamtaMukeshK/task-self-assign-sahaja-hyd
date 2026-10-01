@@ -1,6 +1,6 @@
 # Handoff / status
 
-_Last updated: 2026-10-01 (version 2026-10-01.2)_
+_Last updated: 2026-10-01 (version 2026-10-01.4)_
 
 ## Start here (for a new session)
 - **What this is:** a Google Apps Script web page for the "Hyderabad 2026 - Self Realization Tour" sheet.
@@ -8,10 +8,14 @@ _Last updated: 2026-10-01 (version 2026-10-01.2)_
   Release places; the speaker cell of the day tab is updated. Details of every feature: the dated log below.
 - **Live:** the organiser's own Apps Script deployment of `Code.gs` + `Index.html` (paste from
   `SETUP_GUIDE.html`, then Deploy -> Manage deployments -> New version). The page footer shows the version.
-  Latest pushed and live (confirmed by the user 2026-10-01): 2026-10-01.2.
-- **Demo video:** `docs/demo.mp4` (75 s, phone screen, Indian English female voice). The page's demo button
-  opens the organiser's Google Drive copy (file id 1L1A_FmlOukDZMTnOXa73RlzQfdaHS9Zg); they replace it via
-  Drive -> Manage versions after every re-record.
+  Latest pushed: 2026-10-01.4 (merged into main). Live (confirmed by the user 2026-10-01): 2026-10-01.2. Ask the user which version is
+  live before assuming.
+- **Demo videos:** `docs/demo.mp4` (English, 75 s, phone screen, Indian English female voice), `docs/demo-te.mp4`
+  (Telugu, 78 s) and `docs/demo-hi.mp4` (Hindi, 84 s). The demo button plays the one for the page's language
+  (`DEMO_VIDEO_URLS.en/.te/.hi` in Index.html), each opening the organiser's Google Drive copy: English
+  1L1A_FmlOukDZMTnOXa73RlzQfdaHS9Zg, Telugu 1ut0WKW9gVrnG0qRQltc7qC3P2O5GCybq, Hindi 1Hf3clK7tYRimgm3ispbHwCw4RvTKPJIM.
+  The user replaces a Drive file via Drive -> Manage versions after every re-record (the link stays the same).
+  The GitHub copies after each Drive link are only used if that Drive link is removed.
 - **Tests:** `cd test && npm install && npm test` (70 tests; browser tests need Chromium at
   `/opt/pw-browsers/chromium`). Rebuild the guide after any code change: `python3 tools/build_guide.py`.
   Bump `VERSION` in `Code.gs` (and the matching string in `test/code.test.js`) for every page change.
@@ -20,7 +24,14 @@ _Last updated: 2026-10-01 (version 2026-10-01.2)_
   are in `tools/voiceover/lines.json` (make_voice.py needs `pip install sherpa-onnx soundfile` and the
   kokoro-multi-lang-v1_0 model from github.com/k2-fsa/sherpa-onnx/releases, tag tts-models, untarred into
   tools/voiceover/); then `node record_demo.js` and `cd voiceover && python3 mix.py <ffmpeg path>`.
-  After committing the video, re-pin the two GitHub URLs in `DEMO_VIDEO_URLS` (Index.html) to that commit.
+  Telugu/Hindi: spoken lines in `tools/voiceover/te|hi/lines.json`, captions/cards in the `T` table of
+  `record_demo.js`; `node record_demo.js te` then `python3 mix.py <ffmpeg path> te` (same for hi). Hindi voice:
+  `make_voice_hi.py` (sherpa-onnx + vits-piper-hi_IN-priyamvada-medium untarred into tools/voiceover/). Telugu voice:
+  `make_voice_te.py` (see its header: AI4Bharat te.zip unzipped as tools/voiceover/indic-tts-te/, Coqui TTS 0.22.0
+  in a fresh virtual environment because the system Python packaging tools fail to build it; download.pytorch.org
+  is blocked, so it pulls the full PyTorch from PyPI, ~7 GB installed). The model files are loaded in PyTorch's
+  safe mode only (the auto-mode safety check refuses the unsafe mode, and safe mode works).
+  After committing a video, re-pin that language's two GitHub URLs in `DEMO_VIDEO_URLS` (Index.html) to that commit.
 - **Not in the repository on purpose:** the real sheet data (volunteers' phone numbers). Ask the user for
   an .xlsx export or screenshots when a question depends on the real layout.
 - **User preferences:** plain language, no unexplained abbreviations, state confidence, keep changes small,
@@ -194,6 +205,25 @@ _Last updated: 2026-10-01 (version 2026-10-01.2)_
   lines s2/s5/end and captions say "Register". 75 s. Video commit 88208f6; GitHub fallback links re-pinned.
   VERSION 2026-10-01.2. Drive copy must be replaced via Manage versions.
 
+- 2026-10-01: Telugu and Hindi demo videos. Wording drafted, shown to the user and approved (review sheet with English
+  back-translations: `tools/voiceover/telugu-hindi-draft.md`). At the user's choice the Telugu/Hindi "Register" button
+  now reads నమోదు చేయండి / पंजीकरण करें (was ఎంచుకోండి / चुनें, "Choose"), matching "Register others" / "My
+  Registrations". Recorded with the page in that language from the start; last step says "Want English or
+  Hindi/Telugu?" and switches through them. Telugu clips: pauses cut to 0.45 s, loudness raised to match Hindi.
+  Videos at commit 081cbcd; demo button picks the video by page language (English still opens Drive). Every frame
+  checked by eye (Telugu letters join correctly with the real font). English recording re-run as a check, unchanged
+  (not re-committed). VERSION 2026-10-01.3. 70 tests (the demo button test now covers Telugu/Hindi and was checked
+  to fail when the page ignores the language).
+  NOT VERIFIED: nobody has listened to the Telugu or Hindi voices (the build machine can't play audio); wording not
+  checked by a native speaker; GitHub delivery of the videos to real phones.
+
+- 2026-10-01: Telugu and Hindi Drive links from the user put first in `DEMO_VIDEO_URLS.te` / `.hi`, so every language
+  now opens its own video in Drive's player. Demo button test rewritten: as shipped, each language opens its own
+  Drive link (and back to English); with all Drive links removed, each language plays its own GitHub copy in the page
+  (checked to fail when the page ignores the language). VERSION 2026-10-01.4. 70 tests. Branch merged into main
+  with a normal merge (keeps the pinned video commit 081cbcd reachable).
+  NOT VERIFIED: that the two Drive files are shared as "Anyone with the link" (Google is blocked from the sandbox).
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.
@@ -211,23 +241,11 @@ _Last updated: 2026-10-01 (version 2026-10-01.2)_
 
 ## Next step
 - Done by the user 2026-10-01: version 2026-10-01.2 is LIVE, and the Drive demo video was replaced with the latest
-  75 s English video. Still useful: the footer's "loaded in N s" from a real phone.
-- **In progress (approved in principle, not started): Telugu and Hindi demo videos**, and the demo button plays
-  the video for the language selected on the page.
-  - Voices (female), checked 2026-10-01 from the sandbox:
-    - Hindi: Piper "Priyamvada" via sherpa-onnx:
-      https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-hi_IN-priyamvada-medium.tar.bz2
-      (downloads fine; run it like make_voice.py but with OfflineTtsVitsModelConfig).
-    - Telugu: no Piper/Kokoro Telugu voice exists there. Use AI4Bharat Indic-TTS (FastPitch + HiFiGAN, has female):
-      https://github.com/AI4Bharat/Indic-TTS/releases/download/v1-checkpoints-release/te.zip (1.5 GB) with
-      `pip install TTS==0.22.0` (Coqui; pulls torch). Disk had ~29 GB free. Online voices (Microsoft/Google) and
-      huggingface.co are blocked from the sandbox.
-  - Plan: (1) write the 9 narration lines + 7 captions in Telugu and Hindi and send them to the user for a native
-    speaker's check BEFORE recording; (2) record with the page switched to that language from the start, so the
-    screen matches the voice; last step becomes "you can switch to English/Hindi(Telugu) at the top";
-    (3) per-language demo links in Index.html (English = Drive link; Telugu/Hindi = GitHub copies, e.g.
-    docs/demo-te.mp4 / docs/demo-hi.mp4 pinned to their commit, until the user uploads them to Drive and sends
-    links); (4) tests, guide, notes, push. Estimated 90,000-140,000 tokens; tell the user before exceeding 100,000.
+  75 s English video (still current: the English video did not change in 2026-10-01.3).
+- User: deploy 2026-10-01.4 from SETUP_GUIDE.html on main (Telugu/Hindi button rename + per-language demo videos);
+  check the demo button in all three languages on a phone; report the footer's "loaded in N s".
+- User: listen to `docs/demo-te.mp4` and `docs/demo-hi.mp4` and, ideally, have a native Telugu and a native Hindi
+  speaker check them (and the page's Telugu/Hindi words). Corrections -> edit lines/captions and re-record.
 - Other ideas, not started: reminders one hour before a slot (free: "add to my calendar" button, or an organiser
   list with one-tap WhatsApp links; automatic SMS/WhatsApp needs paid providers + registration); aligning the
   columns of the two laptop tables.

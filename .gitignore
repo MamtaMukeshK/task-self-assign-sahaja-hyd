@@ -5,3 +5,6 @@ tools/demo.webm
 tools/raw/
 tools/voiceover/kokoro-multi-lang-v1_0
 tools/node_modules
+tools/demo-*.webm
+tools/voiceover/vits-piper-hi_IN-priyamvada-medium
+tools/voiceover/indic-tts-te
