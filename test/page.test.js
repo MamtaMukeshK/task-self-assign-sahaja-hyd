@@ -439,7 +439,7 @@ test('language switch: opens in English; Telugu and Hindi translate the page and
   } finally { await browser.close(); }
 });
 
-test('demo video button: prominent, opens the Drive video in a new tab; without Drive, plays here with fallback', { timeout: 60000 }, async () => {
+test('demo video button: prominent, opens the Drive video in a new tab; Telugu/Hindi play their own video; without Drive, plays here with fallback', { timeout: 60000 }, async () => {
   const gs = load([makeSheet('28-Sep', 1, [['S No', 'Speaker Name', 'Institution name'], ['1', '', 'School A']])], new Date(Date.UTC(2026, 8, 28, 5)));
   const DRIVE = /^\s*'https:\/\/drive\.google\.com\/[^']*',\n/m;
   assert.match(html, DRIVE, 'the Google Drive link is listed first');
@@ -473,6 +473,22 @@ test('demo video button: prominent, opens the Drive video in a new tab; without 
     await tab.close();
     await p.selectOption('#lang', 'hi');
     assert.match(await p.textContent('#demoBtn'), /1 मिनट का डेमो देखें/);
+    // Hindi / Telugu: that language's own video plays here (GitHub copies), not the English one on Drive.
+    hits.length = 0;
+    await p.click('#demoBtn');
+    await p.waitForFunction(() => /^https:\/\/raw\.githubusercontent\.com\/.*\/docs\/demo-hi\.mp4$/.test(document.getElementById('demoVideo').src));
+    assert.deepEqual([...new Set(hits)], ['jsdelivr', 'raw'], 'Hindi copies tried in order, Drive not opened');
+    assert.match(await p.getAttribute('#demoLink', 'href'), /^https:\/\/cdn\.jsdelivr\.net\/gh\/MamtaMukeshK\/task-self-assign-sahaja-hyd@[0-9a-f]{40}\/docs\/demo-hi\.mp4$/);
+    await p.click('#demoClose');
+    await p.selectOption('#lang', 'te');
+    await p.click('#demoBtn');
+    await p.waitForFunction(() => /^https:\/\/raw\.githubusercontent\.com\/.*\/docs\/demo-te\.mp4$/.test(document.getElementById('demoVideo').src));
+    await p.click('#demoClose');
+    await p.selectOption('#lang', 'en');
+    const [tab2] = await Promise.all([ctx.waitForEvent('page'), p.click('#demoBtn')]);
+    await tab2.waitForLoadState();
+    assert.match(tab2.url(), /^https:\/\/drive\.google\.com\/file\/d\/[\w-]+\/view/, 'back in English: the Drive video again');
+    await tab2.close();
     // Drive link removed: plays in the page, falling back to the second copy.
     hits.length = 0;
     p = await open(html.replace(DRIVE, ''));

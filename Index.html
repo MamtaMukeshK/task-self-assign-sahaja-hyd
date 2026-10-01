@@ -367,13 +367,24 @@
     return (wd >= 0 ? t('weekdays')[wd] + ' ' : '') + d.name + (d.today ? ' ' + t('todayMark') : d.past ? ' ' + t('pastMark') : '');
   }
 
-  // Demo video for the "Watch the 1-minute demo" button. A Google Drive link first opens Drive's
-  // own player in a new tab (share it as "Anyone with the link"); otherwise the copies play here in order.
-  var DEMO_VIDEO_URLS = [
-    'https://drive.google.com/file/d/1L1A_FmlOukDZMTnOXa73RlzQfdaHS9Zg/view?usp=sharing',
-    'https://cdn.jsdelivr.net/gh/MamtaMukeshK/task-self-assign-sahaja-hyd@88208f6c3711c1ce9056221ba598e2cb0317edbb/docs/demo.mp4',
-    'https://raw.githubusercontent.com/MamtaMukeshK/task-self-assign-sahaja-hyd/88208f6c3711c1ce9056221ba598e2cb0317edbb/docs/demo.mp4'
-  ];
+  // Demo video for the "Watch the 1-minute demo" button, per page language (English if a language has none).
+  // A Google Drive link first opens Drive's own player in a new tab (share it as "Anyone with the link");
+  // otherwise the copies play here in order.
+  var DEMO_VIDEO_URLS = {
+    en: [
+      'https://drive.google.com/file/d/1L1A_FmlOukDZMTnOXa73RlzQfdaHS9Zg/view?usp=sharing',
+      'https://cdn.jsdelivr.net/gh/MamtaMukeshK/task-self-assign-sahaja-hyd@88208f6c3711c1ce9056221ba598e2cb0317edbb/docs/demo.mp4',
+      'https://raw.githubusercontent.com/MamtaMukeshK/task-self-assign-sahaja-hyd/88208f6c3711c1ce9056221ba598e2cb0317edbb/docs/demo.mp4'
+    ],
+    te: [
+      'https://cdn.jsdelivr.net/gh/MamtaMukeshK/task-self-assign-sahaja-hyd@081cbcd7e219ca624dd11716ed62a520f31385d8/docs/demo-te.mp4',
+      'https://raw.githubusercontent.com/MamtaMukeshK/task-self-assign-sahaja-hyd/081cbcd7e219ca624dd11716ed62a520f31385d8/docs/demo-te.mp4'
+    ],
+    hi: [
+      'https://cdn.jsdelivr.net/gh/MamtaMukeshK/task-self-assign-sahaja-hyd@081cbcd7e219ca624dd11716ed62a520f31385d8/docs/demo-hi.mp4',
+      'https://raw.githubusercontent.com/MamtaMukeshK/task-self-assign-sahaja-hyd/081cbcd7e219ca624dd11716ed62a520f31385d8/docs/demo-hi.mp4'
+    ]
+  };
   var POLL_MS = 15000;
   var lastUpdated = '';
   var state = null;
@@ -820,22 +831,23 @@
   });
   applyStaticText();
 
-  // Demo video: plays in a pop-up player (inline on phones); a Google Drive link opens Drive's own player.
+  // Demo video in the page's language: plays in a pop-up player (inline on phones); a Google Drive link
+  // opens Drive's own player.
   (function () {
     var box = document.getElementById('demoBox'), video = document.getElementById('demoVideo');
     var link = document.getElementById('demoLink'), btn = document.getElementById('demoBtn');
-    if (!DEMO_VIDEO_URLS.length) { btn.hidden = true; return; }
-    link.href = DEMO_VIDEO_URLS[0];
-    var drive = /drive\.google\.com/.test(DEMO_VIDEO_URLS[0]);
-    var tried = 0;
+    if (!(DEMO_VIDEO_URLS.en || []).length) { btn.hidden = true; return; }
+    var urls = null, tried = 0;
     video.addEventListener('error', function () {                // try the next copy, else offer the link
-      if (++tried < DEMO_VIDEO_URLS.length) { video.src = DEMO_VIDEO_URLS[tried]; video.play().catch(function () {}); }
+      if (urls && ++tried < urls.length) { video.src = urls[tried]; video.play().catch(function () {}); }
     });
     function close() { box.hidden = true; video.pause(); }
     btn.addEventListener('click', function () {
-      if (drive) { window.open(DEMO_VIDEO_URLS[0], '_blank', 'noopener'); return; }
+      var list = (DEMO_VIDEO_URLS[LANG] || []).length ? DEMO_VIDEO_URLS[LANG] : DEMO_VIDEO_URLS.en;
+      link.href = list[0];
+      if (/drive\.google\.com/.test(list[0])) { window.open(list[0], '_blank', 'noopener'); return; }
       box.hidden = false;
-      if (!video.getAttribute('src')) { tried = 0; video.src = DEMO_VIDEO_URLS[0]; }
+      if (list !== urls) { urls = list; tried = 0; video.src = list[0]; }   // first time, or the language changed
       video.play().catch(function () {});
     });
     document.getElementById('demoClose').addEventListener('click', close);

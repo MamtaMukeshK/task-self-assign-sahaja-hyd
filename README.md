@@ -21,6 +21,10 @@ Two files do everything: `Code.gs` (the logic) and `Index.html` (the page).
 > `DEMO_VIDEO_URLS` in Index.html) in Drive's own player in a new tab. To update that video, upload the new file
 > with Drive's **Manage versions** so the link stays the same. If the Drive link is removed, the button instead
 > plays the GitHub copies (jsDelivr, then GitHub's raw link, pinned to the commit holding the video) in a pop-up.
+> **Telugu and Hindi:** `docs/demo-te.mp4` (78 s) and `docs/demo-hi.mp4` (84 s), recorded with the page in that
+> language (`node record_demo.js te` / `hi`; voices from `make_voice_te.py` / `make_voice_hi.py`; then
+> `python3 mix.py <ffmpeg> te` / `hi`). The button plays the video for the language chosen on the page
+> (`DEMO_VIDEO_URLS.te` / `.hi`: GitHub copies for now; put a Drive link first in a list to use Drive for that language).
 
 ---
 
