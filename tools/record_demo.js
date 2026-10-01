@@ -1,5 +1,6 @@
-// Re-records the demo. Run from tools/: npm i (see FS line), node record_demo.js -> demo.webm + voiceover/marks.json,
-// then add the voice with voiceover/mix.py (see voiceover/make_voice.py). Needs Chromium at /opt/pw-browsers/chromium.
+// Re-records the demo. Run from tools/: npm i (see FS line), node record_demo.js [en|te|hi] -> demo.webm + voiceover/marks.json
+// (Telugu/Hindi: demo-te.webm + voiceover/te/marks.json, ...), then add the voice with voiceover/mix.py (see
+// voiceover/make_voice*.py). Needs Chromium at /opt/pw-browsers/chromium.
 // Records a short end-user demo: the real Index.html + Code.gs logic on a demo copy of the 30-Sep layout.
 const { chromium } = require('playwright-core');
 const fs = require('fs'), path = require('path');
@@ -7,6 +8,45 @@ const REPO = path.resolve(__dirname, '..');
 const { load, makeSheet } = require(REPO + '/test/harness.js');
 const html = fs.readFileSync(REPO + '/Index.html', 'utf8');
 const FS = __dirname + '/node_modules/@fontsource/';  // npm i playwright-core @fontsource/dm-sans @fontsource/instrument-serif @fontsource/noto-sans-telugu @fontsource/noto-sans-devanagari
+const LANG = process.argv[2] || 'en';
+const VO = __dirname + '/voiceover/' + (LANG === 'en' ? '' : LANG + '/'), OUT = __dirname + (LANG === 'en' ? '/demo.webm' : '/demo-' + LANG + '.webm');
+
+// ---- Words shown in the video, per language (spoken lines: voiceover/lines.json, voiceover/<lang>/lines.json) ----
+const T = {
+  en: { step: 'Step', register: 'Register', release: 'Release', langs: ['te', 'hi', 'en'], caps: [
+    'Open the link: today\'s schools are listed. Type your name and mobile once.',
+    'Each school is a card. Tap Details for the contact person and remarks.',
+    'Tap Register: your card turns green, moves up to "My Registrations", and the sheet updates.',
+    'Changed your mind? Tap Release. Your line is removed from the sheet.',
+    'Registering a group? Tick "Register others" and choose speakers from the list.',
+    'Tap Register: you and everyone ticked are added together, marked "via" you.',
+    'Prefer Telugu or Hindi? Choose a language at the top.'],
+    title: ['Hyderabad 2026 · Self Realization Tour', 'How to pick your school in about a minute'],
+    end: ['Open the link · pick a date · tap Register', 'Your name goes straight into the sheet for the organisers'],
+    sheet: ['Google Sheet · 30-Sep tab', 'Demo copy: made-up names and numbers'] },
+  te: { step: 'దశ', register: 'నమోదు చేయండి', release: 'పేరు తీసేయండి', langs: ['en', 'hi', 'te'], caps: [
+    'లింక్ తెరవండి: ఈ రోజు పాఠశాలలు కనిపిస్తాయి. మీ పేరు, మొబైల్ ఒక్కసారి టైప్ చేయండి.',
+    'ప్రతి పాఠశాల ఒక కార్డు. సంప్రదించాల్సిన వ్యక్తి, గమనికల కోసం "వివరాలు" నొక్కండి.',
+    '"నమోదు చేయండి" నొక్కండి: మీ కార్డు ఆకుపచ్చగా మారి, పైన "నా నమోదులు" కిందకు వెళ్తుంది; షీట్ కూడా మారుతుంది.',
+    'మనసు మార్చుకున్నారా? "పేరు తీసేయండి" నొక్కండి. షీట్ నుండి మీ పేరు తొలగిపోతుంది.',
+    'బృందాన్ని నమోదు చేస్తున్నారా? "ఇతరులను నమోదు చేయండి" టిక్ పెట్టి, జాబితా నుండి వక్తలను ఎంచుకోండి.',
+    '"నమోదు చేయండి" నొక్కండి: మీరు, మీరు టిక్ పెట్టిన వారందరూ ఒకేసారి చేరుతారు; వారి పక్కన "(మీ పేరు) ద్వారా" అని కనిపిస్తుంది.',
+    'ఇంగ్లీష్ లేదా హిందీ కావాలా? పైన భాష ఎంచుకోండి.'],
+    title: ['హైదరాబాద్ 2026 · ఆత్మసాక్షాత్కార యాత్ర', 'మీ పాఠశాలను సుమారు ఒక నిమిషంలో ఎంచుకోవడం ఎలా'],
+    end: ['లింక్ తెరవండి · తేదీ ఎంచుకోండి · "నమోదు చేయండి" నొక్కండి', 'మీ పేరు నేరుగా నిర్వాహకుల షీట్‌లోకి వెళ్తుంది'],
+    sheet: ['గూగుల్ షీట్ · 30-Sep ట్యాబ్', 'డెమో కాపీ: పేర్లు, నంబర్లు కల్పితం'] },
+  hi: { step: 'चरण', register: 'पंजीकरण करें', release: 'नाम हटाएँ', langs: ['en', 'te', 'hi'], caps: [
+    'लिंक खोलें: आज के स्कूलों की सूची दिखती है। अपना नाम और मोबाइल एक बार लिखें।',
+    'हर स्कूल एक कार्ड है। संपर्क व्यक्ति और टिप्पणियों के लिए "विवरण" दबाएँ।',
+    '"पंजीकरण करें" दबाएँ: आपका कार्ड हरा होकर ऊपर "मेरे पंजीकरण" में चला जाता है, और शीट भी बदल जाती है।',
+    'मन बदल गया? "नाम हटाएँ" दबाएँ। शीट से आपका नाम हट जाता है।',
+    'समूह का पंजीकरण कर रहे हैं? "दूसरों का पंजीकरण करें" पर टिक लगाएँ और सूची से वक्ता चुनें।',
+    '"पंजीकरण करें" दबाएँ: आप और जिन पर टिक लगाया, सब एक साथ जुड़ते हैं; उनके साथ "(आपका नाम) द्वारा" लिखा आता है।',
+    'अंग्रेज़ी या तेलुगु चाहिए? ऊपर भाषा चुनें।'],
+    title: ['हैदराबाद 2026 · आत्मसाक्षात्कार यात्रा', 'लगभग एक मिनट में अपना स्कूल कैसे चुनें'],
+    end: ['लिंक खोलें · तारीख चुनें · "पंजीकरण करें" दबाएँ', 'आपका नाम सीधे आयोजकों की शीट में पहुँचता है'],
+    sheet: ['गूगल शीट · 30-Sep टैब', 'डेमो कॉपी: नाम और नंबर काल्पनिक हैं'] }
+}[LANG];
 
 // ---- Demo data: real 30-Sep schools/times/map links; made-up volunteers and numbers ----
 const H = ['Sl.No', 'Sahaja Yoga ( IND)\n Speaker Name', 'Total volunteers needed', 'count of Volunteers still neeeded',
@@ -42,7 +82,7 @@ const fontCss = `
 
 // ---- The frame around the page: caption bar, the page, and a live "sheet" panel ----
 const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontCss}
- body{margin:0;background:#0f2438;font-family:'DM Sans',sans-serif;overflow:hidden}
+ body{margin:0;background:#0f2438;font-family:'DM Sans','Noto Sans Telugu','Noto Sans Devanagari',sans-serif;overflow:hidden}
  #cap{height:64px;display:flex;align-items:center;gap:14px;padding:0 22px;background:#1A3A5C;color:#fff;border-bottom:3px solid #C9A84C}
  #step{background:#C9A84C;color:#1A3A5C;font-weight:700;border-radius:20px;padding:4px 12px;font-size:15px;white-space:nowrap}
  #text{font-size:21px;font-weight:500}
@@ -60,7 +100,7 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
  #cursor.click{animation:tap .45s} @keyframes tap{0%{transform:scale(1)}50%{transform:scale(1.9);background:rgba(201,168,76,.25)}100%{transform:scale(1)}}
  #card{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
    background:linear-gradient(180deg,#E1F0FB,#FBFAF6);color:#1A3A5C;z-index:20;transition:opacity .6s}
- #card h1{font:400 44px 'Instrument Serif',serif;margin:0;text-align:center} #card p{font-size:20px;color:#4A6FA5;margin:0;text-align:center}
+ #card h1{font:400 44px 'Instrument Serif','Noto Sans Telugu','Noto Sans Devanagari',serif;margin:0;text-align:center} #card p{font-size:20px;color:#4A6FA5;margin:0;text-align:center}
  #card img{height:90px}
 </style></head><body>
 <div id="cap"><span id="step">Demo</span><span id="text"></span></div>
@@ -78,7 +118,7 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
   await ctx.addInitScript(SHIM);
   const p = await ctx.newPage();
   // Voice-over timing: each step lasts at least as long as its spoken line.
-  const DUR = JSON.parse(fs.readFileSync(__dirname + '/voiceover/durations.json', 'utf8'));
+  const DUR = JSON.parse(fs.readFileSync(VO + 'durations.json', 'utf8'));
   const t0 = Date.now(), marks = [];
   let stepEnd = 0;
   const say = async name => { const gap = stepEnd - Date.now(); if (gap > 0) await p.waitForTimeout(gap);
@@ -97,10 +137,10 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
     const head = ['A · Sl.No', 'B · Speaker Name', 'C · Total needed', 'D · Still needed', 'E · Institution', 'G · Time'];
     const body = g.slice(1).map((r, i) => '<tr>' + cols.map(j => `<td class="${flash(i + 1, j) ? 'flash' : ''}">${r[j].replace(/</g, '&lt;')}</td>`).join('') + '</tr>').join('');
     await p.evaluate(h => { document.getElementById('sheet').innerHTML = h; setTimeout(() => document.querySelectorAll('td.flash').forEach(td => td.classList.remove('flash')), 1600); },
-      `<h3>Google Sheet · 30-Sep tab<small>Demo copy: made-up names and numbers</small></h3><table><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr>${body}</table>`);
+      `<h3>${T.sheet[0]}<small>${T.sheet[1]}</small></h3><table><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr>${body}</table>`);
     before = g;
   };
-  const caption = (step, text) => p.evaluate(([s, t]) => { document.getElementById('step').textContent = s; document.getElementById('text').textContent = t; }, [step, text]);
+  const caption = n => p.evaluate(([s, t]) => { document.getElementById('step').textContent = s; document.getElementById('text').textContent = t; }, [T.step + ' ' + n, T.caps[n - 1]]);
   const card = (show, inner) => p.evaluate(([sh, h]) => { const c = document.getElementById('card'); if (h) c.innerHTML = h; c.style.opacity = sh ? 1 : 0; c.style.pointerEvents = sh ? 'auto' : 'none'; }, [show, inner || '']);
   const moveTo = async loc => { await loc.evaluate(e => e.scrollIntoView({ behavior: 'smooth', block: 'center' })); await wait(700); const b = await loc.boundingBox(); await p.evaluate(([x, y]) => { const c = document.getElementById('cursor'); c.style.left = x + 'px'; c.style.top = y + 'px'; }, [b.x + b.width / 2, b.y + b.height / 2]); await wait(650); };
   const tap = async loc => { await moveTo(loc); await p.evaluate(() => { const c = document.getElementById('cursor'); c.classList.remove('click'); void c.offsetWidth; c.classList.add('click'); }); await loc.click(); await wait(350); };
@@ -109,37 +149,38 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
 
   // ---- Title card ----
   const logo = await app.locator('#logo').getAttribute('src').catch(() => '');
+  if (LANG !== 'en') await app.locator('#lang').selectOption(LANG);   // under the title card: the page is in this language from the start
   await drawSheet();
-  await card(true, `<img src="${logo}"><h1>Hyderabad 2026 · Self Realization Tour</h1><p>How to pick your school in about a minute</p>`);
+  await card(true, `<img src="${logo}"><h1>${T.title[0]}</h1><p>${T.title[1]}</p>`);
   await wait(500); await say('intro');
   await wait(3200); await say('s1'); await card(false); await wait(700);
 
   // ---- 1. Register ----
   marks[marks.length - 1][1] += 0.7; stepEnd += 700;   // speak once the card has faded
-  await caption('Step 1', 'Open the link: today\'s schools are listed. Type your name and mobile once.');
+  await caption(1);
   await wait(1500);
   await type(app.locator('#name'), 'Priya Nair');
   await type(app.locator('#mobile'), '9000000108');
   await wait(600);
-  await say('cards'); await caption('Step 2', 'Each school is a card. Tap Details for the contact person and remarks.');
+  await say('cards'); await caption(2);
   await wait(900);
   await tap(app.locator('#grid tr[data-row="2"] td.c-toggle button'));
   await wait(2200);
   await tap(app.locator('#grid tr[data-row="2"] td.c-toggle button'));
   await wait(500);
-  await say('s2'); await caption('Step 3', 'Tap Register: your card turns green, moves up to "My Registrations", and the sheet updates.');
+  await say('s2'); await caption(3);
   await wait(1200);
-  await tap(app.locator('#grid tr[data-row="4"] button:text-is("Register")'));
+  await tap(app.locator(`#grid tr[data-row="4"] button:text-is("${T.register}")`));
   await settle(); await wait(2600);
 
   // ---- 2. Release ----
-  await say('s3'); await caption('Step 4', 'Changed your mind? Tap Release. Your line is removed from the sheet.');
+  await say('s3'); await caption(4);
   await wait(1000);
-  await tap(app.locator('#mine tr[data-row="4"] button:text-is("Release")'));
+  await tap(app.locator(`#mine tr[data-row="4"] button:text-is("${T.release}")`));
   await settle(); await wait(2200);
 
   // ---- 3. Register others from the list ----
-  await say('s4'); await caption('Step 5', 'Registering a group? Tick "Register others" and choose speakers from the list.');
+  await say('s4'); await caption(5);
   await wait(1000);
   await tap(app.locator('#showOthers'));
   await tap(app.locator('#picker summary'));
@@ -148,26 +189,24 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
   await tap(app.locator('#pickList label', { hasText: 'Ravi Kumar' }).locator('input'));
   await tap(app.locator('#pickList label', { hasText: 'Arjun Varma' }).locator('input'));
   await wait(800);
-  await say('s5'); await caption('Step 6', 'Tap Register: you and everyone ticked are added together, marked "via" you.');
+  await say('s5'); await caption(6);
   await tap(app.locator('#picker summary'));
   await wait(400);
-  await tap(app.locator('#grid tr[data-row="4"] button:text-is("Register")'));
+  await tap(app.locator(`#grid tr[data-row="4"] button:text-is("${T.register}")`));
   await settle(); await wait(3000);
 
   // ---- 4. Language ----
-  await say('s6'); await caption('Step 7', 'Prefer Telugu or Hindi? Choose a language at the top.');
+  await say('s6'); await caption(7);
   await wait(900);
-  await tap(app.locator('#lang')); await app.locator('#lang').selectOption('te'); await wait(2600);
-  await tap(app.locator('#lang')); await app.locator('#lang').selectOption('hi'); await wait(2600);
-  await tap(app.locator('#lang')); await app.locator('#lang').selectOption('en'); await wait(1200);
+  for (const [i, l] of T.langs.entries()) { await tap(app.locator('#lang')); await app.locator('#lang').selectOption(l); await wait(i < 2 ? 2600 : 1200); }
 
   // ---- End card ----
   await say('end');
-  await card(true, `<img src="${logo}"><h1>Open the link · pick a date · tap Register</h1><p>Your name goes straight into the sheet for the organisers</p>`);
+  await card(true, `<img src="${logo}"><h1>${T.end[0]}</h1><p>${T.end[1]}</p>`);
   await wait(Math.max(3200, stepEnd - Date.now()));
-  fs.writeFileSync(__dirname + '/voiceover/marks.json', JSON.stringify(marks));
+  fs.writeFileSync(VO + 'marks.json', JSON.stringify(marks));
   const vid = p.video();
   await ctx.close(); await browser.close();
-  fs.renameSync(await vid.path(), __dirname + '/demo.webm');
-  console.log('recorded', fs.statSync(__dirname + '/demo.webm').size, 'bytes');
+  fs.renameSync(await vid.path(), OUT);
+  console.log('recorded', fs.statSync(OUT).size, 'bytes');
 })().catch(e => { console.error('FAIL', e.message); process.exit(1); });

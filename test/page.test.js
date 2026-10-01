@@ -418,7 +418,7 @@ test('language switch: opens in English; Telugu and Hindi translate the page and
     assert.deepEqual(await p.$$eval('#day option', o => o.map(x => x.textContent)), ['ఆది 27-Sep (గడిచింది)', 'సోమ 28-Sep (ఈ రోజు)']);
     assert.equal(await p.getAttribute('#mobile', 'placeholder'), '10 అంకెలు');
     assert.deepEqual((await p.locator('th').allTextContents()).slice(0, 4), ['క్ర.సం.', '', 'మిగిలిన స్థానాలు', 'SY వక్త పేరు']);
-    assert.equal(await p.locator('tr[data-row="3"]').locator('button').textContent(), 'ఎంచుకోండి');
+    assert.equal(await p.locator('tr[data-row="3"]').locator('button').textContent(), 'నమోదు చేయండి');
     assert.match(await p.textContent('#pickSummary'), /^వక్తలను ఎంచుకోండి \(0 ఎంచుకున్నారు\)$/);
 
     // Vol A is on School A at 10:00; School B is also 10:00 -> the script refuses; message shown in Hindi.
