@@ -114,7 +114,7 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
   await wait(500); await say('intro');
   await wait(3200); await say('s1'); await card(false); await wait(700);
 
-  // ---- 1. Claim ----
+  // ---- 1. Register ----
   marks[marks.length - 1][1] += 0.7; stepEnd += 700;   // speak once the card has faded
   await caption('Step 1', 'Open the link: today\'s schools are listed. Type your name and mobile once.');
   await wait(1500);
@@ -127,7 +127,7 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
   await wait(2200);
   await tap(app.locator('#grid tr[data-row="2"] td.c-toggle button'));
   await wait(500);
-  await say('s2'); await caption('Step 3', 'Tap Claim: your card turns green, moves up to "My Registrations", and the sheet updates.');
+  await say('s2'); await caption('Step 3', 'Tap Register: your card turns green, moves up to "My Registrations", and the sheet updates.');
   await wait(1200);
   await tap(app.locator('#grid tr[data-row="4"] button:text-is("Register")'));
   await settle(); await wait(2600);
@@ -148,7 +148,7 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
   await tap(app.locator('#pickList label', { hasText: 'Ravi Kumar' }).locator('input'));
   await tap(app.locator('#pickList label', { hasText: 'Arjun Varma' }).locator('input'));
   await wait(800);
-  await say('s5'); await caption('Step 6', 'Tap Claim: you and everyone ticked are added together, marked "via" you.');
+  await say('s5'); await caption('Step 6', 'Tap Register: you and everyone ticked are added together, marked "via" you.');
   await tap(app.locator('#picker summary'));
   await wait(400);
   await tap(app.locator('#grid tr[data-row="4"] button:text-is("Register")'));
@@ -163,7 +163,7 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
 
   // ---- End card ----
   await say('end');
-  await card(true, `<img src="${logo}"><h1>Open the link · pick a date · tap Claim</h1><p>Your name goes straight into the sheet for the organisers</p>`);
+  await card(true, `<img src="${logo}"><h1>Open the link · pick a date · tap Register</h1><p>Your name goes straight into the sheet for the organisers</p>`);
   await wait(Math.max(3200, stepEnd - Date.now()));
   fs.writeFileSync(__dirname + '/voiceover/marks.json', JSON.stringify(marks));
   const vid = p.video();
