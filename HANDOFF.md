@@ -210,8 +210,23 @@ _Last updated: 2026-10-01 (version 2026-10-01.2)_
   if not, the page errors loudly rather than guessing.
 
 ## Next step
-- User: deploy 2026-10-01.2 (My Registrations, Open only fix, speed, larger controls, Register button) and replace the Drive demo video;
-  report the footer's "loaded in N s" on a phone.
-- Open ideas, not started: reminders one hour before a slot (free options: "add to my calendar" button, or an
-  organiser list with one-tap WhatsApp links; automatic SMS/WhatsApp needs paid providers + registration);
-  optional alignment of the two laptop tables' columns.
+- User: deploy 2026-10-01.2 and replace the Drive demo video (Manage versions); report the footer's "loaded in N s".
+- **In progress (approved in principle, not started): Telugu and Hindi demo videos**, and the demo button plays
+  the video for the language selected on the page.
+  - Voices (female), checked 2026-10-01 from the sandbox:
+    - Hindi: Piper "Priyamvada" via sherpa-onnx:
+      https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-hi_IN-priyamvada-medium.tar.bz2
+      (downloads fine; run it like make_voice.py but with OfflineTtsVitsModelConfig).
+    - Telugu: no Piper/Kokoro Telugu voice exists there. Use AI4Bharat Indic-TTS (FastPitch + HiFiGAN, has female):
+      https://github.com/AI4Bharat/Indic-TTS/releases/download/v1-checkpoints-release/te.zip (1.5 GB) with
+      `pip install TTS==0.22.0` (Coqui; pulls torch). Disk had ~29 GB free. Online voices (Microsoft/Google) and
+      huggingface.co are blocked from the sandbox.
+  - Plan: (1) write the 9 narration lines + 7 captions in Telugu and Hindi and send them to the user for a native
+    speaker's check BEFORE recording; (2) record with the page switched to that language from the start, so the
+    screen matches the voice; last step becomes "you can switch to English/Hindi(Telugu) at the top";
+    (3) per-language demo links in Index.html (English = Drive link; Telugu/Hindi = GitHub copies, e.g.
+    docs/demo-te.mp4 / docs/demo-hi.mp4 pinned to their commit, until the user uploads them to Drive and sends
+    links); (4) tests, guide, notes, push. Estimated 90,000-140,000 tokens; tell the user before exceeding 100,000.
+- Other ideas, not started: reminders one hour before a slot (free: "add to my calendar" button, or an organiser
+  list with one-tap WhatsApp links; automatic SMS/WhatsApp needs paid providers + registration); aligning the
+  columns of the two laptop tables.
