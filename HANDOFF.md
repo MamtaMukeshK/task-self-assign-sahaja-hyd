@@ -210,9 +210,15 @@ _Last updated: 2026-10-01 (version 2026-10-01.2)_
   if not, the page errors loudly rather than guessing.
 
 ## Next step
-- User: deploy 2026-10-01.2 and replace the Drive demo video (Manage versions); report the footer's "loaded in N s".
-- **In progress (approved in principle, not started): Telugu and Hindi demo videos**, and the demo button plays
-  the video for the language selected on the page.
+- 2026-10-01: user confirmed the live page is 2026-10-01.2. Still open: replace the Drive demo video (Manage
+  versions) if not done; report the footer's "loaded in N s".
+- **In progress: Telugu and Hindi demo videos**, and the demo button plays the video for the language selected on
+  the page.
+  - 2026-10-01 checkpoint: step (1) drafted in `tools/voiceover/telugu-hindi-draft.md` (9 spoken lines, 7 captions,
+    title/end cards, sheet panel heading, each with an English back-translation). WAITING for the user / a native
+    speaker to check it. Nothing recorded, no voice models downloaded yet. Open question put to the user: the
+    Telugu/Hindi "Register" button reads ఎంచుకోండి / चुनें ("Choose"), so the end line says "choose a date, press
+    the Choose button"; keep it, or rename the button to నమోదు చేయండి / पंजीकरण करें (a page change)?
   - Voices (female), checked 2026-10-01 from the sandbox:
     - Hindi: Piper "Priyamvada" via sherpa-onnx:
       https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-hi_IN-priyamvada-medium.tar.bz2
