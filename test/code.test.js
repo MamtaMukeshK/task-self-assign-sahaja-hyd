@@ -638,7 +638,7 @@ test('29-Sep pattern: opens on the next day once the last slot (4:30-6:30 PM) is
   assert.equal(at(18, 29).tab, '29-Sep');
   assert.equal(at(18, 30).tab, '30-Sep');
   const late = at(23, 19);
-  assert.deepEqual([late.tab, late.clock, late.version], ['30-Sep', 'Tue 29 Sep 23:19', '2026-10-01.1']);
+  assert.deepEqual([late.tab, late.clock, late.version], ['30-Sep', 'Tue 29 Sep 23:19', '2026-10-01.2']);
 });
 test('time zone: India by default, the sheet\'s own setting only if TIME_ZONE is emptied', () => {
   const gs = load([makeSheet('28-Sep', 3, [['S No']])], NOW);

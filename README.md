@@ -13,7 +13,7 @@ Two files do everything: `Code.gs` (the logic) and `Index.html` (the page).
 > rebuild it with `python3 tools/build_guide.py`.
 
 
-> **Demo video for volunteers:** `docs/demo.mp4` (74 s, with an Indian English female voice-over, shown on a
+> **Demo video for volunteers:** `docs/demo.mp4` (75 s, with an Indian English female voice-over, shown on a
 > phone screen): the school cards and Details, claim, release, register others from the speaker list, and switching language. Recorded from this page's code with a
 > demo copy of the 30-Sep layout (made-up names). Re-record with `tools/record_demo.js`, then add the voice with
 > `tools/voiceover/mix.py` (the spoken lines are in `tools/voiceover/lines.json`; `make_voice.py` re-speaks them).

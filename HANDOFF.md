@@ -1,6 +1,6 @@
 # Handoff / status
 
-_Last updated: 2026-10-01 (version 2026-10-01.1)_
+_Last updated: 2026-10-01 (version 2026-10-01.2)_
 
 ## Start here (for a new session)
 - **What this is:** a Google Apps Script web page for the "Hyderabad 2026 - Self Realization Tour" sheet.
@@ -8,8 +8,8 @@ _Last updated: 2026-10-01 (version 2026-10-01.1)_
   Release places; the speaker cell of the day tab is updated. Details of every feature: the dated log below.
 - **Live:** the organiser's own Apps Script deployment of `Code.gs` + `Index.html` (paste from
   `SETUP_GUIDE.html`, then Deploy -> Manage deployments -> New version). The page footer shows the version.
-  Latest pushed: 2026-10-01.1. Ask the user which version is live before assuming.
-- **Demo video:** `docs/demo.mp4` (74 s, phone screen, Indian English female voice). The page's demo button
+  Latest pushed: 2026-10-01.2. Ask the user which version is live before assuming.
+- **Demo video:** `docs/demo.mp4` (75 s, phone screen, Indian English female voice). The page's demo button
   opens the organiser's Google Drive copy (file id 1L1A_FmlOukDZMTnOXa73RlzQfdaHS9Zg); they replace it via
   Drive -> Manage versions after every re-record.
 - **Tests:** `cd test && npm install && npm test` (70 tests; browser tests need Chromium at
@@ -188,7 +188,11 @@ _Last updated: 2026-10-01 (version 2026-10-01.1)_
 
 - 2026-10-01: English button "Claim" -> "Register" ("Register (full)" when full); past-day note and busy message
   say "register" too (busy-message matcher accepts both old and new server text). Telugu/Hindi buttons left as
-  they were (user's choice). Demo video and its voice still say "Claim". VERSION 2026-10-01.1. 70 tests.
+  they were (user's choice). VERSION 2026-10-01.1. 70 tests.
+
+- 2026-10-01: demo re-recorded with the latest page (Register button, larger controls, no Day heading); voice
+  lines s2/s5/end and captions say "Register". 75 s. Video commit 88208f6; GitHub fallback links re-pinned.
+  VERSION 2026-10-01.2. Drive copy must be replaced via Manage versions.
 
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
@@ -206,7 +210,7 @@ _Last updated: 2026-10-01 (version 2026-10-01.1)_
   if not, the page errors loudly rather than guessing.
 
 ## Next step
-- User: deploy 2026-10-01.1 (My Registrations, Open only fix, speed, larger controls, Register button) and replace the Drive demo video;
+- User: deploy 2026-10-01.2 (My Registrations, Open only fix, speed, larger controls, Register button) and replace the Drive demo video;
   report the footer's "loaded in N s" on a phone.
 - Open ideas, not started: reminders one hour before a slot (free options: "add to my calendar" button, or an
   organiser list with one-tap WhatsApp links; automatic SMS/WhatsApp needs paid providers + registration);
