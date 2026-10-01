@@ -8,7 +8,7 @@ _Last updated: 2026-10-01 (version 2026-10-01.2)_
   Release places; the speaker cell of the day tab is updated. Details of every feature: the dated log below.
 - **Live:** the organiser's own Apps Script deployment of `Code.gs` + `Index.html` (paste from
   `SETUP_GUIDE.html`, then Deploy -> Manage deployments -> New version). The page footer shows the version.
-  Latest pushed: 2026-10-01.2. Ask the user which version is live before assuming.
+  Latest pushed and live (confirmed by the user 2026-10-01): 2026-10-01.2.
 - **Demo video:** `docs/demo.mp4` (75 s, phone screen, Indian English female voice). The page's demo button
   opens the organiser's Google Drive copy (file id 1L1A_FmlOukDZMTnOXa73RlzQfdaHS9Zg); they replace it via
   Drive -> Manage versions after every re-record.
@@ -210,7 +210,8 @@ _Last updated: 2026-10-01 (version 2026-10-01.2)_
   if not, the page errors loudly rather than guessing.
 
 ## Next step
-- User: deploy 2026-10-01.2 and replace the Drive demo video (Manage versions); report the footer's "loaded in N s".
+- Done by the user 2026-10-01: version 2026-10-01.2 is LIVE, and the Drive demo video was replaced with the latest
+  75 s English video. Still useful: the footer's "loaded in N s" from a real phone.
 - **In progress (approved in principle, not started): Telugu and Hindi demo videos**, and the demo button plays
   the video for the language selected on the page.
   - Voices (female), checked 2026-10-01 from the sandbox:
