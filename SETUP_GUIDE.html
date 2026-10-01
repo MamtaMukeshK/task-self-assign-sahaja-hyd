@@ -147,7 +147,7 @@ Takes about 15 minutes on a laptop or desktop computer (not a phone).</p>
  */
 
 // Shown on the page so it's easy to confirm which version is deployed.
-var VERSION = '2026-09-30.6';
+var VERSION = '2026-10-01.1';
 
 var CONFIG = {
   // Time zone for "today" and "now" (which day opens, which slots have ended).
@@ -258,7 +258,7 @@ function mutate_(o) {
   var adding = o.action === 'claim' ? peopleToAdd_(me, o) : [];
 
   var lock = LockService.getScriptLock();
-  if (!lock.tryLock(CONFIG.LOCK_WAIT_MS)) throw new Error('Lots of people are claiming right now. Please try again.');
+  if (!lock.tryLock(CONFIG.LOCK_WAIT_MS)) throw new Error('Lots of people are registering right now. Please try again.');
   var day, ss;
   try {
     ss = openSpreadsheet_();
@@ -921,7 +921,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
       namePh: 'type or pick your name', mobile: 'Mobile', mobilePh: '10 digits', registerOthers: 'Register others',
       openOnly: 'Open only', chooseSpeakers: 'Choose speakers ({0} selected)', searchNames: 'Search names',
       othersPh: 'One person per line: name, then 10-digit mobile\nRavi Kumar 9123456789\nAsha 9000000002',
-      includeMe: 'Include me too', pastNote: 'This day is over: view only. Pick today or a later date to claim.',
+      includeMe: 'Include me too', pastNote: 'This day is over: view only. Pick today or a later date to register.',
       noMobileYet: '(no mobile saved yet)', mobile10Ph: '10-digit mobile', noMatch: 'No match.', noSpeakers: 'No speakers saved yet.',
       firstTime: "First time: please enter your 10-digit mobile. It will be saved, so you won't be asked again.",
       lineBad: 'Line {0} of "Register others" should be a name then a 10-digit mobile, like "Ravi 9123456789".',
@@ -937,10 +937,10 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
       slNo: 'Sl.No', slotsLeft: 'Slots left', speakerCol: 'SY Speaker Name', details: 'Details ▾', hideDetails: 'Hide details ▴', myRegs: 'My Registrations ({0})', allSchools: 'All Schools', loadingSchools: 'Loading schools…', loadedIn: 'loaded in {0} s',
       movedUp: ' It is now at the top, under "My Registrations".',
       past: 'Past', ended: 'Ended', closed: 'Closed', clashes: 'Clashes with {0} ({1})',
-      claim: 'Claim', claimFull: 'Claim (full)', release: 'Release', overBy: 'Over by {0} (needs {1})', nOfM: '{0} of {1}',
+      claim: 'Register', claimFull: 'Register (full)', release: 'Release', overBy: 'Over by {0} (needs {1})', nOfM: '{0} of {1}',
       overLimit: ' (over limit)', via: ' · via {0}', removeX: 'Remove {0}', freeTitle: '{0} with free slots · {1}',
       noRows: 'No rows on this tab yet.', or: 'or', row: 'row {0}',
-      srvBusy: 'Lots of people are claiming right now. Please try again.',
+      srvBusy: 'Lots of people are registering right now. Please try again.',
       srvGone: 'That row no longer exists. The list has been refreshed.',
       srvEdited: 'That row was edited or moved since you loaded it. Please check it and try again.',
       srvDayOver: '{0} is over, so it can only be viewed now.',
@@ -1042,7 +1042,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   }
   // Messages from the script arrive in English; known ones are shown in the chosen language.
   var SERVER_TEXT = [
-    [/^Lots of people are claiming right now/, 'srvBusy'],
+    [/^Lots of people are (claiming|registering) right now/, 'srvBusy'],
     [/^That row no longer exists/, 'srvGone'],
     [/^That row was edited or moved/, 'srvEdited'],
     [/^This slot has already ended \(([\s\S]*)\), so it can only be viewed now\.$/, 'srvEnded'],

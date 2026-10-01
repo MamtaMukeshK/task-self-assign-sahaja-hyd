@@ -129,7 +129,7 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
   await wait(500);
   await say('s2'); await caption('Step 3', 'Tap Claim: your card turns green, moves up to "My Registrations", and the sheet updates.');
   await wait(1200);
-  await tap(app.locator('#grid tr[data-row="4"] button:text-is("Claim")'));
+  await tap(app.locator('#grid tr[data-row="4"] button:text-is("Register")'));
   await settle(); await wait(2600);
 
   // ---- 2. Release ----
@@ -151,7 +151,7 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
   await say('s5'); await caption('Step 6', 'Tap Claim: you and everyone ticked are added together, marked "via" you.');
   await tap(app.locator('#picker summary'));
   await wait(400);
-  await tap(app.locator('#grid tr[data-row="4"] button:text-is("Claim")'));
+  await tap(app.locator('#grid tr[data-row="4"] button:text-is("Register")'));
   await settle(); await wait(3000);
 
   // ---- 4. Language ----

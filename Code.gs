@@ -9,7 +9,7 @@
  */
 
 // Shown on the page so it's easy to confirm which version is deployed.
-var VERSION = '2026-09-30.6';
+var VERSION = '2026-10-01.1';
 
 var CONFIG = {
   // Time zone for "today" and "now" (which day opens, which slots have ended).
@@ -120,7 +120,7 @@ function mutate_(o) {
   var adding = o.action === 'claim' ? peopleToAdd_(me, o) : [];
 
   var lock = LockService.getScriptLock();
-  if (!lock.tryLock(CONFIG.LOCK_WAIT_MS)) throw new Error('Lots of people are claiming right now. Please try again.');
+  if (!lock.tryLock(CONFIG.LOCK_WAIT_MS)) throw new Error('Lots of people are registering right now. Please try again.');
   var day, ss;
   try {
     ss = openSpreadsheet_();

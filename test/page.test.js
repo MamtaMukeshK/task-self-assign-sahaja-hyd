@@ -37,15 +37,15 @@ test('two users in real browser', { timeout: 60000 }, async () => {
   assert.equal(await a.locator('tr[data-row="2"]').locator('td').first().textContent(), '1', 'serial number is the first cell');
   assert.ok(!heads.some(h => /Sahaja Yoga\s*Speaker Name/.test(h)), 'sheet speaker column not repeated');
   assert.match(await a.textContent('#note'), /No "Total volunteers needed" column/);
-  assert.equal(await a.locator('button:text-is("Claim")').count(), 2);
+  assert.equal(await a.locator('button:text-is("Register")').count(), 2);
 
-  await a.locator('button:text-is("Claim")').first().click();
+  await a.locator('button:text-is("Register")').first().click();
   await a.waitForSelector('text=Registered');
   assert.equal(sheet.grid[3][1], 'Priya 9876543210');
   assert.equal(await a.locator('button:text("Release")').count(), 1);
 
   // Ravi's page is stale: still shows row 4 as open. He is added too, and it is flagged as over the limit.
-  await b.locator('button:text-is("Claim")').first().click();
+  await b.locator('button:text-is("Register")').first().click();
   await b.waitForSelector('text=over its limit by 1');
   assert.equal(sheet.grid[3][1], 'Priya 9876543210\nRavi 9123456789');
   assert.match(await b.locator('tr[data-row="4"]').textContent(), /Over by 1/);
@@ -71,10 +71,10 @@ test('two users in real browser', { timeout: 60000 }, async () => {
   assert.equal(sheet.grid[3][1], '');
 
   await a.fill('#mobile', '');
-  await a.locator('button:text-is("Claim")').first().click();
+  await a.locator('button:text-is("Register")').first().click();
   assert.match(await a.textContent('#status'), /mobile number/);
   await a.fill('#mobile', '98765');
-  await a.locator('button:text-is("Claim")').first().click();
+  await a.locator('button:text-is("Register")').first().click();
   assert.match(await a.textContent('#status'), /Please enter a 10-digit mobile number/, 'caught on the page before sending');
 
   await a.screenshot({ path: path.join(__dirname, 'phone-view.png'), fullPage: true });
@@ -109,9 +109,9 @@ test('multi-slot school in real browser: two join, third sees it full, one leave
     assert.match(await row1(a).textContent(), /2 of 3/);
     assert.match(await row1(a).textContent(), /Ramesh · 9000000001/);
 
-    await row1(a).locator('button:text-is("Claim")').click(); await a.waitForSelector('text=Registered');
+    await row1(a).locator('button:text-is("Register")').click(); await a.waitForSelector('text=Registered');
     const b = await user('Ravi', '9123456789');
-    await row1(b).locator('button:text-is("Claim")').click(); await b.waitForSelector('text=Registered');
+    await row1(b).locator('button:text-is("Register")').click(); await b.waitForSelector('text=Registered');
     assert.equal(sheet.grid[1][1], 'Ramesh\n9000000001\nPriya 9876543210\nRavi 9123456789');
     assert.match(await row1(b).textContent(), /0 of 3/);
     assert.deepEqual(await row1(b).locator('.person').allTextContents(),
@@ -122,7 +122,7 @@ test('multi-slot school in real browser: two join, third sees it full, one leave
     assert.equal(sheet.grid[1][4], 0, 'still-needed column updated');
 
     const c = await user('Neha', '9000000003');
-    assert.deepEqual(await row1(c).locator('button').allTextContents(), ['Claim (full)'], 'full: warning Claim button');
+    assert.deepEqual(await row1(c).locator('button').allTextContents(), ['Register (full)'], 'full: warning Register button');
     await a.reload(); await a.waitForSelector('text=Day: 28-Sep');
     await row1(a).locator('button:text("Release")').click(); await a.waitForSelector('text=Released.');
     assert.equal(sheet.grid[1][1], 'Ramesh\n9000000001\nRavi 9123456789');
@@ -157,16 +157,16 @@ test('date picker and time-clash label in real browser', { timeout: 60000 }, asy
     await p.selectOption('#day', '30-Sep');
     await p.waitForSelector('text=Day: 30-Sep');
     const row = n => p.locator('tr[data-row="' + (n + 1) + '"]');   // n-th school = sheet row n + 1
-    await row(1).locator('button:text-is("Claim")').click(); await p.waitForSelector('text=Registered');
+    await row(1).locator('button:text-is("Register")').click(); await p.waitForSelector('text=Registered');
     assert.equal(d30.grid[1][1], 'Priya 9876543210', 'written to the picked day');
     assert.equal(d28.grid[1][1], '', 'today untouched');
     assert.match(await row(2).textContent(), /Clashes with Sl\.No 1 \(10:00\)/);
     assert.equal(await row(2).locator('button').count(), 0, 'no Claim button on a clashing school');
-    assert.equal(await row(3).locator('button:text-is("Claim")').count(), 1, 'other times still claimable');
+    assert.equal(await row(3).locator('button:text-is("Register")').count(), 1, 'other times still claimable');
 
     await p.selectOption('#day', '28-Sep');
     await p.waitForSelector('text=Day: 28-Sep');
-    assert.equal(await row(2).locator('button:text-is("Claim")').count(), 1, 'same time on another day is fine');
+    assert.equal(await row(2).locator('button:text-is("Register")').count(), 1, 'same time on another day is fine');
     assert.deepEqual(errs, []);
     await p.screenshot({ path: path.join(__dirname, 'picker-view.png') });
   } finally { await browser.close(); }
@@ -221,10 +221,10 @@ test('register others in real browser: list, over-limit in red, remove with ✕'
     await p.check('#showOthers');
     await p.uncheck('#includeMe');                                         // leader registers others only
     await p.fill('#others', 'Ravi 9123456789\nAsha 12345');
-    await p.locator('button:text-is("Claim")').click();
+    await p.locator('button:text-is("Register")').click();
     assert.match(await p.textContent('#status'), /Line 2 of "Register others"/, 'checked on the page first');
     await p.fill('#others', 'Ravi 9123456789\nAsha 9000000002\nNeha 9000000003');
-    await p.locator('button:text-is("Claim")').click();
+    await p.locator('button:text-is("Register")').click();
     await p.waitForSelector('text=over its limit by 1');
     assert.equal(sheet.grid[1][1], 'Ravi 9123456789 (via Priya)\nAsha 9000000002 (via Priya)\nNeha 9000000003 (via Priya)');
     const row = p.locator('tr[data-row="2"]');
@@ -280,10 +280,10 @@ test('speaker picker in real browser: alphabetical, multi-select, and own name f
     assert.equal(await p.textContent('#pickCount'), '3');
     assert.equal(await p.locator('#pickList input.firstmobile').count(), 1, 'asked for Meera\'s number');
 
-    await p.locator('button:text-is("Claim")').click();
+    await p.locator('button:text-is("Register")').click();
     assert.match(await p.textContent('#status'), /Please enter a 10-digit mobile for Meera Das/);
     await p.fill('#pickList input.firstmobile', '90000 00013');
-    await p.locator('button:text-is("Claim")').click();
+    await p.locator('button:text-is("Register")').click();
     await p.waitForSelector('text=Registered');
     assert.equal(day.grid[1][1], 'Priya 9876543210\nzara Khan 9000000012 (via Priya)\nAnil Rao 9000000011 (via Priya)\nMeera Das 9000000013 (via Priya)');
     assert.equal(sp.grid[3][3], '9000000013', 'Meera\'s number saved to the Speaker tab');
@@ -433,7 +433,7 @@ test('language switch: opens in English; Telugu and Hindi translate the page and
 
     await p.selectOption('#lang', 'en');
     assert.equal(await p.textContent('#title'), 'Day: 28-Sep');
-    assert.equal(await p.locator('tr[data-row="3"]').locator('button').textContent(), 'Claim');
+    assert.equal(await p.locator('tr[data-row="3"]').locator('button').textContent(), 'Register');
     assert.match(await p.textContent('#updated'), /^Updated /, 'every line switches, including "Updated"');
     assert.deepEqual(errs, []);
   } finally { await browser.close(); }
@@ -569,7 +569,7 @@ test('My Registrations: your schools and the ones you registered others for move
     assert.equal(await p.locator('#mine tr[data-row="4"] button.x').count(), 1, 'her ✕ for Ravi is in the section');
     assert.equal(await p.isVisible('#allTitle'), true);
 
-    await p.locator('#grid tr[data-row="2"] button:text-is("Claim")').click();
+    await p.locator('#grid tr[data-row="2"] button:text-is("Register")').click();
     await p.waitForSelector('text=Registered');
     assert.match(await p.textContent('#status'), /now at the top, under "My Registrations"/);
     assert.equal(await p.textContent('#mineTitle'), 'My Registrations (2)');
