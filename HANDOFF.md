@@ -8,7 +8,8 @@ _Last updated: 2026-10-01 (version 2026-10-01.3)_
   Release places; the speaker cell of the day tab is updated. Details of every feature: the dated log below.
 - **Live:** the organiser's own Apps Script deployment of `Code.gs` + `Index.html` (paste from
   `SETUP_GUIDE.html`, then Deploy -> Manage deployments -> New version). The page footer shows the version.
-  Latest pushed: 2026-10-01.3 (live was 2026-10-01.2 on 2026-10-01). Ask the user which version is live before assuming.
+  Latest pushed: 2026-10-01.3. Live (confirmed by the user 2026-10-01): 2026-10-01.2. Ask the user which version is
+  live before assuming.
 - **Demo videos:** `docs/demo.mp4` (English, 75 s, phone screen, Indian English female voice), `docs/demo-te.mp4`
   (Telugu, 78 s) and `docs/demo-hi.mp4` (Hindi, 84 s). The demo button plays the one for the page's language
   (`DEMO_VIDEO_URLS.en/.te/.hi` in Index.html). English opens the organiser's Google Drive copy (file id
@@ -231,8 +232,10 @@ _Last updated: 2026-10-01 (version 2026-10-01.3)_
   if not, the page errors loudly rather than guessing.
 
 ## Next step
-- User: deploy 2026-10-01.3 (Telugu/Hindi button rename + per-language demo videos); replace the English Drive demo
-  video via Manage versions if not done yet; report the footer's "loaded in N s".
+- Done by the user 2026-10-01: version 2026-10-01.2 is LIVE, and the Drive demo video was replaced with the latest
+  75 s English video (still current: the English video did not change in 2026-10-01.3).
+- User: deploy 2026-10-01.3 (Telugu/Hindi button rename + per-language demo videos); report the footer's
+  "loaded in N s" from a real phone.
 - User: listen to `docs/demo-te.mp4` and `docs/demo-hi.mp4` and, ideally, have a native Telugu and a native Hindi
   speaker check them (and the page's Telugu/Hindi words). Corrections -> edit lines/captions and re-record.
 - Optional: upload the Telugu/Hindi videos to Drive and send the links; put each first in `DEMO_VIDEO_URLS.te/.hi`.
