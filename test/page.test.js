@@ -677,7 +677,9 @@ test('ongoing programs in real browser: drop-down entry, one card per program wi
     assert.ok(!heads.includes('Backup Yogis Name'), 'sheet backup column not repeated');
     const card = p.locator('#grid tr[data-row="2"]');
     assert.equal(await card.locator('td.c-when').textContent(), '15 Sep 2026 to 31 Mar 2027 · Weekly · Mon, Wed');
-    assert.equal(await card.locator('td.c-slots').textContent(), 'Primary 1 of 1 · Backup 1 of 1', 'one badge, both roles');
+    assert.deepEqual(await card.locator('td.c-slots .roleline').allTextContents(), ['Primary 1 of 1', 'Backup 1 of 1'], 'one badge, both roles');
+    const top = sel => card.locator(sel).evaluate(e => e.getBoundingClientRect().top);
+    assert.ok(await top('.roleline >> nth=1') > await top('.roleline >> nth=0'), 'Backup count on its own line, below Primary');
     assert.equal(await card.locator('td.c-dup', { hasText: 'Mon, Wed' }).isVisible(), false, 'days shown once, in the dates line');
     const btns = loc => loc.locator('td.c-btn button').allTextContents();
 
@@ -693,7 +695,7 @@ test('ongoing programs in real browser: drop-down entry, one card per program wi
     const mine = p.locator('#mine tr[data-row="2"]');
     assert.deepEqual(await btns(mine), ['Release'], 'no Register for the other role');
     assert.equal(await mine.locator('.person').textContent(), 'Priya · 9876543210Backup');
-    assert.equal(await mine.locator('td.c-slots').textContent(), 'Primary 1 of 1 · Backup 0 of 1');
+    assert.deepEqual(await mine.locator('td.c-slots .roleline').allTextContents(), ['Primary 1 of 1', 'Backup 0 of 1']);
 
     assert.match(await p.locator('#grid tr[data-row="3"] .clash').textContent(), /Clashes with Sl.No 1/, 'Wed 9.30 clashes');
     await p.locator('#grid tr[data-row="4"] button:text-is("Register")').click();               // Tue 9.30: no shared day
@@ -731,7 +733,7 @@ test('ongoing programs in real browser: drop-down entry, one card per program wi
     await p.selectOption('#lang', 'te');
     assert.equal(await p.locator('#day option:checked').textContent(), 'కొనసాగుతున్న కార్యక్రమాలు');
     assert.match(await mine.locator('td.c-when').textContent(), /^15 సెప్టెం 2026 నుండి 31 మార్చి 2027 వరకు/);
-    assert.match(await mine.locator('td.c-slots').textContent(), /^ప్రధాన .* · బ్యాకప్ /);
+    assert.match(await mine.locator('td.c-slots').textContent(), /^ప్రధాన .*బ్యాకప్ /);
     assert.equal(await mine.locator('.roletag').textContent(), 'బ్యాకప్');
     await p.selectOption('#lang', 'en');
 

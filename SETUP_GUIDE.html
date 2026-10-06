@@ -147,7 +147,7 @@ Takes about 15 minutes on a laptop or desktop computer (not a phone).</p>
  */
 
 // Shown on the page so it's easy to confirm which version is deployed.
-var VERSION = '2026-10-06.2';
+var VERSION = '2026-10-06.3';
 
 var CONFIG = {
   // Time zone for "today" and "now" (which day opens, which slots have ended).
@@ -927,7 +927,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   .spin { width:20px; height:20px; border:3px solid var(--line); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; flex:none; }
   @keyframes spin { to { transform:rotate(360deg); } }
   td.c-toggle { display:none; }
-  .nowrap { white-space:nowrap; }
+  .roleline { display:block; white-space:nowrap; }   /* Ongoing tab: Primary count, then Backup count below it */
   .roletag { margin-left:6px; padding:0 6px; border:1px solid var(--line); border-radius:8px; font-size:12px; font-weight:500; color:var(--muted); }                            /* the "Details" button is for the phone cards only */
   /* Sl.No, the button and "Slots left" stay put while the table scrolls sideways (left set by pinColumns). */
   th.stick, td.stick { position:sticky; z-index:1; }
@@ -1659,9 +1659,8 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
         if (x.part.over) slots.className = 'c-slots overcount';
         var count = x.part.over ? t('overBy', x.part.over, x.part.total) : t('nOfM', x.part.remaining, x.part.total);
         if (!state.ongoing) { slots.textContent = count; return; }
-        if (i) { slots.lastChild.textContent += ' ·'; slots.appendChild(document.createTextNode(' ')); }
-        var one = document.createElement('span');                // each role's count stays on one line
-        one.className = 'nowrap';
+        var one = document.createElement('span');                // one line per role
+        one.className = 'roleline';
         one.textContent = t(x.role || 'primary') + ' ' + count;
         slots.appendChild(one);
       });
