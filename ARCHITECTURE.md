@@ -1,6 +1,6 @@
 # How the app is built (for designing new features)
 
-_Written 2026-10-06 against version 2026-10-01.4. `HANDOFF.md` is the dated log of what changed and why; this file
+_Written 2026-10-06 against version 2026-10-01.4; updated for 2026-10-06.1 (Ongoing programs). `HANDOFF.md` is the dated log of what changed and why; this file
 explains how the pieces fit, what limits we work within, and what to decide before a redesign._
 
 ## 1. What it is, in one paragraph
@@ -37,6 +37,13 @@ and Hindi.
   | Start/end time (free text, e.g. "2pm to 3pm") | "time" | No |
   | Serial number | "S No" / "Sl No" / "Sr. No." | No (shown first as "Sl.No") |
   | Everything else (school, address, map link, contacts, remarks...) | anything | No - shown as-is |
+- **Ongoing tab** (named `Ongoing` or `Ongoing Programs`): one program per row, listed after the dates as "Ongoing
+  programs". Same columns as a day tab, plus - read on this tab only - backups ("backup"+"name", written by the app),
+  backups needed ("backup"+"needed", blank = 1, 0 = none), backups still needed ("backup"+"still", kept up to date),
+  "start"+"date" / "end"+"date" (real sheet dates, or day-first text) and "days" ("Mon, Thu", "Mon to Fri"; none named
+  = every day). Frequency is shown as typed. A program is closed once its end date (and, that day, its end time) has
+  passed; one person can't be primary and backup on the same program; a clash there = same start time + a shared
+  weekday + both still running.
 - **Speaker cell format:** one person per line, `Name 9876543210`; people registered by someone else end with
   `(via Priya)`. Older hand-typed entries like `Ramesh<newline>98...` are understood (a person ends at the line that
   holds their phone). This text format *is* the data model - there is no hidden table.
@@ -59,7 +66,10 @@ and Hindi.
 **State shape** returned by `getState`:
 `{ tab, headers[], nameIdx, slotsHeader, rows: [{ row, fp, cells[], speaker, assignees: [{name, phone, by, text}],
 total, remaining, over, timeText, start, end, past }], days: [{name, label, past, today}], defaultDay, speakers:
-[{name, mobile}], clock, version, pastDay, size }`
+[{name, mobile}], clock, version, pastDay, size }`. On the Ongoing tab also `ongoing: true, backupIdx, today`, each row
+`backup: {assignees, total, remaining, over}, startDate, endDate` ('yyyy-MM-dd' or '') and `days` (0 = Sunday, or null), and
+the Ongoing entry in `days` has `ongoing: true`. `claimRow/releaseRow/removePerson` take an optional last input `role`
+('backup'; left out = primary).
 
 ## 5. Page (Index.html) - how it works
 - **One file**: styles, the `TEXT` translation table (en/te/hi), and all the JavaScript. No framework, no build step.
@@ -68,12 +78,15 @@ total, remaining, over, timeText, start, end, past }], days: [{name, label, past
   header (school / time / address / map / duplicate / more).
 - **Layouts by width, CSS only:** <= 700 px phone cards (contacts behind "Details"); 701-1100 px tablet cards (all
   shown); > 1100 px laptop table with frozen first columns (`pinColumns`).
+- **Ongoing tab:** one card per program with the same cells as a date tab: one places badge for both roles, one names
+  list (backups tagged), and Register asks "Primary or Backup?" (`askRow`) unless only one role has places.
 - **Refresh:** every 15 s while visible, and on returning to the tab; days already seen show instantly (`dayCache`).
 - **Identity:** whatever is typed in "Your name" (+ mobile), remembered in the browser. "Mine" = same name, ignoring case.
 - **Demo videos:** `DEMO_VIDEO_URLS.en/.te/.hi` - each a Google Drive link (opens Drive's player) then GitHub copies.
 
 ## 6. Rules the current design relies on (change with care)
-1. **Only the speaker cell, the "still needed" cell and the Speaker tab are ever written.** Everything else is the
+1. **Only the speaker cell, the "still needed" cell, on the Ongoing tab the backup and backups-still-needed cells, and
+   the Speaker tab are ever written.** Everything else is the
    organisers'.
 2. **Every write re-reads the live row inside the lock** and refuses if the row changed since the page loaded
    (fingerprint excludes the speaker and "still needed" cells). Display can be slightly stale; writes never are.
@@ -110,7 +123,7 @@ https://developers.google.com/apps-script/guides/services/quotas before relying 
 ## 9. Testing and release
 - `test/harness.js` imitates the Google services (sheets, lock, cache, HTML) in memory; `test/code.test.js` covers the
   server logic; `test/page.test.js` drives the real page in Chromium (two users racing, cards, languages, speed...).
-  `cd test && npm install && npm test` - 70 tests, all must pass. Add tests for every new behaviour.
+  `cd test && npm install && npm test` - 77 tests, all must pass. Add tests for every new behaviour.
 - For every page change: bump `VERSION` in `Code.gs` (and the same string in `test/code.test.js`), run
   `python3 tools/build_guide.py`, commit, push, send the user `SETUP_GUIDE.html`; the user pastes and deploys a New
   version. If the change shows on screen, ask whether the demo videos need re-recording (`tools/record_demo.js`).

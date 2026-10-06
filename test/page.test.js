@@ -562,8 +562,8 @@ test('adaptive layout: phone cards (no sideways scroll, duplicates hidden, Detai
     await tab.evaluate(() => { document.getElementById('grid').parentNode.scrollLeft = 200; });
     assert.ok(await tab.evaluate(() => document.getElementById('grid').parentNode.scrollLeft) > 0, 'the table does scroll sideways');
     assert.deepEqual(await xs(), before, 'Sl.No, button and Slots left stay put');
-    const lefts = await tab.evaluate(() => [...document.querySelectorAll('#grid th.stick')].map(th => [parseFloat(th.style.left), th.offsetWidth]));
-    lefts.slice(1).forEach(([left], i) => assert.equal(left, lefts[i][0] + lefts[i][1], 'frozen columns sit edge to edge (no gaps)'));
+    const lefts = await tab.evaluate(() => [...document.querySelectorAll('#grid th.stick')].map(th => [parseFloat(th.style.left), th.getBoundingClientRect().width]));
+    lefts.slice(1).forEach(([left], i) => assert.ok(Math.abs(left - lefts[i][0] - lefts[i][1]) < 0.01, 'frozen columns sit edge to edge (no gaps)'));
   } finally { await browser.close(); }
 });
 
@@ -642,5 +642,112 @@ test('speed: first view needs no server trip; loading message only while there i
     assert.equal(await p.textContent('#title'), 'Day: 28-Sep', 'a day seen before shows at once');
     assert.equal(await p.isVisible('#loadingBox'), false);
     release(); hold = null;
+  } finally { await browser.close(); }
+});
+
+test('ongoing programs in real browser: drop-down entry, one card per program with both roles, Register asks the role, others, ended greyed, Telugu', { timeout: 60000 }, async () => {
+  const head = ['Sl.No', 'Sahaja Yoga ( IND)\n Speaker Name', 'Total volunteers Needed', 'Number of Volunteers still Needed', 'Backup Yogis Name',
+    'Backup yogis needed', 'Num of backup yogis still needed', 'Frequency', 'Start Date', 'End Date', 'Time', 'Days of the Week',
+    'Institution name', 'Branch / Address', 'Google map', 'Remarks'];
+  const ongoing = makeSheet('Ongoing', 2, [head,
+    ['1', '', '1', '1', '', '1', '1', 'Weekly', new Date(Date.UTC(2026, 8, 15)), new Date(Date.UTC(2027, 2, 31)), '9.30 am', 'Mon, Wed', 'Triveni Talent School', 'Lingampally', '', 'Call first'],
+    ['2', '', '2', '2', '', '1', '1', 'Weekly', '', '', '9.30 am', 'Wed', 'Unacademy', 'Beeramguda', '', ''],
+    ['3', '', '2', '2', '', '1', '1', 'Weekly', '', '', '9.30 am', 'Tue', 'Sri Chaitanya', 'Ameerpet', '', ''],
+    ['4', 'Asha 9000000001', '1', '0', '', '1', '1', 'Daily', '01/09/2026', '30/09/2026', '3 to 4pm', 'Mon to Fri', 'Old School', 'Kukatpally', '', ''],
+    ['5', '', '1', '1', '', '0', '', 'Weekly', '', '', '11 am', 'Thu', 'No Backups School', 'Uppal', '', '']]);
+  const gs = load([makeSheet('06-Oct', 1, screenshotGrid()), ongoing, makeSheet('Speaker', 3, [['Sr. No.', 'Speaker', 'Mobile']])],
+    new Date(Date.UTC(2026, 9, 6, 5)));
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
+  try {
+    const p = await (await browser.newContext({ viewport: { width: 390, height: 800 } })).newPage();
+    p.setDefaultTimeout(8000);
+    const errs = []; p.on('pageerror', e => errs.push(e.message));
+    await p.exposeFunction('gsCall', (fn, a) => { try { return { ok: JSON.parse(JSON.stringify(gs[fn](...a))) }; } catch (e) { return { err: e.message }; } });
+    await p.addInitScript(SHIM);
+    await p.route('http://app.test/', r => r.fulfill({ contentType: 'text/html', body: html }));
+    await p.goto('http://app.test/');
+    await p.waitForSelector('text=Day: 06-Oct');
+    assert.deepEqual(await p.locator('#day option').allTextContents(), ['Tue 06-Oct (today)', 'Ongoing programs'], 'opens on today; Ongoing last');
+    await p.fill('#name', 'Priya'); await p.fill('#mobile', '9876543210');
+    await p.selectOption('#day', 'Ongoing');
+    await p.waitForSelector('text=Day: Ongoing');
+
+    const heads = await p.locator('#grid th').allTextContents();
+    assert.deepEqual(heads.slice(0, 5), ['Sl.No', '', 'Slots left', 'Volunteers', 'Dates & days'], 'same columns as a date tab, plus dates');
+    assert.ok(!heads.includes('Backup Yogis Name'), 'sheet backup column not repeated');
+    const card = p.locator('#grid tr[data-row="2"]');
+    assert.equal(await card.locator('td.c-when').textContent(), '15 Sep 2026 to 31 Mar 2027 · Weekly · Mon, Wed');
+    assert.deepEqual(await card.locator('td.c-slots .roleline').allTextContents(), ['Primary 1 of 1', 'Backup 1 of 1'], 'one badge, both roles');
+    const top = sel => card.locator(sel).evaluate(e => e.getBoundingClientRect().top);
+    assert.ok(await top('.roleline >> nth=1') > await top('.roleline >> nth=0'), 'Backup count on its own line, below Primary');
+    assert.equal(await card.locator('td.c-dup', { hasText: 'Mon, Wed' }).isVisible(), false, 'days shown once, in the dates line');
+    const btns = loc => loc.locator('td.c-btn button').allTextContents();
+
+    await card.locator('button:text-is("Register")').click();
+    assert.equal(await card.locator('.ask').textContent(), 'Register as:');
+    assert.deepEqual(await btns(card), ['Primary', 'Backup', 'Cancel']);
+    await card.locator('button:text-is("Cancel")').click();
+    assert.deepEqual(await btns(card), ['Register'], 'Cancel puts the button back');
+    await card.locator('button:text-is("Register")').click();
+    await card.locator('button:text-is("Backup")').click();
+    await p.waitForSelector('text=Registered as Backup.');
+    assert.deepEqual([ongoing.grid[1][4], ongoing.grid[1][6], ongoing.grid[1][1]], ['Priya 9876543210', 0, ''], 'backup cells only');
+    const mine = p.locator('#mine tr[data-row="2"]');
+    assert.deepEqual(await btns(mine), ['Release'], 'no Register for the other role');
+    assert.equal(await mine.locator('.person').textContent(), 'Priya · 9876543210Backup');
+    assert.deepEqual(await mine.locator('.roletag').evaluate(e => [getComputedStyle(e).backgroundColor, getComputedStyle(e).color, getComputedStyle(e).fontWeight]),
+      ['rgb(201, 168, 76)', 'rgb(26, 58, 92)', '700'], 'Backup tag: solid gold, bold navy');
+    assert.deepEqual(await mine.locator('td.c-slots .roleline').allTextContents(), ['Primary 1 of 1', 'Backup 0 of 1']);
+
+    assert.match(await p.locator('#grid tr[data-row="3"] .clash').textContent(), /Clashes with Sl.No 1/, 'Wed 9.30 clashes');
+    await p.locator('#grid tr[data-row="4"] button:text-is("Register")').click();               // Tue 9.30: no shared day
+    await p.locator('#grid tr[data-row="4"] button:text-is("Primary")').click();
+    await p.waitForSelector('text=My Registrations (2)');
+    assert.deepEqual([ongoing.grid[3][1], ongoing.grid[3][3]], ['Priya 9876543210', 1]);
+    await p.locator('#grid tr[data-row="6"] button:text-is("Register")').click();               // no backups there: no question
+    await p.waitForSelector('text=My Registrations (3)');
+    assert.equal(ongoing.grid[5][1], 'Priya 9876543210');
+    assert.equal(await p.locator('#mine tr[data-row="6"] td.c-slots').textContent(), 'Primary 0 of 1', 'a role with no places is left out');
+
+    await p.check('#showOthers'); await p.uncheck('#includeMe');
+    await p.fill('#others', 'Ravi 9123456789\nAsha 9000000002');
+    const wed = p.locator('#grid tr[data-row="3"]');
+    await wed.locator('button:text-is("Register")').click();
+    assert.equal(await wed.locator('.ask').textContent(), 'Register 2 people as:');
+    await wed.locator('button:text-is("Backup")').click();
+    await p.waitForSelector('text=Registered 2 people as Backup. Note: this school is now over its limit by 1');
+    assert.equal(ongoing.grid[2][4], 'Ravi 9123456789 (via Priya)\nAsha 9000000002 (via Priya)');
+    const wedMine = p.locator('#mine tr[data-row="3"]');
+    assert.equal(await wedMine.locator('.person.extra').count(), 1, 'second backup over the limit, in red');
+    await wedMine.locator('.person', { hasText: 'Ravi' }).locator('button.x').click();
+    await p.waitForSelector('text=Removed Ravi.');
+    assert.equal(ongoing.grid[2][4], 'Asha 9000000002 (via Priya)');
+    await p.fill('#others', ''); await p.check('#includeMe'); await p.uncheck('#showOthers');
+
+    const old = p.locator('#grid tr[data-row="5"]');
+    assert.equal(await old.getAttribute('class'), 'past', 'ended on 30 Sep: greyed out');
+    assert.equal(await old.locator('button').count(), 0);
+    assert.match(await old.locator('td.c-btn').textContent(), /Ended/);
+    await p.check('#openOnly');
+    assert.equal(await p.locator('#grid tr[data-row="5"]').count(), 0, 'Open only hides the ended program');
+    await p.uncheck('#openOnly');
+
+    await p.selectOption('#lang', 'te');
+    assert.equal(await p.locator('#day option:checked').textContent(), 'కొనసాగుతున్న కార్యక్రమాలు');
+    assert.match(await mine.locator('td.c-when').textContent(), /^15 సెప్టెం 2026 నుండి 31 మార్చి 2027 వరకు/);
+    assert.match(await mine.locator('td.c-slots').textContent(), /^ప్రధాన .*బ్యాకప్ /);
+    assert.equal(await mine.locator('.roletag').textContent(), 'బ్యాకప్');
+    await p.selectOption('#lang', 'en');
+
+    await mine.locator('button:text("Release")').click();
+    await p.waitForSelector('text=Released.');
+    assert.deepEqual([ongoing.grid[1][4], ongoing.grid[1][6]], ['', 1]);
+
+    await p.selectOption('#day', '06-Oct');
+    await p.waitForSelector('text=Day: 06-Oct');
+    assert.deepEqual((await p.locator('#grid th').allTextContents()).slice(0, 4), ['Sl.No', '', 'Slots left', 'SY Speaker Name'], 'date tab as before');
+    assert.equal(await p.locator('#grid td.c-when, #grid .roletag').count(), 0);
+    assert.equal(await p.locator('#grid tr[data-row="2"] td.c-slots').textContent(), '0 of 1', 'date tab badge unchanged');
+    assert.deepEqual(errs, []);
   } finally { await browser.close(); }
 });

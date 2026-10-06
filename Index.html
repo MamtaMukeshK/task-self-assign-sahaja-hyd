@@ -41,6 +41,7 @@
   button { font:inherit; font-weight:500; padding:5px 12px; border-radius:8px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; white-space:nowrap; }
   button:hover:not(:disabled) { background:#24507c; }
   button.release { background:#fff; color:var(--accent); }
+  button.release:hover:not(:disabled) { background:#E6EEF7; }   /* white buttons stay readable (phones keep hover after a tap) */
   button:disabled { opacity:.5; cursor:default; }
   select { font:inherit; padding:5px 8px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--navy); }
   td a { color:var(--blue); overflow-wrap:anywhere; }
@@ -94,6 +95,9 @@
   .spin { width:20px; height:20px; border:3px solid var(--line); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; flex:none; }
   @keyframes spin { to { transform:rotate(360deg); } }
   td.c-toggle { display:none; }                            /* the "Details" button is for the phone cards only */
+  .roleline { display:block; white-space:nowrap; }   /* Ongoing tab: Primary count, then Backup count below it */
+  /* "Backup" next to a name: solid gold with navy text (contrast 5.1:1), so backups stand out; grey on ended programs */
+  .roletag { margin-left:6px; padding:1px 8px; border-radius:10px; background:var(--gold); color:var(--navy); font-size:12px; font-weight:700; }
   /* Sl.No, the button and "Slots left" stay put while the table scrolls sideways (left set by pinColumns). */
   th.stick, td.stick { position:sticky; z-index:1; }
   th.stick { z-index:3; }
@@ -125,7 +129,7 @@
     table.grid td.c-sno { order:1; font-weight:700; color:#fff; background:var(--navy); border-radius:12px; padding:1px 9px; font-size:13px; }
     table.grid tr.past td.c-sno { background:#bbb !important; color:#fff !important; }
     table.grid td.c-school { order:2; flex:1; font:700 17px/1.25 'DM Sans', 'Noto Sans Telugu', 'Noto Sans Devanagari', sans-serif; color:var(--navy); }
-    table.grid td.c-time { order:3; width:100%; color:var(--slate); font-weight:500; }
+    table.grid td.c-time, table.grid td.c-when { order:3; width:100%; color:var(--slate); font-weight:500; }
     table.grid td.c-slots { order:4; font-weight:700; color:var(--navy); background:#E6EEF7; border-radius:12px; padding:2px 10px; font-size:13px; }
     table.grid td.c-slots.overcount { color:var(--err); background:#fff; }
     table.grid td.c-btn { order:5; margin-left:auto; display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-end; }
@@ -133,6 +137,8 @@
     table.grid td.c-who { order:6; width:100%; border-top:1px solid var(--line); padding-top:8px; margin-top:4px; }
     table.grid td.c-who:empty { display:none; }
     table.grid td.c-who .person { white-space:normal; }
+    /* Ongoing programs: the backup block (places, buttons, names) comes under the primary one */
+    table.grid td.c-btn .ask { flex-basis:100%; text-align:right; font-size:14px; color:var(--slate); }
     table.grid td.c-addr, table.grid td.c-map, table.grid td.c-more { order:7; width:100%; display:flex; gap:8px; font-size:14px; color:var(--slate); }
     table.grid td.c-map { order:8; } table.grid td.c-more { order:10; }
     table.grid td.c-addr::before, table.grid td.c-map::before, table.grid td.c-more::before { content:attr(data-label); flex:0 0 38%; color:var(--muted); font-size:13px; }
@@ -200,6 +206,15 @@
   var LANG = 'en'; // the page always opens in English
   var TEXT = {
     en: {
+      ongoingLabel: 'Ongoing programs', primary: 'Primary', backup: 'Backup', volunteersCol: 'Volunteers', whenCol: 'Dates & days',
+      registerAs: 'Register as:', registerNAs: 'Register {0} people as:', cancel: 'Cancel', full: '(full)',
+      registeredAs: 'Registered as {0}.', registeredNAs: 'Registered {0} people as {1}.',
+      dateRange: '{0} to {1}', fromDate: 'From {0}', untilDate: 'Until {0}',
+      months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      srvBothRoles: 'You are already registered here as {0}. Nobody was added. Release that first.',
+      srvBothRolesOther: '{1} is already registered here as {0}. Nobody was added. Release that first.',
+      srvProgramEnded: 'This program has ended, so it can only be viewed now.',
+      srvNoBackups: 'No backups are needed here (its total is 0).',
       demoBtn: 'Watch the 1-minute demo', demoOpen: 'Open the video',
       brandTitle: 'Hyderabad 2026 - Self Realization Tour', brandSub: 'Schedule & Assignments',
       sheetTime: 'Sheet time: {0}', language: 'Language', loading: 'Loading…', day: 'Day: {0}', date: 'Date', yourName: 'Your name',
@@ -240,6 +255,15 @@
       srvNameStart: 'Name cannot start with = + - or @.'
     },
     te: {
+      ongoingLabel: 'కొనసాగుతున్న కార్యక్రమాలు', primary: 'ప్రధాన', backup: 'బ్యాకప్', volunteersCol: 'వాలంటీర్లు', whenCol: 'తేదీలు & రోజులు',
+      registerAs: 'ఇలా నమోదు చేయండి:', registerNAs: '{0} మందిని ఇలా నమోదు చేయండి:', cancel: 'రద్దు', full: '(నిండింది)',
+      registeredAs: '{0}గా నమోదు అయింది.', registeredNAs: '{0} మంది {1}గా నమోదు అయ్యారు.',
+      dateRange: '{0} నుండి {1} వరకు', fromDate: '{0} నుండి', untilDate: '{0} వరకు',
+      months: ['జన', 'ఫిబ్ర', 'మార్చి', 'ఏప్రి', 'మే', 'జూన్', 'జులై', 'ఆగ', 'సెప్టెం', 'అక్టో', 'నవం', 'డిసెం'],
+      srvBothRoles: 'మీరు ఇక్కడ ఇప్పటికే {0}గా నమోదై ఉన్నారు. ఎవరినీ చేర్చలేదు. ముందు అక్కడ పేరు తీసేయండి.',
+      srvBothRolesOther: '{1} ఇక్కడ ఇప్పటికే {0}గా నమోదై ఉన్నారు. ఎవరినీ చేర్చలేదు. ముందు అక్కడ పేరు తీసేయండి.',
+      srvProgramEnded: 'ఈ కార్యక్రమం ముగిసింది, ఇప్పుడు చూడటానికి మాత్రమే.',
+      srvNoBackups: 'ఇక్కడ బ్యాకప్ అవసరం లేదు (మొత్తం 0).',
       demoBtn: '1 నిమిషం డెమో చూడండి', demoOpen: 'వీడియో తెరవండి',
       brandTitle: 'హైదరాబాద్ 2026 - ఆత్మసాక్షాత్కార యాత్ర', brandSub: 'షెడ్యూల్ & కేటాయింపులు',
       sheetTime: 'షీట్ సమయం: {0}', language: 'భాష', loading: 'లోడ్ అవుతోంది…', day: 'రోజు: {0}', date: 'తేదీ', yourName: 'మీ పేరు',
@@ -280,6 +304,15 @@
       srvNameStart: 'పేరు = + - లేదా @ తో మొదలవకూడదు.'
     },
     hi: {
+      ongoingLabel: 'चल रहे कार्यक्रम', primary: 'मुख्य', backup: 'बैकअप', volunteersCol: 'स्वयंसेवक', whenCol: 'तिथियाँ और दिन',
+      registerAs: 'इस रूप में पंजीकरण करें:', registerNAs: '{0} लोगों का इस रूप में पंजीकरण करें:', cancel: 'रद्द करें', full: '(भरा हुआ)',
+      registeredAs: '{0} के रूप में पंजीकरण हो गया।', registeredNAs: '{0} लोगों का {1} के रूप में पंजीकरण हो गया।',
+      dateRange: '{0} से {1} तक', fromDate: '{0} से', untilDate: '{0} तक',
+      months: ['जन॰', 'फ़र॰', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुल॰', 'अग॰', 'सित॰', 'अक्तू॰', 'नव॰', 'दिस॰'],
+      srvBothRoles: 'आप यहाँ पहले से {0} के रूप में पंजीकृत हैं। किसी को नहीं जोड़ा गया। पहले वहाँ से नाम हटाएँ।',
+      srvBothRolesOther: '{1} यहाँ पहले से {0} के रूप में पंजीकृत हैं। किसी को नहीं जोड़ा गया। पहले वहाँ से नाम हटाएँ।',
+      srvProgramEnded: 'यह कार्यक्रम समाप्त हो चुका है, अब इसे केवल देखा जा सकता है।',
+      srvNoBackups: 'यहाँ बैकअप की आवश्यकता नहीं है (कुल संख्या 0 है)।',
       demoBtn: '1 मिनट का डेमो देखें', demoOpen: 'वीडियो खोलें',
       brandTitle: 'हैदराबाद 2026 - आत्मसाक्षात्कार यात्रा', brandSub: 'कार्यक्रम और आवंटन',
       sheetTime: 'शीट का समय: {0}', language: 'भाषा', loading: 'लोड हो रहा है…', day: 'दिन: {0}', date: 'तारीख', yourName: 'आपका नाम',
@@ -345,7 +378,11 @@
     [/^Please enter your name first/, 'enterName'],
     [/^Please enter a 10-digit mobile number/, 'enter10'],
     [/^Name is too long/, 'srvNameLong'],
-    [/^Name cannot start/, 'srvNameStart']
+    [/^Name cannot start/, 'srvNameStart'],
+    [/^You are already registered here as (primary|backup)\. Nobody was added/, 'srvBothRoles', function (m) { return [t(m[1])]; }],
+    [/^([\s\S]+?) is already registered here as (primary|backup)\. Nobody was added/, 'srvBothRolesOther', function (m) { return [t(m[2]), m[1]]; }],
+    [/^This program has ended/, 'srvProgramEnded'],
+    [/^No backups are needed here/, 'srvNoBackups']
   ];
   function translateServer(msg) {
     for (var i = 0; i < SERVER_TEXT.length; i++) {
@@ -363,6 +400,7 @@
   }
   // "Mon 28-Sep (today)" from the script -> the chosen language.
   function dayLabel(d) {
+    if (d.ongoing) return t('ongoingLabel');
     var wd = TEXT.en.weekdays.indexOf(String(d.label).slice(0, 3));
     return (wd >= 0 ? t('weekdays')[wd] + ' ' : '') + d.name + (d.today ? ' ' + t('todayMark') : d.past ? ' ' + t('pastMark') : '');
   }
@@ -393,6 +431,7 @@
   var seq = 0;      // ignore responses older than the newest one already shown
   var shownSeq = 0;
   var busyRow = null;
+  var askRow = null; // Ongoing tab: the program whose Register button is asking "Primary or Backup?"
   var nameInput = document.getElementById('name');
   var mobileInput = document.getElementById('mobile');
   var openOnly = document.getElementById('openOnly');
@@ -566,6 +605,7 @@
     // "always the default", so a page left open moves on by itself.
     var chosen = ((state && state.days) || []).filter(function (d) { return d.name === daySelect.value; })[0];
     pickedDay = chosen && chosen.name === state.defaultDay ? '' : daySelect.value;
+    askRow = null;
     shownSeq = ++seq; // ignore answers still on their way for the previous day
     busyRow = null;
     setStatus('');
@@ -587,38 +627,47 @@
 
   function refresh() { call('getState', [pickedDay]); }
 
-  function act(fn, r, verb, target) {
-    if (!myName()) { setStatus(t('enterName'), true); nameInput.focus(); return; }
-    var claiming = fn === 'claimRow';
-    if (claiming && meIncluded() && !tenDigits(mobileInput.value)) { setStatus(t('enter10'), true); mobileInput.focus(); return; }
-    if (claiming && showOthers.checked) {
+  // How many people a Register would add (you and/or "Register others"), or 0 after showing what is missing.
+  function claimCount() {
+    if (meIncluded() && !tenDigits(mobileInput.value)) { setStatus(t('enter10'), true); mobileInput.focus(); return 0; }
+    if (showOthers.checked) {
       var missing = Object.keys(picked).map(function (k) { return picked[k]; }).filter(function (p) { return !tenDigits(p.mobile); })[0];
       if (missing) {
         setStatus(t('enter10For', missing.name), true);
         document.getElementById('picker').open = true;
-        return;
+        return 0;
       }
     }
-    if (claiming) {
-      var n = checkOthers(othersText());
-      if (typeof n === 'string') { setStatus(n, true); othersInput.focus(); return; }
-      if (!n && !meIncluded()) { setStatus(t('nobody'), true); return; }
-    }
+    var n = checkOthers(othersText());
+    if (typeof n === 'string') { setStatus(n, true); othersInput.focus(); return 0; }
+    if (!n && !meIncluded()) { setStatus(t('nobody'), true); return 0; }
+    return n + (meIncluded() ? 1 : 0);
+  }
+
+  function act(fn, r, verb, target, role) {
+    if (!myName()) { setStatus(t('enterName'), true); nameInput.focus(); return; }
+    var claiming = fn === 'claimRow';
+    var count = claiming ? claimCount() : 0;
+    if (claiming && !count) return;
+    askRow = null;
     busyRow = r.row;
     render();
     setStatus(t(verb));
     var args = claiming ? [r.row, r.fp, myName(), mobileInput.value, state.tab, othersText(), meIncluded()]
       : fn === 'removePerson' ? [r.row, r.fp, myName(), target, state.tab]
       : [r.row, r.fp, myName(), state.tab];
+    if (role) args.push(role);                               // 'backup' on the Ongoing tab; left out = primary
     call(fn, args, function (s) {
       if (!claiming) return fn === 'removePerson' ? t('removed', target) : t('released');
       var now = s.rows.filter(function (x) { return x.row === r.row; })[0];
+      var part = now && role === 'backup' ? now.backup : now;
       var card = document.querySelector('#mine tr[data-row="' + r.row + '"]');
       if (card) {
         card.classList.add('flash');
         if (card.scrollIntoView) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-      return t('registered') + (now && now.over ? t('overNote', now.over) : '') + (card ? t('movedUp') : '');
+      var done = !role ? t('registered') : count > 1 ? t('registeredNAs', count, t(role)) : t('registeredAs', t(role));
+      return done + (part && part.over ? t('overNote', part.over) : '') + (card ? t('movedUp') : '');
     });
   }
 
@@ -668,10 +717,11 @@
     // The serial-number column ('S No', 'Sl No', 'Sr. No.') comes first, titled "Sl.No".
     var snoIdx = -1;
     state.headers.forEach(function (h, i) { if (snoIdx < 0 && /^s[lr]?\.?\s*no\.?$/i.test(String(h).trim())) snoIdx = i; });
-    var shown = function (_, i) { return i !== state.nameIdx && i !== snoIdx; };
+    var shown = function (_, i) { return i !== state.nameIdx && i !== snoIdx && i !== state.backupIdx; };
     // On phones each cell becomes a line of a card; its kind decides where it goes (see the phone styles).
     var kind = function (h) {
       h = String(h).replace(/\s+/g, ' ').trim().toLowerCase();
+      if (state.ongoing && /backup|frequency|days|date/.test(h)) return 'c-dup'; // shown in the backup block and the dates line
       if (h === String(state.slotsHeader).replace(/\s+/g, ' ').trim().toLowerCase() || /still/.test(h) && /volunteer/.test(h) || h === 'date') return 'c-dup';
       if (/institution|school/.test(h)) return 'c-school';
       if (/time/.test(h)) return 'c-time';
@@ -683,32 +733,49 @@
     var fixed = (snoIdx >= 0 ? ['c-sno'] : []).concat(['c-btn', 'c-slots']);
     [mineGrid, grid].forEach(function (table) {
       var head = table.insertRow();
-      (snoIdx >= 0 ? [t('slNo')] : []).concat(['', t('slotsLeft'), t('speakerCol')], state.headers.filter(shown)).forEach(function (h, i) {
+      var roleHeads = !state.ongoing ? ['', t('slotsLeft'), t('speakerCol')] : ['', t('slotsLeft'), t('volunteersCol'), t('whenCol')];
+      (snoIdx >= 0 ? [t('slNo')] : []).concat(roleHeads, state.headers.filter(shown)).forEach(function (h, i) {
         var th = document.createElement('th'); th.textContent = h; head.appendChild(th);
         if (i < fixed.length) th.className = 'stick' + (i === fixed.length - 1 ? ' stick-last' : '');
       });
     });
     var open = 0;
-    function isMine(r) { return !!me && r.assignees.some(function (a) { return same(a.name, me); }); }
+    // On the Ongoing tab a person may be on a program as primary or as backup.
+    function people(r) { return r.assignees.concat(r.backup ? r.backup.assignees : []); }
+    function isMine(r) { return !!me && people(r).some(function (a) { return same(a.name, me); }); }
     // "My Registrations": schools you are on, or where you registered someone else.
-    function isMyReg(r) { return isMine(r) || (!!me && r.assignees.some(function (a) { return a.by && same(a.by, me); })); }
+    function isMyReg(r) { return isMine(r) || (!!me && people(r).some(function (a) { return a.by && same(a.by, me); })); }
+    // Same rule as the script: the same start time clashes; on the Ongoing tab only on a shared weekday while both run.
+    function overlaps(a, b) {
+      var sharesDay = !a.days || !b.days || a.days.some(function (d) { return b.days.indexOf(d) >= 0; });
+      var from = [a.startDate || '', b.startDate || '', state.today || ''].sort().pop();
+      var ends = [a.endDate, b.endDate].filter(function (e) { return e; }).sort();
+      return sharesDay && (!ends.length || from <= ends[0]);
+    }
+    function clashOf(r) {
+      var x = state.rows.filter(function (x) { return x !== r && x.start === r.start && isMine(x) && (!state.ongoing || overlaps(x, r)); })[0];
+      return x ? (snoIdx >= 0 ? t('slNo') + ' ' + x.cells[snoIdx] : t('row', x.row)) : '';
+    }
+    // Ongoing tab: "15 Sep 2026 to 31 Mar 2027 · Weekly · Mon, Thu" (a date the script couldn't read is shown as typed).
+    var colOf = function (re) { var c = -1; state.headers.forEach(function (h, i) { if (c < 0 && re.test(String(h).toLowerCase())) c = i; }); return c; };
+    var startIdx = colOf(/start.*date/), endIdx = colOf(/end.*date/), freqIdx = colOf(/frequency/), daysIdx = colOf(/days/);
+    function fmtDate(iso, typed) {
+      var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+      return m ? Number(m[3]) + ' ' + t('months')[m[2] - 1] + ' ' + m[1] : typed;
+    }
+    function whenText(r) {
+      var cell = function (i) { return i >= 0 ? String(r.cells[i]).trim() : ''; };
+      var from = fmtDate(r.startDate, cell(startIdx)), to = fmtDate(r.endDate, cell(endIdx));
+      var dates = from && to ? t('dateRange', from, to) : from ? t('fromDate', from) : to ? t('untilDate', to) : '';
+      return [dates, cell(freqIdx), cell(daysIdx)].filter(function (x) { return x; }).join(' · ');
+    }
     var myCount = 0;
-    var myStarts = {}; // start time -> first S No I'm on at that time
-    state.rows.forEach(function (r) { if (r.start && isMine(r) && !myStarts[r.start]) myStarts[r.start] = snoIdx >= 0 ? t('slNo') + ' ' + r.cells[snoIdx] : t('row', r.row); });
-    state.rows.forEach(function (r) {
-      var mine = isMine(r);
-      var justMe = meIncluded() && !othersText().trim();
-      var clashWith = justMe && !mine && r.start ? myStarts[r.start] : '';
-      var hasRoom = r.remaining > 0;
-      if (hasRoom && !r.past) open++;
-      var myReg = isMyReg(r);
-      if (myReg) myCount++;
-      // "Open only" filters "All Schools": no ended slots and no full schools. Your own always stay under "My Registrations".
-      else if (openOnly.checked && (r.past || !hasRoom)) return;
-      var tr = (myReg ? mineGrid : grid).insertRow();
-      tr.setAttribute('data-row', r.row);
-      tr.className = r.past ? 'past' : mine ? 'mine' : r.over ? 'overrow' : (hasRoom ? '' : 'taken');
-      if (snoIdx >= 0) { var sno = tr.insertCell(); sno.textContent = r.cells[snoIdx]; sno.className = 'c-sno'; }
+    var justMe = meIncluded() && !othersText().trim();
+    // Register / Release, places left and everyone on it. On the Ongoing tab one card holds both roles: the badge
+    // shows both counts, backups carry a "Backup" tag, and Register asks which role (unless only one is open).
+    function roleCells(tr, r, mine, clashWith) {
+      var roles = [{ role: '', part: r }].concat(r.backup ? [{ role: 'backup', part: r.backup }] : []);
+      var open = roles.filter(function (x) { return x.part.total > 0; });
       var btnCell = tr.insertCell();
       btnCell.className = 'c-btn';
       var addButton = function (label, cls, handler) {
@@ -719,33 +786,70 @@
         b.onclick = handler;
         btnCell.appendChild(b);
       };
+      var hasRoom = open.some(function (x) { return x.part.remaining > 0; });
       if (r.past) {
         btnCell.textContent = state.pastDay ? t('past') : t('ended');
-      } else if (r.total <= 0) {
+      } else if (!open.length) {
         btnCell.textContent = t('closed');
       } else if (clashWith) {
         var note = document.createElement('span');
         note.className = 'clash';
         note.textContent = t('clashes', clashWith, r.start);
         btnCell.appendChild(note);
+      } else if (askRow === r.row && open.length > 1) {
+        var ask = document.createElement('span');
+        ask.className = 'ask';
+        var count = meIncluded() ? 1 : 0, n = checkOthers(othersText());
+        count += typeof n === 'number' ? n : 0;
+        ask.textContent = count > 1 ? t('registerNAs', count) : t('registerAs');
+        btnCell.appendChild(ask);
+        open.forEach(function (x) {
+          var room = x.part.remaining > 0;
+          addButton(t(x.role || 'primary') + (room ? '' : ' ' + t('full')), room ? '' : 'warn', function () { act('claimRow', r, 'registering', undefined, x.role); });
+        });
+        addButton(t('cancel'), 'release', function () { askRow = null; render(); });
       } else if (!mine || !justMe) {
-        // A full school can still take more; the extra people show in red.
-        addButton(hasRoom ? t('claim') : t('claimFull'), hasRoom ? '' : 'warn', function () { act('claimRow', r, 'registering'); });
+        // A full school can still take more; the extra people show in red. (On either role of a program you can't take the other.)
+        addButton(hasRoom ? t('claim') : t('claimFull'), hasRoom ? '' : 'warn', function () {
+          if (open.length === 1) return act('claimRow', r, 'registering', undefined, open[0].role);
+          if (!myName()) { setStatus(t('enterName'), true); nameInput.focus(); return; }
+          if (!claimCount()) return;
+          setStatus('');
+          askRow = r.row; render();
+        });
       }
-      if (mine && !r.past) addButton(t('release'), 'release', function () { act('releaseRow', r, 'releasing'); });
+      roles.forEach(function (x) {
+        var onIt = !!me && x.part.assignees.some(function (a) { return same(a.name, me); });
+        if (onIt && !r.past) addButton(t('release'), 'release', function () { act('releaseRow', r, 'releasing', undefined, x.role); });
+      });
       var slots = tr.insertCell();
       slots.className = 'c-slots';
-      if (r.over) { slots.className += ' overcount'; slots.textContent = t('overBy', r.over, r.total); }
-      else slots.textContent = t('nOfM', r.remaining, r.total);
+      roles.filter(function (x) { return !state.ongoing || x.part.total > 0 || x.part.assignees.length; }).forEach(function (x, i) {
+        if (x.part.over) slots.className = 'c-slots overcount';
+        var count = x.part.over ? t('overBy', x.part.over, x.part.total) : t('nOfM', x.part.remaining, x.part.total);
+        if (!state.ongoing) { slots.textContent = count; return; }
+        var one = document.createElement('span');                // one line per role
+        one.className = 'roleline';
+        one.textContent = t(x.role || 'primary') + ' ' + count;
+        slots.appendChild(one);
+      });
       var who = tr.insertCell();
       who.className = 'who c-who';
-      r.assignees.forEach(function (a, i) {
+      var everyone = [];
+      roles.forEach(function (x) { x.part.assignees.forEach(function (a, i) { everyone.push({ a: a, role: x.role, extra: i >= x.part.total }); }); });
+      everyone.forEach(function (p, i) {
+        var a = p.a;
         var line = document.createElement('div');
         line.className = 'person';
-        var extra = i >= r.total;
-        if (extra) line.className += ' extra';
-        line.textContent = (r.assignees.length > 1 ? (i + 1) + '. ' : '') + (a.phone ? a.name + ' · ' + a.phone : a.name) +
-          (extra ? t('overLimit') : '');
+        if (p.extra) line.className += ' extra';
+        line.textContent = (everyone.length > 1 ? (i + 1) + '. ' : '') + (a.phone ? a.name + ' · ' + a.phone : a.name) +
+          (p.extra ? t('overLimit') : '');
+        if (p.role) {
+          var tag = document.createElement('span');
+          tag.className = 'roletag';
+          tag.textContent = t(p.role);
+          line.appendChild(tag);
+        }
         if (a.by) {
           var via = document.createElement('span');
           via.className = 'via';
@@ -758,11 +862,27 @@
           x.textContent = '✕';
           x.title = t('removeX', a.name);
           x.disabled = busyRow !== null;
-          x.onclick = function () { act('removePerson', r, 'removing', a.name); };
+          x.onclick = function () { act('removePerson', r, 'removing', a.name, p.role); };
           line.appendChild(x);
         }
         who.appendChild(line);
       });
+    }
+    state.rows.forEach(function (r) {
+      var mine = isMine(r);
+      var clashWith = justMe && !mine && r.start ? clashOf(r) : '';
+      var hasRoom = r.remaining > 0 || !!(r.backup && r.backup.remaining > 0);
+      if (hasRoom && !r.past) open++;
+      var myReg = isMyReg(r);
+      if (myReg) myCount++;
+      // "Open only" filters "All Schools": no ended slots and no full schools. Your own always stay under "My Registrations".
+      else if (openOnly.checked && (r.past || !hasRoom)) return;
+      var tr = (myReg ? mineGrid : grid).insertRow();
+      tr.setAttribute('data-row', r.row);
+      tr.className = r.past ? 'past' : mine ? 'mine' : r.over || (r.backup && r.backup.over) ? 'overrow' : (hasRoom ? '' : 'taken');
+      if (snoIdx >= 0) { var sno = tr.insertCell(); sno.textContent = r.cells[snoIdx]; sno.className = 'c-sno'; }
+      roleCells(tr, r, mine, clashWith);
+      if (state.ongoing) { var when = tr.insertCell(); when.className = 'c-when'; when.textContent = whenText(r); }
       var hasMore = false;
       r.cells.forEach(function (c, i) {
         if (!shown(c, i)) return;
@@ -802,7 +922,7 @@
   function pinTable(grid) {
     if (!grid.rows.length) return;
     var lefts = [], x = 0;
-    [].forEach.call(grid.rows[0].cells, function (th) { if (/\bstick\b/.test(th.className)) { lefts.push(x); x += th.offsetWidth; } });
+    [].forEach.call(grid.rows[0].cells, function (th) { if (/\bstick\b/.test(th.className)) { lefts.push(x); x += th.getBoundingClientRect().width; } });
     [].forEach.call(grid.rows, function (tr, n) {
       lefts.forEach(function (left, i) {
         var c = tr.cells[i];

@@ -12,7 +12,9 @@ function formatDate(d, tz, f) { // tz ignored: harness runs in UTC
 }
 function makeSheet(name, id, grid) {
   const g = grid.map(r => r.slice()); let maxCols = Math.max(1, ...g.map(r => r.length));
-  const cell = (r, c) => (g[r-1] && g[r-1][c-1] != null) ? String(g[r-1][c-1]) : '';
+  // A real date shows as dd/MM/yyyy (an India-locale sheet); getValues hands back the date itself.
+  const raw = (r, c) => (g[r-1] && g[r-1][c-1] != null) ? g[r-1][c-1] : '';
+  const cell = (r, c) => { const v = raw(r, c); return v instanceof Date ? formatDate(v, '', 'dd/MM/yyyy') : String(v); };
   const sheet = {
     grid: g, writes: 0,
     getName: () => name, getSheetId: () => id, getMaxColumns: () => maxCols,
@@ -24,6 +26,7 @@ function makeSheet(name, id, grid) {
       const set = v => { while (g.length < r) g.push([]); g[r-1][c-1] = v; sheet.writes++; };
       const rng = {
         getDisplayValues: () => Array.from({length: nr}, (_, i) => Array.from({length: nc}, (_, j) => cell(r+i, c+j))),
+        getValues: () => Array.from({length: nr}, (_, i) => Array.from({length: nc}, (_, j) => raw(r+i, c+j))),
         setNumberFormat: f => { rng.fmt = f; return rng; },
         getFormula: () => { const v = cell(r, c); return v.startsWith('=') ? v : ''; },
         setValues: vals => { vals.forEach((row, i) => row.forEach((v, j) => { while (g.length < r + i) g.push([]); g[r - 1 + i][c - 1 + j] = v; })); sheet.writes++; return rng; },

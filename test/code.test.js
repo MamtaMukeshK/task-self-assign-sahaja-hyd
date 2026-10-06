@@ -638,7 +638,7 @@ test('29-Sep pattern: opens on the next day once the last slot (4:30-6:30 PM) is
   assert.equal(at(18, 29).tab, '29-Sep');
   assert.equal(at(18, 30).tab, '30-Sep');
   const late = at(23, 19);
-  assert.deepEqual([late.tab, late.clock, late.version], ['30-Sep', 'Tue 29 Sep 23:19', '2026-10-01.4']);
+  assert.deepEqual([late.tab, late.clock, late.version], ['30-Sep', 'Tue 29 Sep 23:19', '2026-10-06.4']);
 });
 test('time zone: India by default, the sheet\'s own setting only if TIME_ZONE is emptied', () => {
   const gs = load([makeSheet('28-Sep', 3, [['S No']])], NOW);
@@ -674,3 +674,119 @@ test('speed: cache is shared, cleared by typed edits, and re-read when rows are 
   assert.equal(gs.getState('').rows.length, 2, 'size change forces a fresh read');
   assert.doesNotThrow(() => gs.onEdit(undefined), 'onEdit never fails');
 });
+
+// ---- Ongoing programs ------------------------------------------------------
+// Mirrors the real "Ongoing" tab (2026-10-06 workbook; people and numbers replaced with fakes).
+const ONGOING_NOW = new Date(Date.UTC(2026, 9, 6, 5, 0)); // Tue 6 Oct
+function ongoingGrid() {
+  return [
+    ['Sl.No', 'Sahaja Yoga ( IND)\n Speaker Name', 'Total volunteers Needed', 'Number of Volunteers still Needed', 'Backup Yogis Name',
+      'Backup yogis needed', 'Num of backup yogis still needed', 'Frequency', 'Start Date', 'End Date', 'Time', 'Days of the Week',
+      'Institution name', 'Branch / Address', 'Google map', 'Remarks'],
+    ['1', '', '', '', '', '', '', 'Weekly', '', '', '9.30 am', 'Wed', 'Triveni Talent School', 'Lingampally', 'https://maps.app.goo.gl/x', ''],
+    ['2', 'Asha Rao 9000000001', '4', '3', '', '2', '', 'Custom', new Date(Date.UTC(2026, 8, 15)), new Date(Date.UTC(2027, 2, 31)),
+      '4 to 5pm - 1 or 2 sessions', 'Tue, Thu', 'Unacademy', 'Beeramguda', '', 'Work with Asha'],
+    ['3', '', '2', '2', '', '1', '1', 'Daily', '01/10/2026', '05/10/2026', '3 to 4pm', 'Mon, Tue, Wed, Thu, Fri', 'Sri Chaitanya DR BS Rao', 'Ameerpet', '', ''],
+  ];
+}
+function setupOngoing(grid, now) {
+  const sheets = [makeSheet('06-Oct', 1, screenshotGrid()), makeSheet('Ongoing', 2, grid || ongoingGrid()),
+    makeSheet('Speaker', 3, [['Sr. No.', 'Speaker', 'Mobile']])];
+  return { gs: load(sheets, now || ONGOING_NOW), ongoing: sheets[1], sheets };
+}
+
+test('ongoing: listed after the dates, page still opens on today; roles, dates and weekdays read from the real titles', () => {
+  const { gs } = setupOngoing();
+  const s = gs.getState();
+  assert.equal(s.tab, '06-Oct');
+  assert.equal(s.ongoing, undefined, 'a date tab is not ongoing');
+  assert.deepEqual(s.days[s.days.length - 1], { name: 'Ongoing', label: 'Ongoing programs', past: false, today: false, ongoing: true });
+  const o = gs.getState('Ongoing');
+  assert.deepEqual([o.tab, o.ongoing, o.nameIdx, o.backupIdx, o.slotsHeader], ['Ongoing', true, 1, 4, 'Total volunteers Needed']);
+  const [a, b, c] = o.rows;
+  assert.deepEqual([a.total, a.backup.total, a.backup.remaining, a.days, a.startDate, a.endDate, a.start],
+    [1, 1, 1, [3], '', '', '09:30'], 'blanks: 1 place each, no dates');
+  assert.deepEqual([b.total, b.remaining, b.backup.total, b.backup.remaining, b.days, b.startDate, b.endDate, b.start, b.past],
+    [4, 3, 2, 2, [2, 4], '2026-09-15', '2027-03-31', '16:00', false], 'real sheet dates');
+  assert.deepEqual([c.startDate, c.endDate, c.days, c.past], ['2026-10-01', '2026-10-05', [1, 2, 3, 4, 5], true], 'dates typed as text; ended yesterday');
+  assert.equal(b.cells[8], '15/09/2026', 'the date is shown as the sheet shows it');
+});
+
+test('ongoing: register and release as primary and as backup; each role keeps its own still-needed cell', () => {
+  const { gs, ongoing, sheets } = setupOngoing();
+  const r = gs.getState('Ongoing').rows[1];                                   // sheet row 3, page loaded once
+  gs.claimRow(r.row, r.fp, 'Priya', '9876543210', 'Ongoing', '', true, 'backup');
+  assert.deepEqual([ongoing.grid[2][4], ongoing.grid[2][6], ongoing.grid[2][1], ongoing.grid[2][3]],
+    ['Priya 9876543210', 1, 'Asha Rao 9000000001', '3'], 'backup cells only');
+  const s = gs.claimRow(r.row, r.fp, 'Ravi', '9123456789', 'Ongoing', '', true);  // same page: primary (role left out)
+  assert.deepEqual([ongoing.grid[2][1], ongoing.grid[2][3], ongoing.grid[2][4]], ['Asha Rao 9000000001\nRavi 9123456789', 2, 'Priya 9876543210']);
+  assert.deepEqual([s.rows[1].remaining, s.rows[1].backup.remaining, s.rows[1].backup.assignees[0].name], [2, 1, 'Priya']);
+  assert.throws(() => gs.releaseRow(r.row, r.fp, 'Priya', 'Ongoing'), /Your name is not on this row/, 'primary release does not touch backups');
+  gs.releaseRow(r.row, r.fp, 'Priya', 'Ongoing', 'backup');
+  assert.deepEqual([ongoing.grid[2][4], ongoing.grid[2][6]], ['', 2]);
+  assert.deepEqual(gs.getState().speakers.map(p => p.name), ['Priya', 'Ravi'], 'both roles are saved to the Speaker tab');
+  assert.equal(sheets[0].writes, 0, 'date tab untouched');
+});
+
+test('ongoing: register others as backup and remove them; one person cannot hold both roles; full roles still take people', () => {
+  const { gs, ongoing } = setupOngoing();
+  const a = gs.getState('Ongoing').rows[0];                                   // sheet row 2: 1 place, 1 backup
+  gs.claimRow(a.row, a.fp, 'Priya', '9876543210', 'Ongoing', 'Ravi 9123456789', true, 'backup');
+  assert.equal(ongoing.grid[1][4], 'Priya 9876543210\nRavi 9123456789 (via Priya)');
+  const s = gs.getState('Ongoing');
+  assert.deepEqual([s.rows[0].backup.remaining, s.rows[0].backup.over], [0, 1], 'over the backup limit is allowed');
+  assert.throws(() => gs.claimRow(a.row, a.fp, 'priya', '9876543210', 'Ongoing'), /You are already registered here as backup\. Nobody was added/);
+  assert.throws(() => gs.claimRow(a.row, a.fp, 'Asha', '9000000001', 'Ongoing', 'Ravi 9123456789', true), /Ravi is already registered here as backup/);
+  assert.equal(ongoing.grid[1][1], '', 'refused: nothing written');
+  gs.removePerson(a.row, a.fp, 'Priya', 'Ravi', 'Ongoing', 'backup');
+  assert.equal(ongoing.grid[1][4], 'Priya 9876543210');
+  ongoing.grid[1][5] = '0';                                                    // organisers: no backups here
+  const z = gs.getState('Ongoing').rows[0];
+  assert.throws(() => gs.claimRow(z.row, z.fp, 'Ravi', '9123456789', 'Ongoing', '', true, 'backup'), /No backups are needed here/);
+  assert.throws(() => gs.claimRow(z.row, z.fp, 'Ravi', '9123456789', '06-Oct', '', true, 'backup'), /edited or moved|no backup column/);
+});
+
+test('ongoing: a program is closed once its end date (and that day\'s end time) has passed; no end date = always open', () => {
+  const ended = setupOngoing().gs, r = ended.getState('Ongoing').rows[2];
+  assert.throws(() => ended.claimRow(r.row, r.fp, 'Priya', '9876543210', 'Ongoing'), /This program has ended, so it can only be viewed now/);
+  const lastDay = t => setupOngoing(null, new Date(Date.UTC(2026, 9, 5, t))).gs.getState('Ongoing').rows.map(x => x.past);
+  assert.deepEqual(lastDay(10), [false, false, false], 'end date today, before 4pm: open');
+  assert.deepEqual(lastDay(16), [false, false, true], 'end date today, 3 to 4pm is over');
+  const before = setupOngoing(null, new Date(Date.UTC(2026, 8, 1, 5))).gs.getState('Ongoing').rows;
+  assert.deepEqual(before.map(x => x.past), [false, false, false], 'not started yet: open for sign-up in advance');
+});
+
+test('ongoing: same time clashes only on a shared weekday while both programs run, as primary or backup', () => {
+  const head = ongoingGrid()[0];
+  const prog = (n, days, start, end, who) => [String(n), who || '', '3', '', '', '3', '', 'Weekly', start, end, '10 am', days, 'School ' + n, '', '', ''];
+  const { gs } = setupOngoing([head,
+    prog(1, 'Mon, Wed', '', '31/12/2026'), prog(2, 'Tue / Thu', '', '31/12/2026'), prog(3, 'Wed', '', ''),
+    prog(4, 'Mon to Fri', '01/01/2027', ''), prog(5, 'Wed', '', '01/10/2026', 'Ravi 9123456789')]);
+  const rows = () => gs.getState('Ongoing').rows;
+  const claim = (i, role) => { const r = rows()[i]; return gs.claimRow(r.row, r.fp, 'Priya', '9876543210', 'Ongoing', '', true, role); };
+  claim(0, 'backup');
+  claim(1);                                                                    // Tue/Thu: no shared day
+  assert.throws(() => claim(2), /Time clash: you are already on Sl\.No 1 \(School 1\) at 10 am on Ongoing\. Nobody was added/);
+  claim(3);                                                                    // starts after programs 1 and 2 end
+  const c = rows()[2];
+  gs.claimRow(c.row, c.fp, 'Ravi', '9123456789', 'Ongoing');                   // his Wed program ended on 1 Oct
+  assert.equal(rows()[2].assignees[0].name, 'Ravi');
+});
+
+test('ongoing: weekday and date text forms; only an Ongoing tab opens on it; date tabs ignore backup-like columns', () => {
+  assert.deepEqual(['Mon, Thu', 'Tue/Fri', 'Mon to Fri', 'mon-fri', 'Fri - Mon', 'Saturday & Sunday'].map(t => Array.from(gs0().parseDays_(t))),
+    [[1, 4], [2, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [0, 1, 5, 6], [0, 6]]);
+  assert.deepEqual(['Daily', '', 'every day'].map(t => gs0().parseDays_(t)), [null, null, null], 'no weekday named = every day');
+  assert.deepEqual(['15/09/2026', '5-Sep-2026', '15th Sep 2026', 'Sep 15, 2026', '2026-09-15', '15.9.26', '31/02/2026', 'soon', '']
+    .map(t => gs0().dateKey_(t, 'UTC')),
+    ['2026-09-15', '2026-09-05', '2026-09-15', '2026-09-15', '2026-09-15', '2026-09-15', '', '', '']);
+  const only = load([makeSheet('Ongoing', 1, ongoingGrid())], ONGOING_NOW).getState();
+  assert.deepEqual([only.tab, only.ongoing, only.defaultDay], ['Ongoing', true, 'Ongoing']);
+  const after = load([makeSheet('03-Oct', 1, screenshotGrid()), makeSheet('Ongoing', 2, ongoingGrid())], ONGOING_NOW).getState();
+  assert.deepEqual([after.tab, after.days.length], ['Ongoing', 2], 'every date is past: opens on Ongoing');
+  const grid = screenshotGrid().map((r, i) => r.concat(i ? '' : 'Backup Name'));
+  const day = load([makeSheet('06-Oct', 1, grid)], ONGOING_NOW).getState();
+  assert.equal(day.rows[0].backup, undefined);
+  assert.throws(() => load([makeSheet('06-Oct', 1, grid)], ONGOING_NOW).claimRow(day.rows[2].row, day.rows[2].fp, 'Priya', '9876543210', '06-Oct', '', true, 'backup'), /no backup column/);
+});
+function gs0() { return load([makeSheet('Ongoing', 1, ongoingGrid())], ONGOING_NOW); }

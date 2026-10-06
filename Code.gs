@@ -9,7 +9,7 @@
  */
 
 // Shown on the page so it's easy to confirm which version is deployed.
-var VERSION = '2026-10-01.4';
+var VERSION = '2026-10-06.4';
 
 var CONFIG = {
   // Time zone for "today" and "now" (which day opens, which slots have ended).
@@ -44,7 +44,17 @@ var CONFIG = {
   // through the page is added to it (or has their mobile filled in).
   SPEAKERS_TAB_NAMES: ['speaker', 'speakers'],
   SPEAKERS_NEW_TAB_NAME: 'Speakers',
-  SPEAKERS_MOBILE_HEADER: 'Mobile'
+  SPEAKERS_MOBILE_HEADER: 'Mobile',
+  // Programs that run on several days (no single date) are on a tab named 'Ongoing' (or 'Ongoing Programs').
+  // Only there, each program can also take backups, and has start/end dates and days of the week.
+  ONGOING_TAB_NAMES: ['ongoing', 'ongoing programs'],
+  ONGOING_LABEL: 'Ongoing programs',
+  BACKUP_NAME_HEADER_WORDS: ['backup', 'name'],         // 'Backup Yogis Name': the backups, one per line
+  BACKUP_SLOTS_HEADER_WORDS: ['backup', 'needed'],      // 'Backup yogis needed' (blank = 1, 0 = no backups)
+  BACKUP_REMAINING_HEADER_WORDS: ['backup', 'still'],   // 'Num of backup yogis still needed', kept up to date
+  START_DATE_HEADER_WORDS: ['start', 'date'],
+  END_DATE_HEADER_WORDS: ['end', 'date'],               // the program can't be joined after this day
+  DAYS_HEADER_WORDS: ['days']                           // 'Days of the Week': 'Mon, Thu', 'Mon to Fri'...
 };
 
 // The first day's data is put straight into the page, so it shows without a second trip to the server.
@@ -98,19 +108,20 @@ function cachedState_(sheet) {
  * themselves. Others are written as 'Name mobile (via Registrar)'. A school may
  * go over its total (the extra people show in red); a total of 0 means closed.
  */
-function claimRow(rowNum, fingerprint, name, mobile, tabName, othersText, includeSelf) {
+// role 'backup' (Ongoing tab only) works on the backup column instead; left out = the main (primary) column.
+function claimRow(rowNum, fingerprint, name, mobile, tabName, othersText, includeSelf, role) {
   return mutate_({ action: 'claim', rowNum: rowNum, fingerprint: fingerprint, name: name, mobile: mobile,
-    tabName: tabName, othersText: othersText, includeSelf: includeSelf !== false });
+    tabName: tabName, othersText: othersText, includeSelf: includeSelf !== false, role: role });
 }
 
 /** Takes the person using the page off a school. */
-function releaseRow(rowNum, fingerprint, name, tabName) {
-  return mutate_({ action: 'remove', rowNum: rowNum, fingerprint: fingerprint, name: name, target: name, tabName: tabName });
+function releaseRow(rowNum, fingerprint, name, tabName, role) {
+  return mutate_({ action: 'remove', rowNum: rowNum, fingerprint: fingerprint, name: name, target: name, tabName: tabName, role: role });
 }
 
 /** Takes someone the person using the page registered (or themselves) off a school. */
-function removePerson(rowNum, fingerprint, name, personName, tabName) {
-  return mutate_({ action: 'remove', rowNum: rowNum, fingerprint: fingerprint, name: name, target: personName, tabName: tabName });
+function removePerson(rowNum, fingerprint, name, personName, tabName, role) {
+  return mutate_({ action: 'remove', rowNum: rowNum, fingerprint: fingerprint, name: name, target: personName, tabName: tabName, role: role });
 }
 
 function mutate_(o) {
@@ -134,16 +145,25 @@ function mutate_(o) {
     if (day.isToday && row.end && day.now >= row.end) {
       throw new Error('This slot has already ended (' + row.timeText + '), so it can only be viewed now.');
     }
-    var onRow = function (n) { return row.assignees.some(function (a) { return sameName_(a.name, n); }); };
+    if (day.ongoing && programEnded_(row, day)) throw new Error('This program has ended, so it can only be viewed now.');
+    var backup = o.role === 'backup';
+    if (backup && !row.backup) throw new Error('This tab has no backup column.');
+    var part = backup ? row.backup : row;     // the role being changed: its people and total
+    var other = backup ? row : row.backup;    // the other role of an ongoing program, if any
+    var onRow = function (n) { return part.assignees.some(function (a) { return sameName_(a.name, n); }); };
 
-    var people = row.assignees.map(function (a) { return a.text; });
+    var people = part.assignees.map(function (a) { return a.text; });
     if (o.action === 'claim') {
-      if (row.total <= 0) throw new Error('This school is closed (its total is 0).');
+      if (part.total <= 0) throw new Error(backup ? 'No backups are needed here (its total is 0).' : 'This school is closed (its total is 0).');
       adding = adding.filter(function (p) { return !onRow(p.name); }); // already on it = nothing to do
       adding.forEach(function (p) {
+        if (other && other.assignees.some(function (a) { return sameName_(a.name, p.name); })) {
+          throw new Error((p.self ? 'You are' : p.name + ' is') + ' already registered here as ' + (backup ? 'primary' : 'backup') +
+            '. Nobody was added. Release that first.');
+        }
+        // On the Ongoing tab, the same start time only clashes on a shared weekday while both programs run.
         var clash = row.start && tab.rows.filter(function (x) {
-          return x.row !== rowNum && x.start === row.start &&
-            x.assignees.some(function (a) { return sameName_(a.name, p.name); });
+          return x.row !== rowNum && x.start === row.start && (!day.ongoing || overlaps_(x, row, day.today)) && onAnyRole_(x, p.name);
         })[0];
         if (clash) {
           throw new Error('Time clash: ' + (p.self ? 'you are' : p.name + ' is') + ' already on ' + describe_(tab, clash) +
@@ -153,18 +173,19 @@ function mutate_(o) {
       adding.forEach(function (p) { people.push(p.name + ' ' + p.mobile + (p.self ? '' : ' (via ' + me + ')')); });
     } else {
       var idx = -1;
-      row.assignees.forEach(function (a, i) { if (idx < 0 && sameName_(a.name, o.target)) idx = i; });
+      part.assignees.forEach(function (a, i) { if (idx < 0 && sameName_(a.name, o.target)) idx = i; });
       if (idx < 0) throw new Error(sameName_(o.target, me) ? 'Your name is not on this row.' : o.target + ' is not on this row.');
-      var p = row.assignees[idx];
+      var p = part.assignees[idx];
       if (!sameName_(p.name, me) && !sameName_(p.by, me)) throw new Error('Only ' + p.name + (p.by ? ' or ' + p.by : '') + ' can remove ' + p.name + '.');
       people.splice(idx, 1);
     }
     var text = joinPeople_(people);
-    if (text) writeText_(sheet, rowNum, tab.nameCol, text);
-    else sheet.getRange(rowNum, tab.nameCol).clearContent();
-    if (tab.remainingCol) {
-      var cell = sheet.getRange(rowNum, tab.remainingCol);
-      if (!cell.getFormula()) cell.setValue(Math.max(0, row.total - people.length));
+    var nameCol = backup ? tab.backupCol : tab.nameCol, remainingCol = backup ? tab.backupRemainingCol : tab.remainingCol;
+    if (text) writeText_(sheet, rowNum, nameCol, text);
+    else sheet.getRange(rowNum, nameCol).clearContent();
+    if (remainingCol) {
+      var cell = sheet.getRange(rowNum, remainingCol);
+      if (!cell.getFormula()) cell.setValue(Math.max(0, part.total - people.length));
     }
     if (adding.length) saveSpeakers_(ss, adding);
     SpreadsheetApp.flush();
@@ -318,8 +339,13 @@ function listDays_(ss) {
     days.push({ name: s.getName(), key: key, past: key < today, isToday: key === today, sheet: s,
       label: Utilities.formatDate(date, 'UTC', 'EEE') + ' ' + s.getName() + (key === today ? ' (today)' : key < today ? ' (past)' : '') });
   });
-  return days.sort(function (x, y) { return x.key < y.key ? -1 : x.key > y.key ? 1 : 0; });
+  days.sort(function (x, y) { return x.key < y.key ? -1 : x.key > y.key ? 1 : 0; });
+  var ongoing = ss.getSheets().filter(isOngoing_)[0];
+  if (ongoing) days.push({ name: ongoing.getName(), key: '', ongoing: true, past: false, isToday: false, sheet: ongoing, label: CONFIG.ONGOING_LABEL });
+  return days;
 }
+
+function isOngoing_(sheet) { return CONFIG.ONGOING_TAB_NAMES.indexOf(norm_(sheet.getName())) >= 0; }
 var MONTHS_ = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 
 /**
@@ -339,13 +365,20 @@ function resolveDay_(ss, tabName) {
   }
   var days = listDays_(ss);
   if (!days.length) throw new Error('There are no day tabs (named like 30-Sep) yet.');
-  var upcoming = days.filter(function (d) { return !d.past; });
-  var def = upcoming[0] || days[days.length - 1];
+  var dated = days.filter(function (d) { return !d.ongoing; });
+  var upcoming = dated.filter(function (d) { return !d.past; });
+  // Today or the next date; once every date is past, the Ongoing tab (else the latest past date).
+  var def = upcoming[0] || days.filter(function (d) { return d.ongoing; })[0] || dated[dated.length - 1];
   if (def.isToday && upcoming[1] && dayIsOver_(def.sheet, now)) def = upcoming[1];
   var pick = tabName ? days.filter(function (d) { return d.name === tabName; })[0] : def;
   if (!pick) throw new Error('"' + tabName + '" is not available any more (it may have been renamed). Please pick another date.');
-  return { sheet: pick.sheet, past: pick.past, isToday: pick.isToday, now: now, clock: clock, defaultDay: def.name,
-    days: days.map(function (d) { return { name: d.name, label: d.label, past: d.past, today: d.isToday }; }) };
+  return { sheet: pick.sheet, past: pick.past, isToday: pick.isToday, ongoing: !!pick.ongoing, now: now, clock: clock,
+    today: Utilities.formatDate(at, timeZone_(ss), 'yyyy-MM-dd'), defaultDay: def.name,
+    days: days.map(function (d) {
+      var out = { name: d.name, label: d.label, past: d.past, today: d.isToday };
+      if (d.ongoing) out.ongoing = true;
+      return out;
+    }) };
 }
 
 /** True when today's tab has timed slots and all of them have ended (untimed ones don't count). */
@@ -368,8 +401,63 @@ function markPast_(state, day) {
   state.clock = day.clock;
   state.version = VERSION;
   state.pastDay = !!day.past;
-  state.rows.forEach(function (r) { r.past = state.pastDay || !!(day.isToday && r.end && day.now >= r.end); });
+  if (day.ongoing) state.today = day.today; // the page uses it for the same clash rule as the script
+  state.rows.forEach(function (r) {
+    r.past = state.pastDay || !!(day.isToday && r.end && day.now >= r.end) || !!(day.ongoing && programEnded_(r, day));
+  });
   return state;
+}
+
+/** An ongoing program is over once its end date has passed (on the end date itself, once its time is over). */
+function programEnded_(row, day) {
+  return !!row.endDate && (row.endDate < day.today || (row.endDate === day.today && !!row.end && day.now >= row.end));
+}
+
+/** Two ongoing programs share a weekday while both still run (no days listed = every day; no dates = always). */
+function overlaps_(a, b, today) {
+  var sharesDay = !a.days || !b.days || a.days.some(function (d) { return b.days.indexOf(d) >= 0; });
+  var from = [a.startDate || '', b.startDate || '', today].sort().pop();
+  var ends = [a.endDate, b.endDate].filter(function (e) { return e; }).sort();
+  return sharesDay && (!ends.length || from <= ends[0]);
+}
+
+/** True when the name is on the row, as primary or as backup. */
+function onAnyRole_(row, name) {
+  return row.assignees.concat(row.backup ? row.backup.assignees : []).some(function (a) { return sameName_(a.name, name); });
+}
+
+/**
+ * Weekdays (0 = Sunday) from text like 'Mon, Thu', 'Tue/Fri', 'Mon to Fri' or 'Mon-Fri';
+ * null when none are named (blank, 'Daily'...), which counts as every day.
+ */
+var WEEKDAYS_ = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+function parseDays_(text) {
+  var re = /(sun|mon|tue|wed|thu|fri|sat)[a-z]*\.?(?:\s*(?:-|–|to)\s*(sun|mon|tue|wed|thu|fri|sat)[a-z]*)?/g, m, seen = {};
+  var s = String(text || '').toLowerCase();
+  while ((m = re.exec(s))) {
+    var a = WEEKDAYS_.indexOf(m[1]), b = m[2] ? WEEKDAYS_.indexOf(m[2]) : a;
+    for (var i = a; ; i = (i + 1) % 7) { seen[i] = true; if (i === b) break; }
+  }
+  var days = Object.keys(seen).map(Number).sort();
+  return days.length ? days : null;
+}
+
+/**
+ * 'yyyy-MM-dd' from a date cell: a real sheet date (read as a date, so day and month can't be swapped), or text
+ * like '15/09/2026' (day first), '15-Sep-2026', '15th Sep 2026', 'Sep 15, 2026' or '2026-09-15'. '' if none.
+ */
+function dateKey_(v, tz) {
+  if (v && typeof v.getTime === 'function') return isNaN(v.getTime()) ? '' : Utilities.formatDate(v, tz, 'yyyy-MM-dd');
+  var s = String(v == null ? '' : v).trim().toLowerCase(), x, y, m, d;
+  if ((x = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(s))) { y = +x[1]; m = +x[2]; d = +x[3]; }
+  else if ((x = /^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4}|\d{2})$/.exec(s))) { d = +x[1]; m = +x[2]; y = +x[3]; }
+  else if ((x = /^(\d{1,2})(?:st|nd|rd|th)?[\s\-\/]*([a-z]{3})[a-z]*\.?[\s\-\/,]*(\d{4})$/.exec(s))) { d = +x[1]; m = MONTHS_.indexOf(x[2]) + 1; y = +x[3]; }
+  else if ((x = /^([a-z]{3})[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})$/.exec(s))) { m = MONTHS_.indexOf(x[1]) + 1; d = +x[2]; y = +x[3]; }
+  else return '';
+  if (y < 100) y += 2000;
+  var date = new Date(Date.UTC(y, m - 1, d, 12));
+  if (m < 1 || date.getUTCMonth() !== m - 1 || date.getUTCDate() !== d) return '';
+  return Utilities.formatDate(date, 'UTC', 'yyyy-MM-dd');
 }
 
 /**
@@ -397,30 +485,59 @@ function readTab_(sheet) {
     var text = norm_(h);
     if (CONFIG.TIME_HEADER_WORDS.every(function (w) { return text.indexOf(w) >= 0; })) tIdxs.push(i);
   });
+  // Ongoing tab only: backups (with their own total and "still needed"), start/end dates and weekdays.
+  var ongoing = isOngoing_(sheet), bIdx = -1, bsIdx = -1, brIdx = -1, dIdx = -1, starts = [], ends = [];
+  if (ongoing) {
+    bIdx = findHeader_(sheet, headers, CONFIG.BACKUP_NAME_HEADER_WORDS);
+    brIdx = findHeader_(sheet, headers, CONFIG.BACKUP_REMAINING_HEADER_WORDS, [bIdx]);
+    bsIdx = findHeader_(sheet, headers, CONFIG.BACKUP_SLOTS_HEADER_WORDS, [bIdx, brIdx]);
+    dIdx = findHeader_(sheet, headers, CONFIG.DAYS_HEADER_WORDS);
+    var tz = openSpreadsheet_().getSpreadsheetTimeZone();
+    var dates = function (words) {
+      var c = findHeader_(sheet, headers, words);
+      if (c < 0 || values.length < 2) return [];
+      return sheet.getRange(CONFIG.HEADER_ROW + 1, c + 1, values.length - 1, 1).getValues().map(function (v) { return dateKey_(v[0], tz); });
+    };
+    starts = dates(CONFIG.START_DATE_HEADER_WORDS);
+    ends = dates(CONFIG.END_DATE_HEADER_WORDS);
+  }
 
   var rows = [];
   values.slice(1).forEach(function (r, i) {
     // The page itself changes the speaker and "still needed" cells, so they are
     // left out of the fingerprint; everything else must be unchanged.
-    var details = r.filter(function (_, c) { return c !== nIdx && c !== rIdx; });
+    var details = r.filter(function (_, c) { return c !== nIdx && c !== rIdx && c !== bIdx && c !== brIdx; });
     if (details.join('').trim() === '') return; // skip blank rows
     var speaker = r[nIdx].trim();
     var assignees = parseAssignees_(speaker);
     var total = slotsFrom_(sIdx >= 0 ? r[sIdx] : '');
     var timeText = '';
     tIdxs.forEach(function (c) { if (!timeText && r[c].trim()) timeText = r[c].trim(); });
-    rows.push({ row: CONFIG.HEADER_ROW + 1 + i, fp: fingerprint_(details), cells: r, speaker: speaker,
+    var row = { row: CONFIG.HEADER_ROW + 1 + i, fp: fingerprint_(details), cells: r, speaker: speaker,
       assignees: assignees, total: total, remaining: Math.max(0, total - assignees.length),
       over: Math.max(0, assignees.length - total),
-      timeText: timeText, start: startTime_(timeText), end: endTime_(timeText) });
+      timeText: timeText, start: startTime_(timeText), end: endTime_(timeText) };
+    if (ongoing) {
+      if (bIdx >= 0) {
+        var backups = parseAssignees_(r[bIdx].trim()), bTotal = slotsFrom_(bsIdx >= 0 ? r[bsIdx] : '');
+        row.backup = { assignees: backups, total: bTotal, remaining: Math.max(0, bTotal - backups.length),
+          over: Math.max(0, backups.length - bTotal) };
+      }
+      row.startDate = starts[i] || '';
+      row.endDate = ends[i] || '';
+      row.days = parseDays_(dIdx >= 0 ? r[dIdx] : '');
+    }
+    rows.push(row);
   });
-  return { headers: headers, nameCol: nIdx + 1, remainingCol: rIdx + 1,
-    slotsHeader: sIdx >= 0 ? headers[sIdx] : '', rows: rows };
+  return { headers: headers, nameCol: nIdx + 1, remainingCol: rIdx + 1, backupCol: bIdx + 1, backupRemainingCol: brIdx + 1,
+    ongoing: ongoing, slotsHeader: sIdx >= 0 ? headers[sIdx] : '', rows: rows };
 }
 
 function buildState_(sheet) {
   var tab = readTab_(sheet);
-  return { tab: sheet.getName(), headers: tab.headers, nameIdx: tab.nameCol - 1, slotsHeader: tab.slotsHeader, rows: tab.rows };
+  var state = { tab: sheet.getName(), headers: tab.headers, nameIdx: tab.nameCol - 1, slotsHeader: tab.slotsHeader, rows: tab.rows };
+  if (tab.ongoing) { state.ongoing = true; state.backupIdx = tab.backupCol - 1; }
+  return state;
 }
 
 /**
@@ -548,12 +665,12 @@ function cleanMobile_(raw) {
   return digits;
 }
 
-/** Index of the one header containing all the words, -1 if none; errors if several match. */
-function findHeader_(sheet, headers, words) {
+/** Index of the one header containing all the words, -1 if none; errors if several match. Columns in skip are passed over. */
+function findHeader_(sheet, headers, words, skip) {
   var hits = [];
   headers.forEach(function (h, i) {
     var text = norm_(h);
-    if (words.every(function (w) { return text.indexOf(w) >= 0; })) hits.push(i);
+    if ((skip || []).indexOf(i) < 0 && words.every(function (w) { return text.indexOf(w) >= 0; })) hits.push(i);
   });
   if (hits.length > 1) throw new Error('Tab "' + sheet.getName() + '" has several columns whose header contains "' +
     words.join('" and "') + '". Please rename all but one.');
