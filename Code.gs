@@ -9,7 +9,7 @@
  */
 
 // Shown on the page so it's easy to confirm which version is deployed.
-var VERSION = '2026-10-06.3';
+var VERSION = '2026-10-06.4';
 
 var CONFIG = {
   // Time zone for "today" and "now" (which day opens, which slots have ended).

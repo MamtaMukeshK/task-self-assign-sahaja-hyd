@@ -1,6 +1,6 @@
 # Handoff / status
 
-_Last updated: 2026-10-06 (version 2026-10-06.3 pushed, not yet live: Ongoing Programs, one block per card)_
+_Last updated: 2026-10-06 (version 2026-10-06.4 pushed, not yet live: Ongoing Programs, one block per card)_
 
 ## Start here (for a new session)
 - **What this is:** a Google Apps Script web page for the "Hyderabad 2026 - Self Realization Tour" sheet.
@@ -8,7 +8,7 @@ _Last updated: 2026-10-06 (version 2026-10-06.3 pushed, not yet live: Ongoing Pr
   Release places; the speaker cell of the day tab is updated. Details of every feature: the dated log below.
 - **Live:** the organiser's own Apps Script deployment of `Code.gs` + `Index.html` (paste from
   `SETUP_GUIDE.html`, then Deploy -> Manage deployments -> New version). The page footer shows the version.
-  Latest pushed: 2026-10-06.3 on branch claude/zealous-johnson-h19h6w (Ongoing Programs; not merged, not deployed).
+  Latest pushed: 2026-10-06.4 on branch claude/zealous-johnson-h19h6w (Ongoing Programs; not merged, not deployed).
   Live (confirmed by the user 2026-10-01 16:47): 2026-10-01.4. Ask the user which version is
   live before assuming.
 - **Demo videos:** `docs/demo.mp4` (English, 75 s, phone screen, Indian English female voice), `docs/demo-te.mp4`
@@ -287,6 +287,11 @@ _Last updated: 2026-10-06 (version 2026-10-06.3 pushed, not yet live: Ongoing Pr
 - 2026-10-06: at the user's request the Ongoing places badge shows the Backup count on its own line under the Primary
   count (span.roleline, display:block; no "·" between them), on phones and laptops alike. VERSION 2026-10-06.3.
   77 tests (the Ongoing browser test checks the two lines and that Backup sits lower).
+- 2026-10-06: at the user's request the "Backup" tag next to a name is solid gold (var(--gold)) with bold navy text
+  (contrast about 5.1:1, above the 4.5:1 guideline for small text), everywhere a backup is listed; ended programs
+  still grey it out (their existing !important grey rule). Gold was chosen because red and amber already mean
+  "over limit" / "full". Also moved a CSS comment that an earlier edit had separated from its rule. VERSION
+  2026-10-06.4. 77 tests (the Ongoing browser test checks the tag's colours and boldness).
 
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
@@ -304,10 +309,10 @@ _Last updated: 2026-10-06 (version 2026-10-06.3 pushed, not yet live: Ongoing Pr
   if not, the page errors loudly rather than guessing.
 
 ## Next step
-- **User: deploy 2026-10-06.3.** Paste both files from SETUP_GUIDE.html, Deploy -> Manage deployments -> edit the
+- **User: deploy 2026-10-06.4.** Paste both files from SETUP_GUIDE.html, Deploy -> Manage deployments -> edit the
   existing deployment -> New version (keeps the same link). Then check on a phone: the date list ends with "Ongoing
   programs"; a card shows "8 Oct 2026 to 29 Oct 2026 · Weekly · Wed"; Register -> Backup writes column E and sets G;
-  Release clears it; the footer reads v2026-10-06.3. If the dates line shows the sheet's text instead of "8 Oct 2026",
+  Release clears it; the footer reads v2026-10-06.4. If the dates line shows the sheet's text instead of "8 Oct 2026",
   the date cells are text, not real dates (still works, but say so).
 - **Next task (separate, user's choice): demo videos for Ongoing programs** in English, Telugu and Hindi. The recorder
   (tools/record_demo.js, see "Re-record the demo" above) uses a demo copy of the 30-Sep layout; it needs an Ongoing tab

@@ -94,9 +94,10 @@
   #loadingBox[hidden] { display:none; }
   .spin { width:20px; height:20px; border:3px solid var(--line); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; flex:none; }
   @keyframes spin { to { transform:rotate(360deg); } }
-  td.c-toggle { display:none; }
+  td.c-toggle { display:none; }                            /* the "Details" button is for the phone cards only */
   .roleline { display:block; white-space:nowrap; }   /* Ongoing tab: Primary count, then Backup count below it */
-  .roletag { margin-left:6px; padding:0 6px; border:1px solid var(--line); border-radius:8px; font-size:12px; font-weight:500; color:var(--muted); }                            /* the "Details" button is for the phone cards only */
+  /* "Backup" next to a name: solid gold with navy text (contrast 5.1:1), so backups stand out; grey on ended programs */
+  .roletag { margin-left:6px; padding:1px 8px; border-radius:10px; background:var(--gold); color:var(--navy); font-size:12px; font-weight:700; }
   /* Sl.No, the button and "Slots left" stay put while the table scrolls sideways (left set by pinColumns). */
   th.stick, td.stick { position:sticky; z-index:1; }
   th.stick { z-index:3; }

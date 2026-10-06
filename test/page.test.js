@@ -695,6 +695,8 @@ test('ongoing programs in real browser: drop-down entry, one card per program wi
     const mine = p.locator('#mine tr[data-row="2"]');
     assert.deepEqual(await btns(mine), ['Release'], 'no Register for the other role');
     assert.equal(await mine.locator('.person').textContent(), 'Priya · 9876543210Backup');
+    assert.deepEqual(await mine.locator('.roletag').evaluate(e => [getComputedStyle(e).backgroundColor, getComputedStyle(e).color, getComputedStyle(e).fontWeight]),
+      ['rgb(201, 168, 76)', 'rgb(26, 58, 92)', '700'], 'Backup tag: solid gold, bold navy');
     assert.deepEqual(await mine.locator('td.c-slots .roleline').allTextContents(), ['Primary 1 of 1', 'Backup 0 of 1']);
 
     assert.match(await p.locator('#grid tr[data-row="3"] .clash').textContent(), /Clashes with Sl.No 1/, 'Wed 9.30 clashes');
