@@ -1,6 +1,6 @@
 # Handoff / status
 
-_Last updated: 2026-10-06 (version 2026-10-01.4; Ongoing Programs design proposed, not built)_
+_Last updated: 2026-10-06 (version 2026-10-06.1 pushed, not yet live: Ongoing Programs)_
 
 ## Start here (for a new session)
 - **What this is:** a Google Apps Script web page for the "Hyderabad 2026 - Self Realization Tour" sheet.
@@ -8,7 +8,8 @@ _Last updated: 2026-10-06 (version 2026-10-01.4; Ongoing Programs design propose
   Release places; the speaker cell of the day tab is updated. Details of every feature: the dated log below.
 - **Live:** the organiser's own Apps Script deployment of `Code.gs` + `Index.html` (paste from
   `SETUP_GUIDE.html`, then Deploy -> Manage deployments -> New version). The page footer shows the version.
-  Latest pushed: 2026-10-01.4 (merged into main). Live (confirmed by the user 2026-10-01 16:47): 2026-10-01.4. Ask the user which version is
+  Latest pushed: 2026-10-06.1 on branch claude/zealous-johnson-h19h6w (Ongoing Programs; not merged, not deployed).
+  Live (confirmed by the user 2026-10-01 16:47): 2026-10-01.4. Ask the user which version is
   live before assuming.
 - **Demo videos:** `docs/demo.mp4` (English, 75 s, phone screen, Indian English female voice), `docs/demo-te.mp4`
   (Telugu, 78 s) and `docs/demo-hi.mp4` (Hindi, 84 s). The demo button plays the one for the page's language
@@ -16,7 +17,7 @@ _Last updated: 2026-10-06 (version 2026-10-01.4; Ongoing Programs design propose
   1L1A_FmlOukDZMTnOXa73RlzQfdaHS9Zg, Telugu 1ut0WKW9gVrnG0qRQltc7qC3P2O5GCybq, Hindi 1Hf3clK7tYRimgm3ispbHwCw4RvTKPJIM.
   The user replaces a Drive file via Drive -> Manage versions after every re-record (the link stays the same).
   The GitHub copies after each Drive link are only used if that Drive link is removed.
-- **Tests:** `cd test && npm install && npm test` (70 tests; browser tests need Chromium at
+- **Tests:** `cd test && npm install && npm test` (77 tests; browser tests need Chromium at
   `/opt/pw-browsers/chromium`). Rebuild the guide after any code change: `python3 tools/build_guide.py`.
   Bump `VERSION` in `Code.gs` (and the matching string in `test/code.test.js`) for every page change.
 - **Re-record the demo:** in `tools/`: `npm i playwright-core ffmpeg-static @fontsource/dm-sans
@@ -256,6 +257,22 @@ _Last updated: 2026-10-06 (version 2026-10-01.4; Ongoing Programs design propose
   cells. Real 2026-10-06 workbook replayed: 3 programs read correctly (its date cells are still blank = no limit).
   VERSION 2026-10-06.1. 62 server tests (new ones checked to fail when the clash, fingerprint or ended rule is broken).
 
+- 2026-10-06: Ongoing Programs, phase 2 (page) DONE. Index.html: "Ongoing programs" entry in the date list (en/te/hi);
+  on that tab each card shows a dates line ("8 Oct 2026 to 29 Oct 2026 · Weekly · Wed", month names translated), then
+  a Primary block (places left, Register/Release, names) and a Backup block (the same), then address/map/Details; the
+  sheet's backup, frequency, days and date columns are hidden on cards (shown raw on laptops, like other duplicates).
+  Laptop table: columns Primary | Primary slots left | Primary volunteers | Backup | Backup slots left | Backup
+  volunteers | Dates & days. Holding one role hides the other role's Register (registering others still shows it).
+  Page clash label uses the script's rule (shared weekday + both running). My Registrations and "Open only" count both
+  roles. Four new script messages translated. Frozen-column 1-pixel fix: exact widths (getBoundingClientRect) instead
+  of whole pixels; that test now checks within 0.01 pixel. README and the guide's organiser rules describe the
+  Ongoing tab. 77 tests (1 new browser test). Screenshots checked by eye at 390 and 1280 pixels wide (two layout
+  fixes made after looking: a divider so the Backup block never shares the Primary line; headed button columns).
+  Real workbook (700388ce upload, dates filled in) replayed: 8-29 Oct Wed 9.30, 22 Oct-10 Dec Tue/Thu 4-5pm,
+  from 9 Oct Mon-Fri 3-4pm all read correctly; the 10 Dec program closes at 5 pm that day.
+  NOT VERIFIED: on real Google (dates are read with getValues, which the build machine can't call for real; the test
+  stand-in returns dates the way Google documents it); Telugu/Hindi wording of the new phrases by a native speaker.
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.
@@ -272,9 +289,16 @@ _Last updated: 2026-10-06 (version 2026-10-01.4; Ongoing Programs design propose
   if not, the page errors loudly rather than guessing.
 
 ## Next step
-- **2026-10-06: Ongoing Programs feature - design proposed, waiting for the user.** Read
-  `docs/ongoing-programs-design.md` (brief, what the real tab looks like, 11 questions with recommended answers,
-  options A/B/C, design A in detail, estimate). Apply the user's answers there before building. No code written yet.
+- **User: deploy 2026-10-06.1.** Paste both files from SETUP_GUIDE.html, Deploy -> Manage deployments -> edit the
+  existing deployment -> New version (keeps the same link). Then check on a phone: the date list ends with "Ongoing
+  programs"; a card shows "8 Oct 2026 to 29 Oct 2026 · Weekly · Wed"; Register as Backup writes column E and sets G;
+  Release clears it; the footer reads v2026-10-06.1. If the dates line shows the sheet's text instead of "8 Oct 2026",
+  the date cells are text, not real dates (still works, but say so).
+- **Next task (separate, user's choice): demo videos for Ongoing programs** in English, Telugu and Hindi. The recorder
+  (tools/record_demo.js, see "Re-record the demo" above) uses a demo copy of the 30-Sep layout; it needs an Ongoing tab
+  in its demo data, new steps (pick "Ongoing programs", register as Backup, see it under My Registrations), new voice
+  lines in tools/voiceover/lines.json and te/hi/lines.json, then re-pin the GitHub copies and replace the three Drive
+  files via Manage versions. Estimated 40,000-60,000 tokens (low confidence).
 - Done by the user 2026-10-01: version 2026-10-01.4 is LIVE; the English, Telugu and Hindi demo videos on Drive are
   current and open correctly on computer and phone.
 - Open (no code change without the user's go-ahead): does the built-in first-day data (doGet's INITIAL_STATE) reach

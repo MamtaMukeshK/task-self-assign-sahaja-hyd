@@ -401,6 +401,7 @@ function markPast_(state, day) {
   state.clock = day.clock;
   state.version = VERSION;
   state.pastDay = !!day.past;
+  if (day.ongoing) state.today = day.today; // the page uses it for the same clash rule as the script
   state.rows.forEach(function (r) {
     r.past = state.pastDay || !!(day.isToday && r.end && day.now >= r.end) || !!(day.ongoing && programEnded_(r, day));
   });

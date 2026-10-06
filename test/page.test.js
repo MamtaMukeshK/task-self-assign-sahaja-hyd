@@ -562,8 +562,8 @@ test('adaptive layout: phone cards (no sideways scroll, duplicates hidden, Detai
     await tab.evaluate(() => { document.getElementById('grid').parentNode.scrollLeft = 200; });
     assert.ok(await tab.evaluate(() => document.getElementById('grid').parentNode.scrollLeft) > 0, 'the table does scroll sideways');
     assert.deepEqual(await xs(), before, 'Sl.No, button and Slots left stay put');
-    const lefts = await tab.evaluate(() => [...document.querySelectorAll('#grid th.stick')].map(th => [parseFloat(th.style.left), th.offsetWidth]));
-    lefts.slice(1).forEach(([left], i) => assert.equal(left, lefts[i][0] + lefts[i][1], 'frozen columns sit edge to edge (no gaps)'));
+    const lefts = await tab.evaluate(() => [...document.querySelectorAll('#grid th.stick')].map(th => [parseFloat(th.style.left), th.getBoundingClientRect().width]));
+    lefts.slice(1).forEach(([left], i) => assert.ok(Math.abs(left - lefts[i][0] - lefts[i][1]) < 0.01, 'frozen columns sit edge to edge (no gaps)'));
   } finally { await browser.close(); }
 });
 
@@ -642,5 +642,82 @@ test('speed: first view needs no server trip; loading message only while there i
     assert.equal(await p.textContent('#title'), 'Day: 28-Sep', 'a day seen before shows at once');
     assert.equal(await p.isVisible('#loadingBox'), false);
     release(); hold = null;
+  } finally { await browser.close(); }
+});
+
+test('ongoing programs in real browser: drop-down entry, primary and backup on each card, clashes by weekday, ended greyed, Telugu', { timeout: 60000 }, async () => {
+  const head = ['Sl.No', 'Sahaja Yoga ( IND)\n Speaker Name', 'Total volunteers Needed', 'Number of Volunteers still Needed', 'Backup Yogis Name',
+    'Backup yogis needed', 'Num of backup yogis still needed', 'Frequency', 'Start Date', 'End Date', 'Time', 'Days of the Week',
+    'Institution name', 'Branch / Address', 'Google map', 'Remarks'];
+  const ongoing = makeSheet('Ongoing', 2, [head,
+    ['1', '', '1', '1', '', '1', '1', 'Weekly', new Date(Date.UTC(2026, 8, 15)), new Date(Date.UTC(2027, 2, 31)), '9.30 am', 'Mon, Wed', 'Triveni Talent School', 'Lingampally', '', 'Call first'],
+    ['2', '', '2', '2', '', '1', '1', 'Weekly', '', '', '9.30 am', 'Wed', 'Unacademy', 'Beeramguda', '', ''],
+    ['3', '', '2', '2', '', '1', '1', 'Weekly', '', '', '9.30 am', 'Tue', 'Sri Chaitanya', 'Ameerpet', '', ''],
+    ['4', 'Asha 9000000001', '1', '0', '', '1', '1', 'Daily', '01/09/2026', '30/09/2026', '3 to 4pm', 'Mon to Fri', 'Old School', 'Kukatpally', '', '']]);
+  const gs = load([makeSheet('06-Oct', 1, screenshotGrid()), ongoing, makeSheet('Speaker', 3, [['Sr. No.', 'Speaker', 'Mobile']])],
+    new Date(Date.UTC(2026, 9, 6, 5)));
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
+  try {
+    const p = await (await browser.newContext({ viewport: { width: 390, height: 800 } })).newPage();
+    p.setDefaultTimeout(8000);
+    const errs = []; p.on('pageerror', e => errs.push(e.message));
+    await p.exposeFunction('gsCall', (fn, a) => { try { return { ok: JSON.parse(JSON.stringify(gs[fn](...a))) }; } catch (e) { return { err: e.message }; } });
+    await p.addInitScript(SHIM);
+    await p.route('http://app.test/', r => r.fulfill({ contentType: 'text/html', body: html }));
+    await p.goto('http://app.test/');
+    await p.waitForSelector('text=Day: 06-Oct');
+    assert.deepEqual(await p.locator('#day option').allTextContents(), ['Tue 06-Oct (today)', 'Ongoing programs'], 'opens on today; Ongoing last');
+    await p.fill('#name', 'Priya'); await p.fill('#mobile', '9876543210');
+    await p.selectOption('#day', 'Ongoing');
+    await p.waitForSelector('text=Day: Ongoing');
+
+    const heads = await p.locator('#grid th').allTextContents();
+    assert.deepEqual(heads.slice(0, 8), ['Sl.No', 'Primary', 'Primary slots left', 'Primary volunteers', 'Backup', 'Backup slots left', 'Backup volunteers', 'Dates & days']);
+    assert.ok(!heads.includes('Backup Yogis Name'), 'sheet backup column not repeated');
+    const card = p.locator('#grid tr[data-row="2"]');
+    assert.equal(await card.locator('td.c-when').textContent(), '15 Sep 2026 to 31 Mar 2027 · Weekly · Mon, Wed');
+    assert.deepEqual(await card.locator('td.c-slots').allTextContents(), ['Primary: 1 of 1', 'Backup: 1 of 1']);
+    assert.equal(await card.locator('td.c-dup', { hasText: 'Mon, Wed' }).isVisible(), false, 'days shown once, in the dates line');
+    const y = sel => card.locator(sel).evaluate(e => e.getBoundingClientRect().top);
+    assert.ok(await y('td.c-slots.c-role2') > await y('td.c-who:not(.c-role2)'), 'backup block sits under the primary names');
+
+    await card.locator('td.c-btn.c-role2 button:text-is("Register")').click();
+    await p.waitForSelector('text=My Registrations (1)');
+    assert.deepEqual([ongoing.grid[1][4], ongoing.grid[1][6], ongoing.grid[1][1]], ['Priya 9876543210', 0, ''], 'backup cells only');
+    const mine = p.locator('#mine tr[data-row="2"]');
+    assert.equal(await mine.locator('td.c-btn:not(.c-role2) button').count(), 0, 'no primary Register while backup here');
+    assert.deepEqual(await mine.locator('td.c-btn.c-role2 button').allTextContents(), ['Release']);
+    assert.match(await mine.locator('td.c-who.c-role2').textContent(), /Priya · 9876543210/);
+
+    assert.equal(await p.locator('#grid tr[data-row="3"] .clash').count(), 2, 'Wed 9.30 clashes, for both roles');
+    assert.match(await p.locator('#grid tr[data-row="3"] .clash').first().textContent(), /Clashes with Sl.No 1/);
+    await p.locator('#grid tr[data-row="4"] td.c-btn:not(.c-role2) button:text-is("Register")').click(); // Tue 9.30: no shared day
+    await p.waitForSelector('text=My Registrations (2)');
+    assert.deepEqual([ongoing.grid[3][1], ongoing.grid[3][3]], ['Priya 9876543210', 1]);
+
+    const old = p.locator('#grid tr[data-row="5"]');
+    assert.equal(await old.getAttribute('class'), 'past', 'ended on 30 Sep: greyed out');
+    assert.equal(await old.locator('button').count(), 0);
+    assert.match(await old.locator('td.c-btn').first().textContent(), /Ended/);
+    await p.check('#openOnly');
+    assert.equal(await p.locator('#grid tr[data-row="5"]').count(), 0, 'Open only hides the ended program');
+    assert.equal(await p.locator('#grid tr[data-row="3"]').count(), 1);
+    await p.uncheck('#openOnly');
+
+    await p.selectOption('#lang', 'te');
+    assert.equal(await p.locator('#day option:checked').textContent(), 'కొనసాగుతున్న కార్యక్రమాలు');
+    assert.match(await mine.locator('td.c-when').textContent(), /^15 సెప్టెం 2026 నుండి 31 మార్చి 2027 వరకు/);
+    assert.match(await mine.locator('td.c-slots.c-role2').textContent(), /^బ్యాకప్: /);
+    await p.selectOption('#lang', 'en');
+
+    await mine.locator('td.c-btn.c-role2 button:text("Release")').click();
+    await p.waitForSelector('text=Released.');
+    assert.deepEqual([ongoing.grid[1][4], ongoing.grid[1][6]], ['', 1]);
+
+    await p.selectOption('#day', '06-Oct');
+    await p.waitForSelector('text=Day: 06-Oct');
+    assert.deepEqual((await p.locator('#grid th').allTextContents()).slice(0, 4), ['Sl.No', '', 'Slots left', 'SY Speaker Name'], 'date tab as before');
+    assert.equal(await p.locator('#grid td.c-when').count(), 0);
+    assert.deepEqual(errs, []);
   } finally { await browser.close(); }
 });

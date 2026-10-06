@@ -1,6 +1,8 @@
 # Ongoing Programs - design proposal
 
-_Status 2026-10-06: proposed, waiting for the user's answers to section 3 and a go-ahead. No code written yet._
+_Status 2026-10-06: BUILT as version 2026-10-06.1 (option A, every recommended answer in section 3 accepted; the user added
+that ended programs are never open for sign-up). Not deployed yet. One change from below: the new columns are read on the
+Ongoing tab only (safer for date tabs). Details of what was built: HANDOFF.md, 2026-10-06 entries._
 
 ## 1. The brief (from the user, ARCHITECTURE.md section 11 format)
 
@@ -110,7 +112,7 @@ Findings:
 ## 6. What changes for current users
 
 - One new entry at the bottom of the date drop-down. Date tabs look and behave exactly as before (they have no backup
-  columns, so no backup buttons). If organisers ever add backup columns to a date tab, backups would work there too.
+  columns, so no backup buttons). The backup, date and weekday columns are read on the Ongoing tab only.
 - The organiser pastes the two files and deploys a new version, as usual.
 
 ## 7. Estimate (tokens, as counted in the session; moderate confidence, +/- 30%)
