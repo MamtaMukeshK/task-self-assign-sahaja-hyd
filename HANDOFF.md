@@ -249,6 +249,10 @@ _Last updated: 2026-10-01 (version 2026-10-01.4)_
   if not, the page errors loudly rather than guessing.
 
 ## Next step
+- **2026-10-06: the user wants a new feature that may need design or redesign.** It will be described in the
+  first message of a new session (feature brief: ARCHITECTURE.md section 11). Read ARCHITECTURE.md, ask the
+  questions in its section 10 that the brief leaves open, propose a design with options/trade-offs and a token
+  estimate, and get agreement before coding.
 - Done by the user 2026-10-01: version 2026-10-01.4 is LIVE; the English, Telugu and Hindi demo videos on Drive are
   current and open correctly on computer and phone.
 - Open (no code change without the user's go-ahead): does the built-in first-day data (doGet's INITIAL_STATE) reach

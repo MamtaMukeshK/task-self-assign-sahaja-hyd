@@ -1,5 +1,9 @@
 # Project memory
 
 Before doing anything, read `HANDOFF.md`: its "Start here" section explains what this project is, what is
-live, how to run the tests, rebuild the setup guide and re-record the demo video. The dated log below it
+live, how to run the tests, rebuild the setup guide and re-record the demo videos. The dated log below it
 records every change and decision. Keep `HANDOFF.md` updated at the end of each task.
+
+For any new feature or redesign, also read `ARCHITECTURE.md` (how the pieces fit, the data model in the sheet,
+the rules the design relies on, platform limits, and the questions to settle with the user before designing).
+Propose a design and get the user's agreement before writing code.
