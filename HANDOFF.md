@@ -244,6 +244,18 @@ _Last updated: 2026-10-06 (version 2026-10-01.4; Ongoing Programs design propose
   Questions, options and the recommended design: `docs/ongoing-programs-design.md`. Waiting for the user's answers
   and go-ahead; build proposed as two tasks (server, then page), each under 100,000 tokens.
 
+- 2026-10-06: Ongoing Programs, phase 1 (server) DONE, page not yet. User chose option A with all recommended answers
+  (docs/ongoing-programs-design.md section 3), plus: ended programs are never open for sign-up. Code.gs: the tab named
+  "Ongoing" is listed after the dates (`ongoing: true`); the page opens on it once every date is past. On that tab only:
+  backup column (header "backup"+"name"), its total ("backup"+"needed", blank = 1, 0 = none) and still-needed
+  ("backup"+"still", kept up to date), Start/End Date (read as real dates, or day-first text), Days of the Week
+  ("Mon, Thu", "Mon to Fri"; none named = every day). claimRow/releaseRow/removePerson take an optional last input
+  role ('backup'; left out = primary, so old open pages still work). Refused: both roles for one person on one program;
+  an ended program (end date passed, or end date today and its time over). Clash on Ongoing = same start time + shared
+  weekday + both still running, counting both roles. Date tabs unchanged. Fingerprint leaves out all four written
+  cells. Real 2026-10-06 workbook replayed: 3 programs read correctly (its date cells are still blank = no limit).
+  VERSION 2026-10-06.1. 62 server tests (new ones checked to fail when the clash, fingerprint or ended rule is broken).
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.
