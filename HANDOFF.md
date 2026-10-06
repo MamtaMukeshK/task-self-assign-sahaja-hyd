@@ -1,6 +1,6 @@
 # Handoff / status
 
-_Last updated: 2026-10-01 (version 2026-10-01.4)_
+_Last updated: 2026-10-06 (version 2026-10-01.4; Ongoing Programs design proposed, not built)_
 
 ## Start here (for a new session)
 - **What this is:** a Google Apps Script web page for the "Hyderabad 2026 - Self Realization Tour" sheet.
@@ -233,6 +233,17 @@ _Last updated: 2026-10-01 (version 2026-10-01.4)_
   HTML and fonts don't block drawing, so it can show for a moment before the script runs even when the built-in
   first-day data works. Only a spinner lasting about a second or more would mean that data is missing.
 
+- 2026-10-06: test run in a fresh container: 69 of 70 pass. The one failure is test 68 (adaptive layout), check
+  "Sl.No, button and Slots left stay put": on the laptop table the third frozen column moves 1 pixel (171 -> 170)
+  when the table scrolls sideways. No code has changed since 70/70 (only documents since commit 4551774), so it comes
+  from this container's font sizes giving a column a fraction-of-a-pixel width: pinTable adds up whole-pixel widths
+  (`offsetWidth`). Cosmetic. Proposed fix (not applied, waits for the go-ahead): use the exact width
+  (`getBoundingClientRect().width`). Confidence moderate-high.
+- 2026-10-06: feature brief "Ongoing Programs" received with a new workbook (30_Sep_Assignments_-_Testing_SheetNew.xlsx,
+  not committed) whose new "Ongoing" tab has the backup, frequency and days columns but no start/end date columns.
+  Questions, options and the recommended design: `docs/ongoing-programs-design.md`. Waiting for the user's answers
+  and go-ahead; build proposed as two tasks (server, then page), each under 100,000 tokens.
+
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
   to docs.google.com). First real check = README Step 5.
@@ -249,10 +260,9 @@ _Last updated: 2026-10-01 (version 2026-10-01.4)_
   if not, the page errors loudly rather than guessing.
 
 ## Next step
-- **2026-10-06: the user wants a new feature that may need design or redesign.** It will be described in the
-  first message of a new session (feature brief: ARCHITECTURE.md section 11). Read ARCHITECTURE.md, ask the
-  questions in its section 10 that the brief leaves open, propose a design with options/trade-offs and a token
-  estimate, and get agreement before coding.
+- **2026-10-06: Ongoing Programs feature - design proposed, waiting for the user.** Read
+  `docs/ongoing-programs-design.md` (brief, what the real tab looks like, 11 questions with recommended answers,
+  options A/B/C, design A in detail, estimate). Apply the user's answers there before building. No code written yet.
 - Done by the user 2026-10-01: version 2026-10-01.4 is LIVE; the English, Telugu and Hindi demo videos on Drive are
   current and open correctly on computer and phone.
 - Open (no code change without the user's go-ahead): does the built-in first-day data (doGet's INITIAL_STATE) reach
