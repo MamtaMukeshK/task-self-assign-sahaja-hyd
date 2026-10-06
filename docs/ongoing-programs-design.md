@@ -2,7 +2,8 @@
 
 _Status 2026-10-06: BUILT as version 2026-10-06.1 (option A, every recommended answer in section 3 accepted; the user added
 that ended programs are never open for sign-up). Not deployed yet. One change from below: the new columns are read on the
-Ongoing tab only (safer for date tabs). Details of what was built: HANDOFF.md, 2026-10-06 entries._
+Ongoing tab only (safer for date tabs). Details of what was built: HANDOFF.md, 2026-10-06 entries. Card layout changed the same day (version .2, user's choice):
+one block per card, Register asks Primary or Backup - the two-block layout in section 5 is no longer used._
 
 ## 1. The brief (from the user, ARCHITECTURE.md section 11 format)
 

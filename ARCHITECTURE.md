@@ -78,6 +78,8 @@ the Ongoing entry in `days` has `ongoing: true`. `claimRow/releaseRow/removePers
   header (school / time / address / map / duplicate / more).
 - **Layouts by width, CSS only:** <= 700 px phone cards (contacts behind "Details"); 701-1100 px tablet cards (all
   shown); > 1100 px laptop table with frozen first columns (`pinColumns`).
+- **Ongoing tab:** one card per program with the same cells as a date tab: one places badge for both roles, one names
+  list (backups tagged), and Register asks "Primary or Backup?" (`askRow`) unless only one role has places.
 - **Refresh:** every 15 s while visible, and on returning to the tab; days already seen show instantly (`dayCache`).
 - **Identity:** whatever is typed in "Your name" (+ mobile), remembered in the browser. "Mine" = same name, ignoring case.
 - **Demo videos:** `DEMO_VIDEO_URLS.en/.te/.hi` - each a Google Drive link (opens Drive's player) then GitHub copies.

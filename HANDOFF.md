@@ -1,6 +1,6 @@
 # Handoff / status
 
-_Last updated: 2026-10-06 (version 2026-10-06.1 pushed, not yet live: Ongoing Programs)_
+_Last updated: 2026-10-06 (version 2026-10-06.2 pushed, not yet live: Ongoing Programs, one block per card)_
 
 ## Start here (for a new session)
 - **What this is:** a Google Apps Script web page for the "Hyderabad 2026 - Self Realization Tour" sheet.
@@ -8,7 +8,7 @@ _Last updated: 2026-10-06 (version 2026-10-06.1 pushed, not yet live: Ongoing Pr
   Release places; the speaker cell of the day tab is updated. Details of every feature: the dated log below.
 - **Live:** the organiser's own Apps Script deployment of `Code.gs` + `Index.html` (paste from
   `SETUP_GUIDE.html`, then Deploy -> Manage deployments -> New version). The page footer shows the version.
-  Latest pushed: 2026-10-06.1 on branch claude/zealous-johnson-h19h6w (Ongoing Programs; not merged, not deployed).
+  Latest pushed: 2026-10-06.2 on branch claude/zealous-johnson-h19h6w (Ongoing Programs; not merged, not deployed).
   Live (confirmed by the user 2026-10-01 16:47): 2026-10-01.4. Ask the user which version is
   live before assuming.
 - **Demo videos:** `docs/demo.mp4` (English, 75 s, phone screen, Indian English female voice), `docs/demo-te.mp4`
@@ -272,6 +272,18 @@ _Last updated: 2026-10-06 (version 2026-10-06.1 pushed, not yet live: Ongoing Pr
   from 9 Oct Mon-Fri 3-4pm all read correctly; the 10 Dec program closes at 5 pm that day.
   NOT VERIFIED: on real Google (dates are read with getValues, which the build machine can't call for real; the test
   stand-in returns dates the way Google documents it); Telugu/Hindi wording of the new phrases by a native speaker.
+- 2026-10-06: user found the two-block Ongoing cards cluttered and chose option B of three (A two buttons, B one
+  Register that asks the role, C a page-wide role switch). Index.html: an Ongoing card has the same three cells as a
+  date-tab card: one badge "Primary 2 of 2 · Backup 1 of 2" (each count kept on one line), one names list (primary
+  first, backups with a grey "Backup" tag, over-limit red per role), one button cell. Register is replaced by "Register
+  as: [Primary] [Backup] [Cancel]" ("Register 3 people as:" with Register others; a full role reads "Backup (full)" in
+  amber); skipped when only one role has places; the question stays open across the 15-second refresh (askRow) and is
+  only shown once your name/mobile/others list are valid. Success message names the role ("Registered 2 people as
+  Backup."). Release and ✕ need no question. Laptop columns: Sl.No | button | Slots left | Volunteers | Dates & days.
+  White buttons (Release, Cancel) now get a light tint on hover instead of dark blue, which hid their text (phones
+  keep the hover look after a tap). Date tabs unchanged (test checks headers and the "0 of 1" badge). Server unchanged.
+  VERSION 2026-10-06.2. 77 tests (Ongoing browser test rewritten: question, Cancel, single-role skip, others count,
+  ✕ remove, Telugu tag). Screenshots checked at 390 and 1280 pixels wide.
 
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
@@ -289,10 +301,10 @@ _Last updated: 2026-10-06 (version 2026-10-06.1 pushed, not yet live: Ongoing Pr
   if not, the page errors loudly rather than guessing.
 
 ## Next step
-- **User: deploy 2026-10-06.1.** Paste both files from SETUP_GUIDE.html, Deploy -> Manage deployments -> edit the
+- **User: deploy 2026-10-06.2.** Paste both files from SETUP_GUIDE.html, Deploy -> Manage deployments -> edit the
   existing deployment -> New version (keeps the same link). Then check on a phone: the date list ends with "Ongoing
-  programs"; a card shows "8 Oct 2026 to 29 Oct 2026 · Weekly · Wed"; Register as Backup writes column E and sets G;
-  Release clears it; the footer reads v2026-10-06.1. If the dates line shows the sheet's text instead of "8 Oct 2026",
+  programs"; a card shows "8 Oct 2026 to 29 Oct 2026 · Weekly · Wed"; Register -> Backup writes column E and sets G;
+  Release clears it; the footer reads v2026-10-06.2. If the dates line shows the sheet's text instead of "8 Oct 2026",
   the date cells are text, not real dates (still works, but say so).
 - **Next task (separate, user's choice): demo videos for Ongoing programs** in English, Telugu and Hindi. The recorder
   (tools/record_demo.js, see "Re-record the demo" above) uses a demo copy of the 30-Sep layout; it needs an Ongoing tab
