@@ -8,7 +8,8 @@ _Last updated: 2026-10-06 (version 2026-10-06.4 pushed, not yet live: Ongoing Pr
   Release places; the speaker cell of the day tab is updated. Details of every feature: the dated log below.
 - **Live:** the organiser's own Apps Script deployment of `Code.gs` + `Index.html` (paste from
   `SETUP_GUIDE.html`, then Deploy -> Manage deployments -> New version). The page footer shows the version.
-  Latest pushed: 2026-10-06.4 on branch claude/zealous-johnson-h19h6w (Ongoing Programs; not merged, not deployed).
+  Latest pushed: 2026-10-06.4 (Ongoing Programs), merged into main through a pull request on 2026-10-06 at the
+  user's request, before the live check; not deployed yet.
   Live (confirmed by the user 2026-10-01 16:47): 2026-10-01.4. Ask the user which version is
   live before assuming.
 - **Demo videos:** `docs/demo.mp4` (English, 75 s, phone screen, Indian English female voice), `docs/demo-te.mp4`
