@@ -312,8 +312,9 @@ _Last updated: 2026-10-06 (version 2026-10-06.4 pushed, not yet live: Ongoing Pr
 ## Next step
 - **2026-10-07: Follow-up Program sign-up (per-date slots) - designed, not built.** Spec with every decision:
   `docs/followup/SPEC.md`; clickable mock-up: `docs/followup/mockup.html`. New sheet + new page link (tour page
-  untouched). Before building, settle SPEC section 0 with the user: (1) does it replace or sit beside "Ongoing
-  programs"; (2) Primary/Backup roles on per-date slots? Build in 3 stages (SPEC section 5), confirming each.
+  untouched). SPEC section 0 decided: both pages exist; one role (no
+  Backup) for now. Calendar layout: "One week" (Mon-Thu / Fri-Sun + week total) recommended, user to confirm in the
+  mock-up ("Next 8 days" is the alternative). Build in 3 stages (SPEC section 5), confirming each.
 - **User: deploy 2026-10-06.4.** Paste both files from SETUP_GUIDE.html, Deploy -> Manage deployments -> edit the
   existing deployment -> New version (keeps the same link). Then check on a phone: the date list ends with "Ongoing
   programs"; a card shows "8 Oct 2026 to 29 Oct 2026 · Weekly · Wed"; Register -> Backup writes column E and sets G;

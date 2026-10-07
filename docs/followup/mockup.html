@@ -133,6 +133,18 @@ p { margin:0; max-width:68ch; }
 .cmonth { text-align:center; display:flex; flex-direction:column; }
 .cmonth b { font:400 22px/1.1 var(--font-display); color:var(--app-navy); }
 .cmonth span { font-size:13px; color:var(--app-muted); }
+.cgrid4 { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px; }
+.cday.big { min-height:84px; gap:3px; border-width:2px; }
+.cday.big b { font-size:26px; } .cday.big b small { font-size:12px; font-weight:700; color:var(--app-sel-edge); }
+.cday.big .wdn { font-size:14px; font-weight:700; color:var(--app-muted); }
+.cday.big.today { border-color:var(--app-navy); background:var(--app-band); }
+.cday.big .cnt { font-size:13px; padding:1px 6px; }
+.cday .you { font-size:12px; font-weight:700; color:var(--app-mine-edge); }
+.cday.wk { background:var(--app-navy); color:var(--app-card); border-color:var(--app-navy); cursor:default; }
+.cday.wk .wdn { color:var(--app-band); }
+.cmode { display:flex; gap:4px; justify-content:center; margin-bottom:6px; }
+.cmode button { font:inherit; font-size:13px; padding:4px 10px; border-radius:14px; border:1px solid var(--app-line); background:var(--app-card); color:var(--app-navy); cursor:pointer; }
+.cmode button.on { background:var(--app-sel-edge); border-color:var(--app-sel-edge); font-weight:700; }
 .cgrid { display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:4px; }
 .cwd { text-align:center; font-size:12px; font-weight:700; color:var(--app-muted); }
 .cday { position:relative; min-height:58px; border-radius:10px; border:1px solid var(--app-line); background:var(--app-bg); font:inherit; color:var(--app-navy); cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:2px 0; }
@@ -195,7 +207,7 @@ td.y { color:var(--good); font-weight:700; } td.n { color:var(--bad); font-weigh
   <div class="tabs" role="tablist" aria-label="Options">
     <button class="tab" role="tab" id="tab-A" data-opt="A">A · Upcoming list</button>
     <button class="tab" role="tab" id="tab-B" data-opt="B">B · Month calendar</button>
-    <button class="tab" role="tab" id="tab-C" data-opt="C">C · Two-week calendar + list <span class="star">★</span></button>
+    <button class="tab" role="tab" id="tab-C" data-opt="C">C · Calendar + list <span class="star">★</span></button>
     <button class="tab" role="tab" id="tab-D" data-opt="D">D · Week time grid</button>
     <button class="tab" role="tab" id="tab-E" data-opt="E">E · Phone calendar</button>
     <button class="tab" role="tab" id="tab-S" data-opt="S">Sheet setup</button>
@@ -268,7 +280,7 @@ td.y { color:var(--good); font-weight:700; } td.n { color:var(--bad); font-weigh
   // ---------- shared state ----------
   var sel = {};            // selected slot ids
   var repeat = '1';        // '1' | '4' | '8' | 'all'
-  var opt = 'C', weekOff = 0, monthOff = 0, pickedDay = key(TODAY), openOnly = false, aDays = 7, cOff = 0, cDays = 14;
+  var opt = 'C', weekOff = 0, monthOff = 0, pickedDay = key(TODAY), openOnly = false, aDays = 7, cOff = 0, cDays = 14, cMode = 'week';
   var screen = document.getElementById('screen'), phoneEl = document.querySelector('.phone');
 
   // ---------- pieces used by several options ----------
@@ -374,18 +386,24 @@ td.y { color:var(--good); font-weight:700; } td.n { color:var(--bad); font-weigh
         (list.length ? dayBlock(pickedDay, list) : '<p style="padding:14px;color:var(--app-muted)">No slots on this date.</p>') + '<div style="height:110px"></div>';
     },
     C: function () {
-      var mon0 = addDays(TODAY, -((TODAY.getDay() + 6) % 7)), g0 = addDays(mon0, cOff * 14), g1 = addDays(g0, 13);
+      // Two layouts to compare: 'week' = Mon-Thu / Fri-Sun + week total (arrows move a week);
+      // 'roll' = the next 8 days from today, 4 + 4 (arrows move 8 days).
+      var mon0 = addDays(TODAY, -((TODAY.getDay() + 6) % 7));
+      var g0 = cMode === 'week' ? addDays(mon0, cOff * 7) : addDays(TODAY, cOff * 8), n = cMode === 'week' ? 7 : 8, g1 = addDays(g0, n - 1);
       var mlabel = g0.getMonth() === g1.getMonth() ? MONL[g0.getMonth()] + ' ' + g0.getFullYear() : MON[g0.getMonth()] + ' – ' + MON[g1.getMonth()] + ' ' + g1.getFullYear();
-      var cells = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(function (w) { return '<div class="cwd">' + w + '</div>'; });
-      for (var i = 0; i < 14; i++) {
+      var cells = [], weekOpen = 0;
+      for (var i = 0; i < n; i++) {
         var dt = addDays(g0, i), k = key(dt), l = onDay(k), past = k < key(TODAY);
         var open = l.filter(function (x) { return !isPast(x) && left(x) > 0; }).length, mine = l.some(function (x) { return isMine(x) && !x.cancelled && !isPast(x); });
-        var cls = 'cday' + (past || !l.length ? ' dim' : '') + (k === key(TODAY) ? ' today' : '') + (dt.getDate() === 1 ? ' first' : '');
+        weekOpen += past ? 0 : open;
+        var cls = 'cday big' + (past || !l.length ? ' dim' : '') + (k === key(TODAY) ? ' today' : '');
         cells.push('<button class="' + cls + '"' + (past || !l.length ? ' disabled' : ' data-jump="' + k + '"') + ' aria-label="' + dayLabel(dt) + ', ' + open + ' sessions with places">' +
-          (dt.getDate() === 1 ? '<span class="mo">' + MON[dt.getMonth()] + '</span>' : '') + '<b>' + dt.getDate() + '</b>' +
-          (past || !l.length ? '<span class="cnt">–</span>' : '<span class="cnt ' + (open === 0 ? 'f' : open <= 1 ? 'a' : 'g') + '">' + open + '</span>') +
-          (mine ? '<span class="me" title="You\'re registered">●</span>' : '') + '</button>');
+          '<span class="wdn">' + (k === key(TODAY) ? 'Today' : WD[dt.getDay()]) + '</span><b>' + dt.getDate() + (dt.getDate() === 1 || i === 0 ? ' <small>' + MON[dt.getMonth()] + '</small>' : '') + '</b>' +
+          (past ? '<span class="cnt">past</span>' : !l.length ? '<span class="cnt">–</span>' : '<span class="cnt ' + (open === 0 ? 'f' : open <= 1 ? 'a' : 'g') + '">' + (open === 0 ? 'full' : open + ' open') + '</span>') +
+          (mine ? '<span class="you">● You</span>' : '') + '</button>');
       }
+      if (cMode === 'week') cells.push('<div class="cday big wk"><span class="wdn">This week</span><b>' + weekOpen + '</b><span class="cnt g">open</span></div>');
+      var maxOff = cMode === 'week' ? 7 : 6;
       var blocks = [];
       for (var j = 0; j < cDays; j++) {
         var kk = key(addDays(TODAY, j)), ll = onDay(kk).filter(function (x) { return !openOnly || (!isPast(x) && (left(x) > 0 || isMine(x))); });
@@ -393,11 +411,11 @@ td.y { color:var(--good); font-weight:700; } td.n { color:var(--bad); font-weigh
       }
       var until = addDays(TODAY, cDays - 1);
       return appHead('Tap a date to jump to it') +
-        '<div class="cal2"><div class="cnav"><button class="arrow" data-cw="-1"' + (cOff <= 0 ? ' disabled' : '') + ' aria-label="Previous 2 weeks">‹</button>' +
+        '<div class="cal2"><div class="cmode" role="group" aria-label="Calendar layout"><button data-cmode="week"' + (cMode === 'week' ? ' class="on"' : '') + '>One week</button><button data-cmode="roll"' + (cMode === 'roll' ? ' class="on"' : '') + '>Next 8 days</button></div>' +
+        '<div class="cnav"><button class="arrow" data-cw="-1"' + (cOff <= 0 ? ' disabled' : '') + ' aria-label="' + (cMode === 'week' ? 'Previous week' : 'Previous 8 days') + '">‹</button>' +
         '<div class="cmonth"><b>' + mlabel + '</b><span>' + g0.getDate() + ' ' + MON[g0.getMonth()] + ' – ' + g1.getDate() + ' ' + MON[g1.getMonth()] + '</span></div>' +
-        '<button class="arrow" data-cw="1"' + (cOff >= 3 ? ' disabled' : '') + ' aria-label="Next 2 weeks">›</button></div>' +
-        '<div class="cgrid">' + cells.join('') + '</div>' +
-        '<p class="legend"><span class="cnt g">3</span> sessions with places left · <span class="me">●</span> you\'re registered</p></div>' +
+        '<button class="arrow" data-cw="1"' + (cOff >= maxOff ? ' disabled' : '') + ' aria-label="' + (cMode === 'week' ? 'Next week' : 'Next 8 days') + '">›</button></div>' +
+        '<div class="cgrid4">' + cells.join('') + '</div></div>' +
         mySummary() +
         '<div class="ctrl"><label><input type="checkbox" id="oo"' + (openOnly ? ' checked' : '') + '> Open only</label><span style="font-size:14px;color:var(--app-muted)">Showing until ' + dayLabel(until) + '</span></div>' +
         '<div class="c-list">' + blocks.join('') + '</div><button class="more" data-cmore>Show 2 more weeks ▾</button>';
@@ -446,7 +464,7 @@ td.y { color:var(--good); font-weight:700; } td.n { color:var(--bad); font-weigh
       con:['Small squares on a phone are hard for elderly users to read and tap','Selecting across days means tapping in and out of dates'],
       effort:'Medium · about 40,000–60,000 tokens', fit:'Fair on phones, good on laptops',
       try:'Tap 10 Oct, select a slot, tap 14 Oct, select another, then Register.' },
-    C: { name:'Option C · Two-week calendar + list (chosen)', what:'A two-week calendar block (a full week per row, Monday to Sunday) with big ‹ › arrows and the month name, above a list of the next 2 weeks. Each date shows how many sessions still have places, and a green dot where you are registered. Tap a date to jump to it; "Show 2 more weeks" extends the list. Select slots, choose how often to repeat, Register once.',
+    C: { name:'Option C · Calendar + list (chosen)', what:'Now with larger days, 4 per row. Two layouts to compare with the switch on the phone: "One week" (Mon–Thu, Fri–Sun, plus the week\'s total; arrows move a week) or "Next 8 days" (from today, 4 + 4; arrows move 8 days). Big ‹ › arrows and the month name above a list of the next 2 weeks. Each date shows how many sessions still have places, and a green dot where you are registered. Tap a date to jump to it; "Show 2 more weeks" extends the list. Select slots, choose how often to repeat, Register once.',
       pro:['Whole week visible at once, readable on a phone','Big arrows instead of sideways swiping','Month always shown; dates far ahead load when tapped','Multi-select, repeat, per-date Release built in'],
       con:['Calendar block takes about a third of the phone screen (it scrolls away as you read the list)','Most work of the in-page options'],
       effort:'About 70,000–100,000 tokens', fit:'Best overall',
@@ -520,7 +538,8 @@ td.y { color:var(--good); font-weight:700; } td.n { color:var(--bad); font-weigh
     if ((t = e.target.closest('[data-mo]'))) { monthOff = Math.max(0, Math.min(1, monthOff + +t.dataset.mo)); render(); return; }
     if ((t = e.target.closest('[data-wk]'))) { weekOff = Math.max(0, Math.min(7, weekOff + +t.dataset.wk)); render(); return; }
     if (e.target.closest('[data-more]')) { aDays += 7; render(); return; }
-    if ((t = e.target.closest('[data-cw]'))) { cOff = Math.max(0, Math.min(3, cOff + +t.dataset.cw)); render(); return; }
+    if ((t = e.target.closest('[data-cmode]'))) { cMode = t.dataset.cmode; cOff = 0; render(); return; }
+    if ((t = e.target.closest('[data-cw]'))) { cOff = Math.max(0, Math.min(cMode === 'week' ? 7 : 6, cOff + +t.dataset.cw)); render(); return; }
     if (e.target.closest('[data-cmore]')) { cDays += 14; render(); return; }
     if ((t = e.target.closest('[data-jump]'))) {
       var jk = t.dataset.jump, need = Math.round((new Date(+jk.slice(0, 4), +jk.slice(5, 7) - 1, +jk.slice(8)) - TODAY) / 864e5) + 1;

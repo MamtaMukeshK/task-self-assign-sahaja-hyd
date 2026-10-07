@@ -3,22 +3,19 @@
 _Agreed with the user 2026-10-07 in a design session. Nothing built yet. Clickable mock-up: `docs/followup/mockup.html`
 (also published at https://claude.ai/artifact/ESNid5pMiVY5HG4cBoXYhc, version 4). Read `ARCHITECTURE.md` first._
 
-## 0. Two questions to settle before building (raised by the overlap with "Ongoing programs")
+## 0. Relationship to "Ongoing programs" (decided 2026-10-07)
 "Ongoing programs" (v2026-10-06.x, `docs/ongoing-programs-design.md`) was designed in a parallel session: one row per
-program on an "Ongoing" tab of the tour sheet; a sign-up commits to **every** date of the program; **Primary/Backup**
-roles. This spec is a different model: **each date is its own slot**, booked and released one by one, on a **separate
-sheet and page link**.
-1. **Relationship:** does this follow-up program page *replace* "Ongoing programs" for long-running programs, or do
-   both exist (Ongoing = whole-program commitment inside the tour page; this = per-date booking for the new program)?
-   Recommended: both exist for now; decide after organisers have used both.
-2. **Primary/Backup on per-date slots?** The mock-up has one role. If backups matter here too, each slot gets a
-   Backup count and Register asks "Primary or Backup" (as Ongoing does). Recommended: ask the organisers; add it only
-   if they need it (it doubles the counts on every card and the repeat logic must apply per role).
+program on an "Ongoing" tab of the tour sheet; a sign-up commits to **every** date; **Primary/Backup** roles. This spec
+is a different model: **each date is its own slot**, booked and released one by one, on a **separate sheet and link**.
+1. **Both exist for now:** "Ongoing programs" stays in the tour page for whole-program commitments; this page is for
+   per-date booking in the new follow-up program. Revisit after organisers have used both.
+2. **One role (no Primary/Backup) on per-date slots for now.** Add Backup later only if organisers ask (each slot would
+   get a backup count and Register would ask "Primary or Backup", as Ongoing does).
 
 ## 1. Decisions (all agreed)
 | # | Topic | Decision |
 |---|---|---|
-| 1 | Layout | **Option C**: a two-week calendar block (7 columns Mon-Sun, a full week per row, 2 rows), **large ‹ › arrow buttons** at the edges moving 2 weeks, **month name** between them (e.g. "October 2026", "Oct – Nov 2026"; a small month tag on the 1st). Each date shows the number of sessions with places left (green/amber/grey) and a green dot where you are registered; today outlined; past/empty dates dimmed. Below it, a list of the **next 2 weeks**; **"Show 2 more weeks"** adds 2 weeks; tapping a date further ahead extends the list to it and scrolls there. |
+| 1 | Layout | **Option C, "One week" layout (recommended; user to confirm in the mock-up)**: the current week on two rows of large day boxes, **Mon–Thu** on top and **Fri–Sun + a "This week: N open" box** below (about twice the size of a 7-column grid). Each box: weekday ("Today" for today), date (month tag on the 1st and on the first box), "N open" / "full" / "past", "● You" where registered. **Large ‹ › arrow buttons** at the edges move **one week**; the **month name** and date range sit between them. Alternative kept in the mock-up for comparison: **"Next 8 days"** from today, 4 + 4, arrows move 8 days. Below: a list of the **next 2 weeks**; **"Show 2 more weeks"** adds 2 weeks; tapping a date further ahead extends the list to it and scrolls there. |
 | 2 | Multi-select | Tick several slots across days, then **Register once** (bottom bar: count, Clear, repeat choice, Register). |
 | 3 | Repeat | "Just this date / Same session, next 4 dates / next 8 dates / whole program". For **daily** sessions: "Just this day / next 7 days / next 14 days / whole program". Counted in dates of the same plan line, so it works for every frequency. Full or cancelled dates are skipped and listed. |
 | 4 | Booking horizon | Volunteers may book **the whole program** (every generated date). |
