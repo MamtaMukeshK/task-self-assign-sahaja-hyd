@@ -1,6 +1,6 @@
 # Follow-up Program, stage 1: how it will be built
 
-_Written 2026-10-07 before coding. Follows `SPEC.md` (all decisions there are final); this file records the smaller
+_Written 2026-10-07 before coding; **built the same day** (`followup/Code.gs`, `test/followup.test.js`, 8 tests passing). Follows `SPEC.md` (all decisions there are final); this file records the smaller
 choices the spec leaves open. Items marked **(assumption)** should be confirmed with the user when stage 1 is shown._
 
 ## Files

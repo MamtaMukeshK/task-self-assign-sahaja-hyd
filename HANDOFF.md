@@ -1,6 +1,6 @@
 # Handoff / status
 
-_Last updated: 2026-10-06 (version 2026-10-06.4 pushed, not yet live: Ongoing Programs, one block per card)_
+_Last updated: 2026-10-07 (Follow-up Program stage 1 built: server + tests in `followup/`; tour page unchanged at 2026-10-06.4, not yet live)_
 
 ## Start here (for a new session)
 - **What this is:** a Google Apps Script web page for the "Hyderabad 2026 - Self Realization Tour" sheet.
@@ -18,7 +18,7 @@ _Last updated: 2026-10-06 (version 2026-10-06.4 pushed, not yet live: Ongoing Pr
   1L1A_FmlOukDZMTnOXa73RlzQfdaHS9Zg, Telugu 1ut0WKW9gVrnG0qRQltc7qC3P2O5GCybq, Hindi 1Hf3clK7tYRimgm3ispbHwCw4RvTKPJIM.
   The user replaces a Drive file via Drive -> Manage versions after every re-record (the link stays the same).
   The GitHub copies after each Drive link are only used if that Drive link is removed.
-- **Tests:** `cd test && npm install && npm test` (77 tests; browser tests need Chromium at
+- **Tests:** `cd test && npm install && npm test` (85 tests: 77 tour page + 8 Follow-up server; browser tests need Chromium at
   `/opt/pw-browsers/chromium`). Rebuild the guide after any code change: `python3 tools/build_guide.py`.
   Bump `VERSION` in `Code.gs` (and the matching string in `test/code.test.js`) for every page change.
 - **Re-record the demo:** in `tools/`: `npm i playwright-core ffmpeg-static @fontsource/dm-sans
@@ -310,6 +310,16 @@ _Last updated: 2026-10-06 (version 2026-10-06.4 pushed, not yet live: Ongoing Pr
   if not, the page errors loudly rather than guessing.
 
 ## Next step
+- **2026-10-07: Follow-up Program stage 1 BUILT (server only; not shown to the user's organisers, never run on real
+  Google).** `followup/Code.gs` = the new sheet's server (separate Apps Script project; tour `Code.gs` untouched):
+  menu Program -> Set up the sheet / Update slots now, weekly trigger (Sunday 22:00 India), generator for all 7
+  frequencies, `getSlots`, `registerSlots` (repeat, register others, preview, limits 10 people / 100 entries),
+  `releaseSlot` / `releaseGroup` (12-hour rule), `cancellationList_` / `markNoticeSent_` (private until stage 3).
+  Choices the spec left open, and 5 assumptions to confirm with the user: `docs/followup/STAGE1_PLAN.md`.
+  Tests: `test/followup.test.js` (8); `test/harness.js` gained stand-ins (script properties, delete/sort rows,
+  dropdowns, triggers, `load(..., file)`). Stage 1 used about 120,000 tokens (user approved up to 125,000).
+  **Next: user confirms the assumptions, then stage 2 (the page, `followup/Index.html` + `doGet`).** Stage 2 must also
+  decide how `doGet` passes the first data (as the tour page does) and the page's own VERSION/test strings.
 - **2026-10-07: Follow-up Program sign-up (per-date slots) - designed, not built.** Spec with every decision:
   `docs/followup/SPEC.md`; clickable mock-up: `docs/followup/mockup.html`. New sheet + new page link (tour page
   untouched). SPEC section 0 decided: both pages exist; one role (no
