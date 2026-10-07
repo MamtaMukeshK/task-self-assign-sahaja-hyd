@@ -444,7 +444,7 @@ function registerSlots(slotIds, repeat, name, mobile, othersText, includeSelf, p
   var ids = [].concat(slotIds || []).map(String);
   if (!ids.length) throw new Error('Please pick at least one date.');
   var count = repeat === 'all' ? Infinity : Number(repeat || 1);
-  if (!(count >= 1 && count % 1 === 0)) throw new Error('Unknown repeat choice.');
+  if (!(count === Infinity || (count >= 1 && count % 1 === 0))) throw new Error('Unknown repeat choice.');
 
   var lock = LockService.getScriptLock();
   if (!previewOnly && !lock.tryLock(CONFIG.LOCK_WAIT_MS)) throw new Error('Lots of people are registering right now. Please try again.');
