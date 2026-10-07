@@ -27,6 +27,7 @@ is a different model: **each date is its own slot**, booked and released one by 
 | 10 | Cancellation | Organisers set Status = "Cancelled" on a date's row. The page strikes it through for everyone; volunteers on it see a **red notice at the top** ("⚠ Cancelled: … please don't go. Your other dates are unchanged."). Plus an **organiser WhatsApp list**: a sheet menu opens the affected volunteers with a ready-written message each (one tap per person); "Cancellation notice sent" records it. Email/SMS: not now. |
 | 11 | Sheet & link | A **new sheet and its own page link**; the current tour sheet and page are untouched. |
 | 12 | Page reads | Only the **coming weeks** (today onwards, plus what the volunteer has scrolled/tapped to); past dates are not sent to the page. |
+| 13 | Register others (decided 2026-10-07) | **"Who: Just me ▾"** button in the bottom bar opens the same speaker list / name+mobile box / "Include me too" as today; the bar then reads e.g. "3 people · 2 slots · next 4 dates → Register". One Register books **the whole group on every chosen date** (selected slots × repeat), each entry "Name mobile (via Registrar)". A confirmation lists each date and who goes on it before anything is written. **Not enough places (decision a, option C):** if a date has at least one place left, the whole group is booked and anyone beyond the limit is shown in red as over the limit (as on the tour page); a date that is already full (0 places) is skipped, as it is for one person. **Time clash:** only the person who clashes is skipped on that date; the rest are booked, and the summary names who was skipped and why. **Limits:** at most 10 people and 100 entries (people × dates) per Register, with a clear message when exceeded. **Release:** per date, each registered person has a ✕ (registrar removes just that person) plus a "Release all N for this date" button; each person can also release themselves with their own name; the 12-hour rule applies to all of these. **My Registrations** counts dates where you are on the list or registered someone ("Sat 17 Oct · you + 2 others"); cancellation notices reach the registrar for those dates, and the organiser WhatsApp list includes every affected person (their own mobile), not only the registrar. Trust model unchanged: anyone with the link can register any name; only the person or their registrar can release them through the page. |
 
 ## 2. Sheet (new workbook)
 **Tab "Program plan"** (typed by organisers; one line per regular session):
@@ -46,12 +47,17 @@ writes) | Notes.
 
 ## 3. Server (new Apps Script project bound to the new sheet; reuse patterns from Code.gs)
 - `getSlots(fromDate, toDate)`: Open + Cancelled slots in the range (cached per range, cleared on writes/edits as today).
-- `registerSlots(slotIds[], repeatChoice, name, mobile, others…)`: one lock; expand the repeat; for each date re-read
-  the row, refuse/skip full, cancelled, started, or clashing (same person, overlapping time); write; return a per-date
-  result list (booked / skipped with reason) for the confirmation sheet.
-- `releaseSlot(slotId, name)`: refuse inside 12 hours of the start (server clock, Asia/Kolkata), else remove the name.
+- `registerSlots(slotIds[], repeatChoice, name, mobile, othersText, includeSelf)`: one lock; enforce the limits
+  (10 people, 100 entries); expand the repeat; for each date re-read the row; skip cancelled, started or already-full
+  (0 places) dates; skip only the clashing person (same person, overlapping time); otherwise add everyone (extras beyond
+  the places are allowed and flagged); write; return a per-date, per-person result list (booked / over limit / skipped
+  with reason) for the confirmation sheet.
+- `releaseSlot(slotId, name, personName?)`: refuse inside 12 hours of the start (server clock, Asia/Kolkata); remove
+  the person if the caller is that person or their registrar ("via"); `releaseGroup(slotId, name)` removes everyone the
+  caller registered on that date (same rule).
 - `generateSlots()`: trigger + menu; idempotent by Slot ID; never touches rows with volunteers except Status/Notes.
-- `cancellationList()`: for Cancelled rows with volunteers and no notice sent, return name, phone and a prefilled
+- `cancellationList()`: for Cancelled rows with volunteers and no notice sent, return every affected person (including
+  people registered by others, using their own mobile) with name, phone and a prefilled
   WhatsApp link (`https://wa.me/91XXXXXXXXXX?text=…`); mark sent when the organiser confirms.
 
 ## 4. Page (new Index.html based on the current one)
@@ -59,11 +65,13 @@ writes) | Notes.
 - Option C calendar + list as in decision 1; cards: time, centre · area, places badge, people, Select/Selected,
   Full, Ended, Cancelled (struck through), your dates (Release / Release closed + organiser phone).
 - My Registrations summary (count + next date) and cancellation alerts above the list; "Open only".
-- Register others ("via" you) and the Speakers list as today.
+- Register others as in decision 13 ("Who" button in the bottom bar, group confirmation, per-person ✕, "Release all N
+  for this date", over-limit names in red); Speakers list as today (new people added to it).
 - Demo videos later (separate task).
 
 ## 5. Build plan (a fresh session; each stage confirmed with the user before the next)
 1. Sheet template + generator + server functions + tests (simulated sheet, all frequencies, edge dates). ~40-60k tokens.
-2. Page: calendar + list + multi-select + repeat + release rules, phone/tablet/laptop, en/te/hi. ~50-70k tokens.
+2. Page: calendar + list + multi-select + repeat + release rules + register others, phone/tablet/laptop, en/te/hi.
+   ~60-85k tokens (register others adds ~15-25k across stages 1 and 2).
 3. Cancellations: page notice + organiser WhatsApp list menu; setup guide for the new sheet. ~25-40k tokens.
 Estimates have moderate confidence. Stop and ask before any stage passes 100,000 tokens.
