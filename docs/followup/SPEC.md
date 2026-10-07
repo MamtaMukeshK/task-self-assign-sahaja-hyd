@@ -85,4 +85,15 @@ writes) | Notes.
    (and ideally native speakers') OK before recording. Then the user uploads the three videos to Drive ("Anyone with
    the link") and sends the links; put them in `DEMO_VIDEO_URLS`. ~60-100k tokens (low confidence; the Telugu voice
    setup alone is a large download, see HANDOFF).
+   **4b. Organiser demo video** (added by the user 2026-10-07): how to enter data in and manage the two tabs of the new
+   sheet, "Program plan" and "Slots". Laptop-sized (organisers mostly use computers), about 2 minutes, same English
+   voice; Telugu/Hindi versions only if the user asks. Steps: add a Program plan line (day, start/end, Frequency incl.
+   Daily and Monthly, From/Until, places, contact); run "Program → Update slots now" and see the dates appear in Slots;
+   which Slots columns organisers may edit (Status, Places, Notes, adding a one-off row) and which the page writes
+   (Volunteers, Still needed, Cancellation notice sent - fix only by hand when needed); change a plan line and see that
+   dates with volunteers are not moved; cancel one date (Status = Cancelled) and send the WhatsApp list; read who is
+   coming. Recording limit: Google's own sites are blocked from the build machine, so the video shows a faithful
+   sheet-like screen built from the real tab layout (not real Google Sheets); say so in the video's first caption, or
+   let the user record their own screen and add the voice-over afterwards. Linked from the new sheet's setup guide and
+   README (not from the volunteers' page). ~30-50k tokens (low confidence); narration text approved by the user first.
 Estimates have moderate confidence (stage 4: low). Stop and ask before any stage passes 100,000 tokens.

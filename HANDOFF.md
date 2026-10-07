@@ -315,7 +315,8 @@ _Last updated: 2026-10-06 (version 2026-10-06.4 pushed, not yet live: Ongoing Pr
   untouched). SPEC section 0 decided: both pages exist; one role (no
   Backup) for now. Calendar layout: "One week" (Mon-Thu / Fri-Sun + week total), confirmed.
   Register others: decision 13 (groups booked even if over the limit; already-full dates skipped). Spec is final.
-  Stage 4 added: demo videos in en/te/hi + language-aware demo button on the new page (SPEC section 5). Build in 3 stages (SPEC section 5), confirming each.
+  Stage 4 added: demo videos in en/te/hi + language-aware demo button on the new page (SPEC section 5).
+  Stage 4b added: an organiser demo video for the Program plan and Slots tabs (SPEC section 5). Build in 3 stages (SPEC section 5), confirming each.
 - **User: deploy 2026-10-06.4.** Paste both files from SETUP_GUIDE.html, Deploy -> Manage deployments -> edit the
   existing deployment -> New version (keeps the same link). Then check on a phone: the date list ends with "Ongoing
   programs"; a card shows "8 Oct 2026 to 29 Oct 2026 · Weekly · Wed"; Register -> Backup writes column E and sets G;
