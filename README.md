@@ -122,7 +122,9 @@ At midnight India time the page automatically switches to the new day's tab.
 - A school takes people up to its **Total volunteers needed** (any column title
   containing "total" and "volunteer"). Blank or no such column = 1 person; 0 = closed.
   A column titled like **count of Volunteers still needed** ("still" + "volunteer")
-  is kept up to date by the page, unless it holds a formula.
+  is kept up to date by the page (and, on the Ongoing tab, "Num of backup yogis still needed"): on every registration,
+  whenever someone types in a names or "needed" cell, and whenever the page reads the tab. A number typed into it by hand
+  is replaced by the calculated one; change the total instead. Past days and cells holding a formula are left alone.
 - A school can go **over** its total: everyone is added, the extra people show in red
   "(over limit)" and "Slots left" reads "Over by N". A total of 0 closes the school.
 - **Register others:** tick it, list one person per line (name then 10-digit mobile),

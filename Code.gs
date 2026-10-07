@@ -9,7 +9,7 @@
  */
 
 // Shown on the page so it's easy to confirm which version is deployed.
-var VERSION = '2026-10-06.4';
+var VERSION = '2026-10-07.1';
 
 var CONFIG = {
   // Time zone for "today" and "now" (which day opens, which slots have ended).
@@ -74,15 +74,18 @@ function doGet() {
 function getState(tabName) {
   var ss = openSpreadsheet_();
   var day = resolveDay_(ss, tabName);
-  var state = cachedState_(day.sheet);
+  var state = cachedState_(day.sheet, !day.past); // past days are a record: their "still needed" cells are left as they are
   state.days = day.days;
   state.defaultDay = day.defaultDay;
   state.speakers = speakerList_(ss);
   return markPast_(state, day);
 }
 
-/** A day's rows, from the shared cache when fresh (a copy, safe to annotate). */
-function cachedState_(sheet) {
+/**
+ * A day's rows, from the shared cache when fresh (a copy, safe to annotate). With keepCounts, a fresh read also
+ * corrects any "still needed" cell that doesn't match the people on its row (see syncRemaining_).
+ */
+function cachedState_(sheet, keepCounts) {
   var cache = CacheService.getScriptCache();
   var key = cacheKey_(sheet);
   // Inserting or deleting rows/columns doesn't count as an edit, so a size change also means "read again".
@@ -92,7 +95,9 @@ function cachedState_(sheet) {
     var cached = JSON.parse(hit);
     if (cached.size === size) return cached;
   }
-  var state = buildState_(sheet);
+  var tab = readTab_(sheet);
+  if (keepCounts && syncRemaining_(sheet, tab)) tab = readTab_(sheet);
+  var state = buildState_(sheet, tab);
   state.size = size;
   try {
     cache.put(key, JSON.stringify(state), CONFIG.CACHE_SECONDS);
@@ -388,13 +393,54 @@ function dayIsOver_(sheet, now) {
 }
 
 /** Marks a past day, and today's slots whose end time has passed, as view-only. */
-// Runs by itself whenever someone types in the sheet: forget the cached copy so the page shows it at once.
+// Runs by itself whenever someone types in the sheet: bring that tab's "still needed" cells up to date (today, later
+// days and the Ongoing tab), and forget the cached copy so the page shows the change at once.
 function onEdit(e) {
   try {
     var keys = ['speakers'];
-    if (e && e.range) keys.push(cacheKey_(e.range.getSheet()));
+    if (e && e.range) {
+      var sheet = e.range.getSheet();
+      keys.push(cacheKey_(sheet));
+      try {
+        var day = listDays_(openSpreadsheet_()).filter(function (d) { return d.name === sheet.getName(); })[0];
+        if (day && !day.past) syncRemaining_(sheet, readTab_(sheet));
+      } catch (err) {}
+    }
     CacheService.getScriptCache().removeAll(keys);
   } catch (err) {}
+}
+
+/**
+ * Makes every "still needed" cell (and, on the Ongoing tab, every "backups still needed" cell) equal to the places
+ * left on its row - what the page shows - so hand edits and rows nobody has registered on are counted too. Only cells
+ * that differ are written; a cell holding a formula is left alone. Writes happen inside the script lock, after reading
+ * the tab again (a registration may have just written); if someone is registering right now it is skipped and the next
+ * read catches up. Returns true when it changed something.
+ */
+function syncRemaining_(sheet, tab) {
+  var stale = function (t) {
+    var out = [];
+    t.rows.forEach(function (r) {
+      [[t.remainingCol, r.remaining], [t.backupRemainingCol, r.backup ? r.backup.remaining : null]].forEach(function (c) {
+        if (c[0] && c[1] != null && String(r.cells[c[0] - 1]).trim() !== String(c[1])) out.push([r.row, c[0], c[1]]);
+      });
+    });
+    return out;
+  };
+  if (!stale(tab).length) return false;
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(2000)) return false;
+  var changed = false;
+  try {
+    stale(readTab_(sheet)).forEach(function (c) {
+      var cell = sheet.getRange(c[0], c[1]);
+      if (!cell.getFormula()) { cell.setValue(c[2]); changed = true; }
+    });
+    if (changed) SpreadsheetApp.flush();
+  } finally {
+    lock.releaseLock();
+  }
+  return changed;
 }
 
 function markPast_(state, day) {
@@ -533,8 +579,8 @@ function readTab_(sheet) {
     ongoing: ongoing, slotsHeader: sIdx >= 0 ? headers[sIdx] : '', rows: rows };
 }
 
-function buildState_(sheet) {
-  var tab = readTab_(sheet);
+function buildState_(sheet, tab) {
+  tab = tab || readTab_(sheet);
   var state = { tab: sheet.getName(), headers: tab.headers, nameIdx: tab.nameCol - 1, slotsHeader: tab.slotsHeader, rows: tab.rows };
   if (tab.ongoing) { state.ongoing = true; state.backupIdx = tab.backupCol - 1; }
   return state;
