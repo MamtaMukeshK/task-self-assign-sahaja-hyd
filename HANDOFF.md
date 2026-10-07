@@ -3,6 +3,7 @@
 _Last updated: 2026-10-07 (Follow-up Program stage 1 built: server + tests in `followup/`; tour page unchanged at 2026-10-06.4, not yet live)_
 
 ## Start here (for a new session)
+- **Read `resume.md` first**: current state, what waits on the user, next steps and lessons learned (2026-10-07).
 - **What this is:** a Google Apps Script web page for the "Hyderabad 2026 - Self Realization Tour" sheet.
   Volunteers pick a date, see each school as a card (phones/tablets) or a table (laptops), and Claim /
   Release places; the speaker cell of the day tab is updated. Details of every feature: the dated log below.
