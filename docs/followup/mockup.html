@@ -1,0 +1,592 @@
+<title>Follow-up Program Sign-up Options</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Instrument+Serif&display=swap">
+<style>
+/* Layout: intro + recommendation, option tabs, then a live phone mock-up beside its notes (stacked on phones). */
+:root {
+  --bg:#F7F5EF; --surface:#FFFFFF; --fg:#22344A; --muted:#5E6E83; --line:#DCE4EE; --accent:#1A3A5C; --gold:#C9A84C; --soft:#E8F0F8;
+  --good:#2E7D32; --warn:#B26A00; --bad:#B3261E;
+  /* The phone screens show the app itself, which is light-only today, so these stay the same in both themes. */
+  --app-bg:#FBFAF6; --app-card:#FFFFFF; --app-fg:#34485F; --app-navy:#1A3A5C; --app-line:#D9E6F2; --app-band:#E1F0FB;
+  --app-mine:#E6F4EA; --app-mine-edge:#2E7D32; --app-sel:#FFF6D8; --app-sel-edge:#C9A84C; --app-muted:#5A6B82;
+  --app-full:#F1F4F8; --app-red:#B3261E; --app-amber:#B26A00; --app-green:#2E7D32; --phone-edge:#1B1F24;
+  --font-display:'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --font-body:'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg:#111821; --surface:#18222E; --fg:#E4EAF2; --muted:#9AA9BC; --line:#2A3746; --accent:#9CC0E6; --gold:#D9BC6A; --soft:#1E2B3A;
+  --good:#7BC77F; --warn:#E3A84B; --bad:#F08A82; color-scheme:dark; } }
+:root[data-theme="dark"] {
+  --bg:#111821; --surface:#18222E; --fg:#E4EAF2; --muted:#9AA9BC; --line:#2A3746; --accent:#9CC0E6; --gold:#D9BC6A; --soft:#1E2B3A;
+  --good:#7BC77F; --warn:#E3A84B; --bad:#F08A82; color-scheme:dark; }
+* { box-sizing:border-box; }
+body { background:var(--bg); color:var(--fg); font:16px/1.5 var(--font-body); padding-inline:16px; padding-block:20px 48px; }
+.wrap { max-width:1120px; margin:0 auto; display:flex; flex-direction:column; gap:20px; }
+h1 { font:400 clamp(30px,5vw,44px)/1.1 var(--font-display); margin:0; color:var(--accent); text-wrap:balance; }
+h2 { font:400 26px/1.2 var(--font-display); margin:0; color:var(--accent); text-wrap:balance; }
+h3 { font-size:16px; margin:0; }
+p { margin:0; max-width:68ch; }
+.lede { color:var(--muted); }
+.eyebrow { font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+.rec { background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--gold); border-radius:10px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; }
+.tabs { display:flex; flex-wrap:wrap; gap:8px; }
+.tab { font:inherit; font-weight:600; font-size:15px; padding:9px 14px; border-radius:22px; border:1px solid var(--line); background:var(--surface); color:var(--fg); cursor:pointer; }
+.tab[aria-selected="true"] { background:var(--accent); color:var(--surface); border-color:var(--accent); }
+.tab .star { color:var(--gold); }
+.tab:focus-visible, button:focus-visible, select:focus-visible { outline:3px solid var(--gold); outline-offset:2px; }
+[hidden] { display:none !important; }
+.stage { display:grid; grid-template-columns:minmax(0,390px) minmax(0,1fr); gap:28px; align-items:start; }
+#phoneCol { min-width:0; }
+@media (max-width:860px) { .stage { grid-template-columns:minmax(0,1fr); } }
+.notes { display:flex; flex-direction:column; gap:14px; min-width:0; }
+.notes ul { margin:0; padding-left:20px; display:flex; flex-direction:column; gap:4px; }
+.pc { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+@media (max-width:520px) { .pc { grid-template-columns:1fr; } }
+.pc > div { background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:12px 14px; display:flex; flex-direction:column; gap:6px; }
+.pro h3 { color:var(--good); } .con h3 { color:var(--bad); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; }
+.chip { font-size:13px; font-weight:600; padding:4px 10px; border-radius:14px; background:var(--soft); color:var(--fg); }
+.try { background:var(--soft); border-radius:10px; padding:10px 14px; font-size:15px; }
+.reset { font:inherit; font-size:14px; padding:6px 12px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--fg); cursor:pointer; align-self:flex-start; }
+
+/* ---------- phone frame + app look ---------- */
+.phone { width:100%; max-width:390px; height:760px; border:12px solid var(--phone-edge); border-radius:38px; overflow:hidden; background:var(--app-bg); position:relative; display:flex; flex-direction:column; }
+.screen { flex:1; overflow-y:auto; overflow-x:hidden; color:var(--app-fg); font:17px/1.4 var(--font-body); position:relative; }
+.appbar { background:linear-gradient(180deg, var(--app-band), var(--app-bg)); border-bottom:3px solid var(--app-sel-edge); padding:12px 14px 10px; }
+.appbar .t { font:400 21px/1.15 var(--font-display); color:var(--app-navy); }
+.appbar .s { font-size:13px; color:var(--app-muted); }
+.who { display:flex; gap:8px; align-items:center; padding:8px 14px; font-size:15px; color:var(--app-muted); border-bottom:1px solid var(--app-line); }
+.who b { color:var(--app-navy); }
+.ctrl { display:flex; gap:10px; align-items:center; padding:8px 14px; flex-wrap:wrap; font-size:16px; }
+.ctrl label { display:flex; align-items:center; gap:6px; }
+.ctrl input[type=checkbox] { width:22px; height:22px; }
+.sect { font:400 20px/1.2 var(--font-display); color:var(--app-navy); padding:12px 14px 4px; }
+.dayhead { position:sticky; top:0; z-index:2; background:var(--app-bg); padding:10px 14px 6px; font-weight:700; color:var(--app-navy); border-bottom:1px solid var(--app-line); display:flex; justify-content:space-between; }
+.dayhead small { font-weight:500; color:var(--app-muted); }
+.slot { margin:8px 12px; background:var(--app-card); border:1px solid var(--app-line); border-left:5px solid #4A6FA5; border-radius:12px; padding:10px 12px; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 10px; align-items:center; }
+.slot .tm { font-weight:700; color:var(--app-navy); }
+.slot .pl { font-size:15px; color:var(--app-fg); grid-column:1; }
+.slot .ppl { font-size:13px; color:var(--app-muted); grid-column:1 / -1; }
+.slot.full { background:var(--app-full); border-left-color:#9AA0A6; }
+.slot.mine { background:var(--app-mine); border-left-color:var(--app-mine-edge); }
+.slot.sel { background:var(--app-sel); border-left-color:var(--app-sel-edge); outline:2px solid var(--app-sel-edge); }
+.slot.past { opacity:.55; }
+.badge { font-size:13px; font-weight:700; padding:2px 9px; border-radius:12px; background:var(--app-band); color:var(--app-navy); justify-self:start; }
+.badge.low { color:var(--app-amber); } .badge.none { color:var(--app-red); background:var(--app-full); }
+.pick { font:inherit; font-size:16px; font-weight:700; min-width:118px; min-height:44px; border-radius:10px; border:2px solid var(--app-navy); background:var(--app-card); color:var(--app-navy); cursor:pointer; grid-row:1 / span 3; grid-column:2; }
+.pick.on { background:var(--app-navy); color:var(--app-card); }
+.pick:disabled { border-color:#B8C1CC; color:#8A96A5; cursor:default; }
+.pick.rel { border-color:var(--app-mine-edge); color:var(--app-mine-edge); font-size:15px; line-height:1.1; }
+.pick.rel small { font-weight:500; font-size:12px; }
+.toast { position:absolute; left:12px; right:12px; bottom:14px; z-index:8; background:var(--app-mine-edge); color:var(--app-card); border-radius:12px; padding:10px 12px; font-size:15px; }
+.slot.cxl { background:var(--app-full); border-left-color:var(--app-red); }
+.slot.cxl .tm { text-decoration:line-through; }
+.okmark.cx { color:var(--app-red); } .okmark.late { color:var(--app-amber); font-size:13px; line-height:1.2; } .okmark small { font-weight:500; }
+.cxt { color:var(--app-red); }
+.alert { margin:8px 12px; padding:10px 12px; border-radius:12px; background:#FDECEA; border:1px solid var(--app-red); color:#7A1A14; font-size:15px; }
+.blk.cxl { background:var(--app-full); border-color:var(--app-red); color:var(--app-red); text-decoration:line-through; }
+.ev.cxl { background:#FDECEA; color:#7A1A14; text-decoration:line-through; }
+.okmark { font-size:14px; font-weight:700; color:var(--app-mine-edge); grid-row:1 / span 3; grid-column:2; text-align:center; }
+.more { display:block; margin:12px auto 90px; font:inherit; font-size:16px; padding:10px 16px; border-radius:10px; border:1px solid var(--app-line); background:var(--app-card); color:var(--app-navy); cursor:pointer; }
+.mysum { margin:8px 12px; padding:10px 12px; border-radius:12px; background:var(--app-mine); border:1px solid var(--app-mine-edge); font-size:15px; }
+.mysum b { color:var(--app-mine-edge); }
+
+/* bottom bar for multi-select + repeat */
+.bar { position:sticky; bottom:0; background:var(--app-navy); color:var(--app-card); padding:10px 12px; display:flex; flex-direction:column; gap:8px; z-index:5; box-shadow:0 -4px 14px rgba(0,0,0,.25); }
+.bar .row { display:flex; gap:8px; align-items:center; justify-content:space-between; }
+.bar select { font:inherit; font-size:15px; padding:7px 8px; border-radius:8px; border:0; background:var(--app-card); color:var(--app-navy); min-width:0; flex:1; }
+.bar .go { font:inherit; font-weight:700; font-size:17px; padding:10px 16px; border-radius:10px; border:0; background:var(--app-sel-edge); color:var(--app-navy); cursor:pointer; }
+.bar .clear { font:inherit; font-size:14px; background:transparent; color:var(--app-card); border:1px solid rgba(255,255,255,.5); border-radius:8px; padding:6px 10px; cursor:pointer; }
+
+/* confirmation sheet */
+.sheet { position:absolute; inset:0; background:rgba(15,25,40,.55); display:flex; align-items:flex-end; z-index:9; }
+.sheet .in { background:var(--app-card); color:var(--app-fg); width:100%; max-height:85%; overflow:auto; border-radius:18px 18px 0 0; padding:16px; display:flex; flex-direction:column; gap:10px; }
+.sheet h4 { margin:0; font:400 22px/1.2 var(--font-display); color:var(--app-navy); }
+.sheet ul { margin:0; padding-left:18px; font-size:15px; display:flex; flex-direction:column; gap:3px; }
+.sheet .skip { color:var(--app-amber); }
+.sheet button { font:inherit; font-weight:700; font-size:17px; padding:11px; border-radius:10px; border:0; background:var(--app-navy); color:var(--app-card); cursor:pointer; }
+
+/* option B month grid */
+.monthnav { display:flex; justify-content:space-between; align-items:center; padding:8px 14px; }
+.monthnav button { font:inherit; font-size:20px; width:44px; height:40px; border-radius:10px; border:1px solid var(--app-line); background:var(--app-card); color:var(--app-navy); cursor:pointer; }
+.monthnav b { font:400 21px var(--font-display); color:var(--app-navy); }
+.mgrid { display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:3px; padding:0 8px; }
+.mgrid .wd { font-size:12px; text-align:center; color:var(--app-muted); font-weight:700; }
+.cell { min-height:52px; border-radius:8px; border:1px solid var(--app-line); background:var(--app-card); font:inherit; font-size:14px; padding:3px 2px; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; color:var(--app-fg); }
+.cell.out { visibility:hidden; }
+.cell.none { background:transparent; border-style:dashed; cursor:default; color:var(--app-muted); }
+.cell.on { outline:3px solid var(--app-sel-edge); }
+.cell.today b { text-decoration:underline; }
+.cell .n { font-size:11px; font-weight:700; border-radius:8px; padding:0 4px; }
+.n.g { background:#DDEFE0; color:var(--app-green); } .n.a { background:#FBEBD0; color:var(--app-amber); } .n.f { background:var(--app-full); color:var(--app-muted); } .n.m { background:var(--app-mine-edge); color:var(--app-card); }
+
+/* option C date strip */
+.strip { display:flex; gap:8px; overflow-x:auto; padding:10px 12px; border-bottom:1px solid var(--app-line); position:sticky; top:0; background:var(--app-bg); z-index:3; scrollbar-width:thin; }
+.dchip { flex:none; min-width:76px; padding:6px 8px; border-radius:12px; border:1px solid var(--app-line); background:var(--app-card); font:inherit; color:var(--app-navy); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:1px; }
+.dchip .d { font-size:13px; color:var(--app-muted); } .dchip .x { font-size:20px; font-weight:700; } .dchip .o { font-size:12px; font-weight:700; }
+.dchip .o.g { color:var(--app-green); } .dchip .o.a { color:var(--app-amber); } .dchip .o.f { color:var(--app-muted); }
+.dchip.nos { opacity:.45; }
+.c-list .dayhead { top:0; }
+.cal2 { background:var(--app-card); border-bottom:1px solid var(--app-line); padding:8px 8px 6px; }
+.cnav { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; }
+.arrow { flex:none; width:48px; height:48px; border-radius:12px; border:0; background:var(--app-navy); color:var(--app-card); font:700 30px/1 var(--font-body); cursor:pointer; }
+.arrow:disabled { background:var(--app-line); color:var(--app-muted); cursor:default; }
+.cmonth { text-align:center; display:flex; flex-direction:column; }
+.cmonth b { font:400 22px/1.1 var(--font-display); color:var(--app-navy); }
+.cmonth span { font-size:13px; color:var(--app-muted); }
+.cgrid { display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:4px; }
+.cwd { text-align:center; font-size:12px; font-weight:700; color:var(--app-muted); }
+.cday { position:relative; min-height:58px; border-radius:10px; border:1px solid var(--app-line); background:var(--app-bg); font:inherit; color:var(--app-navy); cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:2px 0; }
+.cday b { font-size:19px; line-height:1; }
+.cday.dim { opacity:.45; cursor:default; }
+.cday.today { border:2px solid var(--app-navy); }
+.cday .mo { position:absolute; top:1px; left:3px; font-size:10px; font-weight:700; color:var(--app-sel-edge); }
+.cnt { font-size:12px; font-weight:700; min-width:22px; text-align:center; border-radius:8px; padding:0 4px; }
+.cnt.g { background:#DDEFE0; color:var(--app-green); } .cnt.a { background:#FBEBD0; color:var(--app-amber); } .cnt.f { background:var(--app-full); color:var(--app-muted); }
+.cday .me { position:absolute; top:2px; right:4px; font-size:11px; color:var(--app-mine-edge); }
+.legend { margin:6px 2px 0; font-size:12px; color:var(--app-muted); display:flex; gap:4px; align-items:center; flex-wrap:wrap; }
+.legend .me { color:var(--app-mine-edge); }
+
+/* option D week grid */
+.wkgrid { display:grid; grid-template-columns:34px repeat(7, minmax(0,1fr)); padding:0 4px 100px; position:relative; }
+.wkgrid .hd { font-size:11px; text-align:center; color:var(--app-muted); font-weight:700; padding:4px 0; position:sticky; top:0; background:var(--app-bg); z-index:2; }
+.col { position:relative; border-left:1px solid var(--app-line); height:calc(14 * 46px); }
+.hrs { position:relative; height:calc(14 * 46px); }
+.hrs span { position:absolute; right:3px; font-size:10px; color:var(--app-muted); transform:translateY(-6px); }
+.hline { position:absolute; left:0; right:0; border-top:1px dashed var(--app-line); }
+.blk { position:absolute; left:2px; right:2px; border-radius:6px; font:inherit; font-size:10px; line-height:1.15; padding:2px; text-align:left; background:#DCE8F5; border:1px solid #4A6FA5; color:var(--app-navy); overflow:hidden; cursor:pointer; }
+.blk.full { background:var(--app-full); border-color:#9AA0A6; color:var(--app-muted); }
+.blk.mine { background:var(--app-mine); border-color:var(--app-mine-edge); }
+.blk.sel { background:var(--app-sel); border:2px solid var(--app-sel-edge); }
+
+/* option E calendar app */
+.cal-top { background:var(--app-card); padding:12px 14px; border-bottom:1px solid var(--app-line); display:flex; justify-content:space-between; align-items:center; }
+.cal-top b { font-size:19px; color:var(--app-navy); }
+.cal-top span { font-size:13px; color:var(--app-muted); }
+.cal-day { display:grid; grid-template-columns:52px minmax(0,1fr); gap:8px; padding:8px 12px; border-bottom:1px solid var(--app-line); }
+.cal-day .dd { text-align:center; color:var(--app-muted); font-size:12px; } .cal-day .dd b { display:block; font-size:22px; color:var(--app-navy); }
+.ev { font:inherit; text-align:left; width:100%; border:0; border-radius:8px; padding:6px 9px; margin-bottom:5px; background:#4A6FA5; color:#FFFFFF; font-size:14px; cursor:pointer; }
+.ev.full { background:#9AA0A6; } .ev.mine { background:var(--app-mine-edge); }
+.ev small { display:block; opacity:.9; }
+
+/* tables */
+.tbl { overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:var(--surface); }
+table { border-collapse:collapse; width:100%; font-size:14px; font-variant-numeric:tabular-nums; }
+th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { background:var(--soft); font-weight:700; white-space:nowrap; }
+td.y { color:var(--good); font-weight:700; } td.n { color:var(--bad); font-weight:700; } td.m { color:var(--warn); font-weight:700; }
+.written { background:color-mix(in srgb, var(--gold) 18%, transparent); }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior:auto !important; } }
+</style>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <span class="eyebrow">Follow-up program · design options · mock-ups only, made-up data</span>
+    <h1>Signing up for a weekly program</h1>
+    <p class="lede">Five ways volunteers could see all planned slots and sign up for several at once, including repeating the same weekday and time for the next few weeks. Each option below is clickable: tick slots, pick how many weeks to repeat, and press Register. Nothing is saved; it is the same demo data in every option.</p>
+  </header>
+
+  <div class="rec">
+    <span class="eyebrow">Decided (7 Oct 2026)</span>
+    <p><b>Option C</b>: two-week calendar (a week per row, ‹ › arrows, month shown) above a list of the next 2 weeks, with "Show 2 more weeks". Tick several slots across days and register once, repeating "next 4 / 8 dates" or the whole program (daily sessions: next 7 / 14 days).</p>
+    <p><b>Sheet</b>: a new sheet and page link for this program; organisers fill <b>Program plan</b> (daily, weekdays, weekly, every 2 weeks, monthly, one-off; from/until), and a weekly script fills <b>Slots</b>. The page reads only the coming weeks.</p>
+    <p><b>Rules</b>: release any single date until 12 hours before it starts; registering stays open until the start. Cancelled dates show a red notice to those registered, and organisers get a one-tap WhatsApp list of them. Option E (phone calendar) may come later.</p>
+  </div>
+
+  <div class="tabs" role="tablist" aria-label="Options">
+    <button class="tab" role="tab" id="tab-A" data-opt="A">A · Upcoming list</button>
+    <button class="tab" role="tab" id="tab-B" data-opt="B">B · Month calendar</button>
+    <button class="tab" role="tab" id="tab-C" data-opt="C">C · Two-week calendar + list <span class="star">★</span></button>
+    <button class="tab" role="tab" id="tab-D" data-opt="D">D · Week time grid</button>
+    <button class="tab" role="tab" id="tab-E" data-opt="E">E · Phone calendar</button>
+    <button class="tab" role="tab" id="tab-S" data-opt="S">Sheet setup</button>
+    <button class="tab" role="tab" id="tab-X" data-opt="X">Compare</button>
+  </div>
+
+  <section id="stage" class="stage">
+    <div id="phoneCol">
+      <div class="phone" aria-label="Phone mock-up"><div class="screen" id="screen"></div></div>
+    </div>
+    <div class="notes" id="notes"></div>
+  </section>
+
+  <section id="sheetPanel" hidden class="notes"></section>
+  <section id="comparePanel" hidden class="notes"></section>
+</div>
+
+<script>
+(function () {
+  // ---------- demo data: an 8-week follow-up program, Mon 5 Oct - Sun 29 Nov 2026; "now" = Wed 7 Oct, 08:00 ----------
+  var WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var WDL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var MONL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var TODAY = new Date(2026, 9, 7), NOW_MIN = 8 * 60;
+  var PLAN = [ // the organisers' "Weekly plan"
+    { dow:1, start:'18:30', end:'19:30', centre:'Ameerpet Centre', area:'Ameerpet', places:3, freq:'Weekly' },
+    { dow:3, start:'10:00', end:'11:00', centre:'Kukatpally Public Library', area:'Kukatpally', places:2, freq:'Weekly' },
+    { dow:4, start:'18:30', end:'19:30', centre:'Madhapur Community Hall', area:'Madhapur', places:3, freq:'Every 2 weeks' },
+    { dow:6, start:'10:00', end:'11:00', centre:'Secunderabad Club Annexe', area:'Secunderabad', places:2, freq:'Weekly' },
+    { dow:6, start:'17:00', end:'18:00', centre:'Dilsukhnagar Yoga Hall', area:'Dilsukhnagar', places:4, freq:'Monthly · 2nd Saturday' },
+    { dow:0, start:'09:00', end:'10:00', centre:'KBR Park, Gate 1', area:'Jubilee Hills', places:5, freq:'Weekly' },
+    { dow:-1, start:'07:00', end:'08:00', centre:'Begumpet Morning Centre', area:'Begumpet', places:2, freq:'Daily' }
+  ];
+  var NAMES = ['Anita S.','Ravi K.','Lakshmi D.','Suresh R.','Meera D.','Kiran R.','Arjun V.','Padma N.','Vikram J.','Asha R.','Gopal M.','Sita P.'];
+  var ME = 'Priya Nair';
+  var slots = [];
+  function key(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function addDays(d, n) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }
+  function mins(t) { var p = t.split(':'); return +p[0] * 60 + +p[1]; }
+  function ampm(t) { var m = mins(t), h = Math.floor(m / 60), mm = m % 60; return ((h + 11) % 12 + 1) + (mm ? ':' + ('0' + mm).slice(-2) : '') + (h < 12 ? ' AM' : ' PM'); }
+  function build() {
+    slots = [];
+    var first = new Date(2026, 9, 5);
+    for (var i = 0; i < 56; i++) {
+      var d = addDays(first, i);
+      PLAN.forEach(function (p, pi) {
+        if (p.freq !== 'Daily' && p.dow !== d.getDay()) return;
+        if (p.freq === 'Every 2 weeks' && Math.round((d - new Date(2026, 9, 8)) / 864e5 / 7) % 2) return;  // from Thu 8 Oct
+        if (/^Monthly/.test(p.freq) && Math.ceil(d.getDate() / 7) !== 2) return;                           // 2nd Saturday
+        var seed = (i * 7 + pi * 13) % 11, n = (i + pi) % 9 === 0 ? p.places : seed % p.places, people = []; // mostly open, a few full
+        for (var k = 0; k < n; k++) people.push(NAMES[(seed + k * 5 + pi) % NAMES.length]);
+        if (pi === 3 && i >= 5 && i < 21 && people.length < p.places) people.push(ME); // demo: Priya already does 3 Saturdays
+        if (pi === 1 && i === 2) { people = people.slice(0, p.places - 1); people.push(ME); } // demo: Priya today, under 12 h away
+        slots.push({ id: key(d) + '#' + pi, plan: pi, date: d, key: key(d), start: p.start, end: p.end, centre: p.centre, area: p.area, places: p.places, people: people,
+          cancelled: pi === 3 && i === 12 }); // demo: organisers cancelled Sat 17 Oct, 10 AM
+      });
+    }
+  }
+  build();
+  function isPast(s) { var k = key(TODAY); return s.key < k || (s.key === k && mins(s.end) <= NOW_MIN); }
+  function isMine(s) { return s.people.indexOf(ME) >= 0; }
+  function left(s) { return s.cancelled ? 0 : Math.max(0, s.places - s.people.length); }
+  function minsUntil(s) { return Math.round((s.date - TODAY) / 864e5) * 1440 + mins(s.start) - NOW_MIN; }
+  function late(s) { return minsUntil(s) < 12 * 60; }   // release closes 12 hours before the start
+  function dayLabel(d) { return WD[d.getDay()] + ' ' + d.getDate() + ' ' + MON[d.getMonth()]; }
+  function onDay(k) { return slots.filter(function (s) { return s.key === k; }).sort(function (a, b) { return mins(a.start) - mins(b.start); }); }
+  function upcoming() { return slots.filter(function (s) { return !isPast(s); }); }
+
+  // ---------- shared state ----------
+  var sel = {};            // selected slot ids
+  var repeat = '1';        // '1' | '4' | '8' | 'all'
+  var opt = 'C', weekOff = 0, monthOff = 0, pickedDay = key(TODAY), openOnly = false, aDays = 7, cOff = 0, cDays = 14;
+  var screen = document.getElementById('screen'), phoneEl = document.querySelector('.phone');
+
+  // ---------- pieces used by several options ----------
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+  function appHead(sub) {
+    return '<div class="appbar"><div class="t">Follow-up Program · Hyderabad</div><div class="s">' + sub + '</div></div>' +
+      '<div class="who">Signing up as <b>' + ME + '</b> · 9000000108</div>';
+  }
+  function badge(s) {
+    if (s.cancelled || isPast(s)) return '';
+    var l = left(s);
+    return '<span class="badge' + (l === 0 ? ' none' : l === 1 ? ' low' : '') + '">' + (l === 0 ? 'Full' : l + ' of ' + s.places + ' left') + '</span>';
+  }
+  function slotCard(s) {
+    var cls = 'slot' + (isPast(s) ? ' past' : isMine(s) ? ' mine' : sel[s.id] ? ' sel' : left(s) === 0 ? ' full' : '');
+    if (s.cancelled) cls = 'slot cxl';
+    var right = s.cancelled ? '<span class="okmark cx">Cancelled</span>'
+      : isMine(s) ? (isPast(s) ? '<span class="okmark">✓ Attended</span>' : late(s) ? '<span class="okmark late">Release closed<br><small>under 12 h to go</small></span>'
+        : '<button class="pick rel" data-rel="' + s.id + '">Release<br><small>this date</small></button>')
+      : '<button class="pick' + (sel[s.id] ? ' on' : '') + '" data-pick="' + s.id + '"' + (isPast(s) || left(s) === 0 ? ' disabled' : '') + '>' +
+        (isPast(s) ? 'Ended' : left(s) === 0 ? 'Full' : sel[s.id] ? '☑ Selected' : '☐ Select') + '</button>';
+    return '<div class="' + cls + '"><span class="tm">' + ampm(s.start) + ' – ' + ampm(s.end) + '</span>' + right +
+      '<span class="pl">' + esc(s.centre) + ' · ' + esc(s.area) + '</span>' + badge(s) +
+      '<span class="ppl">' + (s.cancelled ? '<b class="cxt">Cancelled by the organisers.</b>' + (isMine(s) ? ' You were registered: no need to go.' : '')
+        : (isMine(s) ? '✓ You\'re on this date · ' : '') + (s.people.length ? 'With: ' + esc(s.people.join(', ')) : 'Nobody yet') +
+          (isMine(s) && !isPast(s) && late(s) ? '<br>Can\'t make it? Please call the organiser, Mr. Rao, 9000000201.' : '')) + '</span></div>';
+  }
+  function dayBlock(k, list) {
+    var d = list[0].date, open = list.filter(function (s) { return !isPast(s) && left(s) > 0; }).length;
+    return '<div id="d-' + k + '"><div class="dayhead">' + dayLabel(d) + (k === key(TODAY) ? ' · today' : '') + '<small>' + open + ' open</small></div>' +
+      list.map(slotCard).join('') + '</div>';
+  }
+  function mySummary() {
+    var cx = upcoming().filter(function (s) { return isMine(s) && s.cancelled; });
+    var alert = cx.map(function (s) { return '<div class="alert" role="alert"><b>⚠ Cancelled:</b> ' + dayLabel(s.date) + ', ' + ampm(s.start) + ' · ' + esc(s.centre) + '. You were registered, so please don\'t go. Your other dates are unchanged.</div>'; }).join('');
+    var mine = upcoming().filter(function (s) { return isMine(s) && !s.cancelled; });
+    if (!mine.length) return alert;
+    return alert + '<div class="mysum">My Registrations: <b>' + mine.length + ' upcoming</b> · next: ' + dayLabel(mine[0].date) + ', ' + ampm(mine[0].start) + ', ' + esc(mine[0].centre) + '</div>';
+  }
+  function bar() {
+    var n = Object.keys(sel).length;
+    if (!n) return '';
+    var daily = Object.keys(sel).every(function (id) { return PLAN[+id.split('#')[1]].freq === 'Daily'; });
+    if ((daily ? ['1','7','14','all'] : ['1','4','8','all']).indexOf(repeat) < 0) repeat = '1';
+    return '<div class="bar"><div class="row"><b>' + n + ' slot' + (n > 1 ? 's' : '') + ' selected</b><button class="clear" data-clear>Clear</button></div>' +
+      '<div class="row"><select id="repeatSel" aria-label="Repeat">' +
+      (Object.keys(sel).every(function (id) { return PLAN[+id.split('#')[1]].freq === 'Daily'; })
+        ? [['1','Just this day'],['7','Same session, next 7 days'],['14','Same session, next 14 days'],['all','Same session, whole program']]
+        : [['1','Just this date'],['4','Same session, next 4 dates'],['8','Same session, next 8 dates'],['all','Same session, whole program']]).map(function (o) {
+        return '<option value="' + o[0] + '"' + (repeat === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') +
+      '</select><button class="go" data-go>Register</button></div></div>';
+  }
+  function expand() { // selected slots -> every dated slot to book, honouring "repeat"
+    var out = [], skipped = [], seen = {};
+    Object.keys(sel).forEach(function (id) {
+      var s0 = slots.filter(function (s) { return s.id === id; })[0]; if (!s0) return;
+      var count = repeat === 'all' ? 999 : +repeat;
+      slots.filter(function (s) { return s.plan === s0.plan && s.date >= s0.date; }).slice(0, count).forEach(function (s) {
+        if (seen[s.id]) return; seen[s.id] = 1;
+        if (isMine(s)) return;
+        if (left(s) === 0) skipped.push(s); else out.push(s);
+      });
+    });
+    var by = function (a, b) { return a.date - b.date || mins(a.start) - mins(b.start); };
+    return { book: out.sort(by), skipped: skipped.sort(by) };
+  }
+  function confirmSheet() {
+    var r = expand();
+    r.book.forEach(function (s) { s.people.push(ME); });
+    sel = {};
+    var li = function (s) { return '<li>' + dayLabel(s.date) + ', ' + ampm(s.start) + ' · ' + esc(s.centre) + '</li>'; };
+    var html = '<div class="sheet" data-close><div class="in"><h4>Registered for ' + r.book.length + ' slot' + (r.book.length === 1 ? '' : 's') + '</h4>' +
+      '<p style="font-size:15px">Your name was written into each slot\'s row in the sheet. They now appear under "My Registrations".</p>' +
+      '<ul>' + r.book.map(li).join('') + '</ul>' +
+      (r.skipped.length ? '<p class="skip"><b>Skipped ' + r.skipped.length + ' (full or cancelled):</b></p><ul class="skip">' + r.skipped.map(li).join('') + '</ul>' : '') +
+      '<button data-close>Done</button></div></div>';
+    render(); phoneEl.insertAdjacentHTML('beforeend', html);
+  }
+
+  // ---------- the five options ----------
+  var views = {
+    A: function () {
+      var days = [], d0 = TODAY;
+      for (var i = 0; i < aDays; i++) { var k = key(addDays(d0, i)), l = onDay(k).filter(function (s) { return !openOnly || (!isPast(s) && (left(s) > 0 || isMine(s))); }); if (l.length) days.push(dayBlock(k, l)); }
+      return appHead('All upcoming slots') + mySummary() +
+        '<div class="ctrl"><label><input type="checkbox" id="oo"' + (openOnly ? ' checked' : '') + '> Open only</label></div>' +
+        days.join('') + '<button class="more" data-more>Show the next 7 days ▾</button>';
+    },
+    B: function () {
+      var base = new Date(2026, 9 + monthOff, 1), y = base.getFullYear(), m = base.getMonth();
+      var cells = WD.map(function (w) { return '<div class="wd">' + w[0] + '</div>'; }), lead = base.getDay(), dim = new Date(y, m + 1, 0).getDate();
+      for (var i = 0; i < lead; i++) cells.push('<div class="cell out"></div>');
+      for (var dd = 1; dd <= dim; dd++) {
+        var dt = new Date(y, m, dd), k = key(dt), l = onDay(k), up = l.filter(function (s) { return !isPast(s); });
+        var open = up.filter(function (s) { return left(s) > 0; }).length, mine = l.some(isMine);
+        var n = !l.length ? '' : mine ? '<span class="n m">mine</span>' : !up.length ? '<span class="n f">past</span>' : open === 0 ? '<span class="n f">full</span>' : '<span class="n ' + (open <= 1 ? 'a' : 'g') + '">' + open + ' open</span>';
+        cells.push('<button class="cell' + (!l.length ? ' none' : '') + (k === pickedDay ? ' on' : '') + (k === key(TODAY) ? ' today' : '') + '"' + (l.length ? ' data-day="' + k + '"' : ' disabled') + '><b>' + dd + '</b>' + n + '</button>');
+      }
+      var list = onDay(pickedDay);
+      return appHead('Tap a date to see its slots') + mySummary() +
+        '<div class="monthnav"><button data-mo="-1" aria-label="Previous month">‹</button><b>' + MONL[m] + ' ' + y + '</b><button data-mo="1" aria-label="Next month">›</button></div>' +
+        '<div class="mgrid">' + cells.join('') + '</div>' +
+        (list.length ? dayBlock(pickedDay, list) : '<p style="padding:14px;color:var(--app-muted)">No slots on this date.</p>') + '<div style="height:110px"></div>';
+    },
+    C: function () {
+      var mon0 = addDays(TODAY, -((TODAY.getDay() + 6) % 7)), g0 = addDays(mon0, cOff * 14), g1 = addDays(g0, 13);
+      var mlabel = g0.getMonth() === g1.getMonth() ? MONL[g0.getMonth()] + ' ' + g0.getFullYear() : MON[g0.getMonth()] + ' – ' + MON[g1.getMonth()] + ' ' + g1.getFullYear();
+      var cells = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(function (w) { return '<div class="cwd">' + w + '</div>'; });
+      for (var i = 0; i < 14; i++) {
+        var dt = addDays(g0, i), k = key(dt), l = onDay(k), past = k < key(TODAY);
+        var open = l.filter(function (x) { return !isPast(x) && left(x) > 0; }).length, mine = l.some(function (x) { return isMine(x) && !x.cancelled && !isPast(x); });
+        var cls = 'cday' + (past || !l.length ? ' dim' : '') + (k === key(TODAY) ? ' today' : '') + (dt.getDate() === 1 ? ' first' : '');
+        cells.push('<button class="' + cls + '"' + (past || !l.length ? ' disabled' : ' data-jump="' + k + '"') + ' aria-label="' + dayLabel(dt) + ', ' + open + ' sessions with places">' +
+          (dt.getDate() === 1 ? '<span class="mo">' + MON[dt.getMonth()] + '</span>' : '') + '<b>' + dt.getDate() + '</b>' +
+          (past || !l.length ? '<span class="cnt">–</span>' : '<span class="cnt ' + (open === 0 ? 'f' : open <= 1 ? 'a' : 'g') + '">' + open + '</span>') +
+          (mine ? '<span class="me" title="You\'re registered">●</span>' : '') + '</button>');
+      }
+      var blocks = [];
+      for (var j = 0; j < cDays; j++) {
+        var kk = key(addDays(TODAY, j)), ll = onDay(kk).filter(function (x) { return !openOnly || (!isPast(x) && (left(x) > 0 || isMine(x))); });
+        if (ll.length) blocks.push(dayBlock(kk, ll));
+      }
+      var until = addDays(TODAY, cDays - 1);
+      return appHead('Tap a date to jump to it') +
+        '<div class="cal2"><div class="cnav"><button class="arrow" data-cw="-1"' + (cOff <= 0 ? ' disabled' : '') + ' aria-label="Previous 2 weeks">‹</button>' +
+        '<div class="cmonth"><b>' + mlabel + '</b><span>' + g0.getDate() + ' ' + MON[g0.getMonth()] + ' – ' + g1.getDate() + ' ' + MON[g1.getMonth()] + '</span></div>' +
+        '<button class="arrow" data-cw="1"' + (cOff >= 3 ? ' disabled' : '') + ' aria-label="Next 2 weeks">›</button></div>' +
+        '<div class="cgrid">' + cells.join('') + '</div>' +
+        '<p class="legend"><span class="cnt g">3</span> sessions with places left · <span class="me">●</span> you\'re registered</p></div>' +
+        mySummary() +
+        '<div class="ctrl"><label><input type="checkbox" id="oo"' + (openOnly ? ' checked' : '') + '> Open only</label><span style="font-size:14px;color:var(--app-muted)">Showing until ' + dayLabel(until) + '</span></div>' +
+        '<div class="c-list">' + blocks.join('') + '</div><button class="more" data-cmore>Show 2 more weeks ▾</button>';
+    },
+    D: function () {
+      var mon = addDays(new Date(2026, 9, 5), weekOff * 7), H0 = 7, PX = 46;
+      var cols = '<div class="hrs">' + Array.from({ length: 14 }, function (_, h) { return '<span style="top:' + (h * PX) + 'px">' + ampm((H0 + h) + ':00').replace(':00', '') + '</span>'; }).join('') + '</div>';
+      var heads = '<div class="hd"></div>';
+      for (var i = 0; i < 7; i++) {
+        var dt = addDays(mon, i), k = key(dt);
+        heads += '<div class="hd">' + WD[dt.getDay()] + '<br>' + dt.getDate() + '</div>';
+        var lines = Array.from({ length: 14 }, function (_, h) { return '<div class="hline" style="top:' + (h * PX) + 'px"></div>'; }).join('');
+        cols += '<div class="col">' + lines + onDay(k).map(function (s) {
+          var top = (mins(s.start) / 60 - H0) * PX, ht = (mins(s.end) - mins(s.start)) / 60 * PX - 2;
+          var c = 'blk' + (s.cancelled ? ' cxl' : isMine(s) ? ' mine' : sel[s.id] ? ' sel' : left(s) === 0 || isPast(s) ? ' full' : '');
+          return '<button class="' + c + '" style="top:' + top + 'px;height:' + ht + 'px"' + (isPast(s) || s.cancelled || (!isMine(s) && left(s) === 0) || (isMine(s) && late(s)) ? ' disabled' : isMine(s) ? ' data-rel="' + s.id + '" title="Release this date"' : ' data-pick="' + s.id + '"') + '>' +
+            esc(s.area.split(' ')[0]) + '<br>' + (s.cancelled ? 'cancelled' : isMine(s) ? '✓ you' : left(s) + '/' + s.places) + '</button>';
+        }).join('') + '</div>';
+      }
+      return appHead('Week of ' + dayLabel(mon)) +
+        '<div class="monthnav"><button data-wk="-1" aria-label="Previous week">‹</button><b style="font-size:17px">' + dayLabel(mon) + ' – ' + dayLabel(addDays(mon, 6)) + '</b><button data-wk="1" aria-label="Next week">›</button></div>' +
+        '<div class="wkgrid">' + heads + cols + '</div>';
+    },
+    E: function () {
+      var days = [];
+      for (var i = 0; i < 14; i++) {
+        var dt = addDays(TODAY, i), l = onDay(key(dt)).filter(function (s) { return !isPast(s); });
+        if (!l.length) continue;
+        days.push('<div class="cal-day"><div class="dd">' + WD[dt.getDay()] + '<b>' + dt.getDate() + '</b></div><div>' + l.map(function (s) {
+          return '<button class="ev' + (s.cancelled ? ' cxl' : isMine(s) ? ' mine' : left(s) === 0 ? ' full' : '') + '" data-ev="' + s.id + '">' + (s.cancelled ? 'CANCELLED · ' : isMine(s) ? '✓ ' : '') + 'Volunteer: ' + esc(s.centre) +
+            '<small>' + ampm(s.start) + '–' + ampm(s.end) + ' · ' + (s.cancelled ? 'cancelled by the organisers' : left(s) === 0 ? 'full' : left(s) + ' of ' + s.places + ' places left') + '</small></button>';
+        }).join('') + '</div></div>');
+      }
+      return '<div class="cal-top"><b>October 2026</b><span>Subscribed: "Follow-up Program"</span></div>' + days.join('');
+    }
+  };
+
+  var NOTES = {
+    A: { name:'Option A · Upcoming list (agenda)', what:'One scrolling list of all upcoming slots, grouped by date, with a big Select button on each. Tick as many as you like across days, choose how many weeks to repeat, and press Register once.',
+      pro:['Easiest to read and tap on a phone; suits elderly volunteers','Very close to today\'s page, so little to relearn','Multi-select and "repeat weekly" fit naturally'],
+      con:['No at-a-glance picture of the month','A long program means a long list (shown 7 days at a time)'],
+      effort:'Medium · about 50,000–80,000 tokens', fit:'Good',
+      try:'Tick two slots on different days, choose "next 4 dates", press Register. Then tap Release on one of those dates.' },
+    B: { name:'Option B · Month calendar', what:'A month grid; each date shows how many slots are open (green), nearly full (amber), full (grey) or yours. Tap a date to see and select its slots below.',
+      pro:['Best overview: which days need people','Organisers will like it for planning'],
+      con:['Small squares on a phone are hard for elderly users to read and tap','Selecting across days means tapping in and out of dates'],
+      effort:'Medium · about 40,000–60,000 tokens', fit:'Fair on phones, good on laptops',
+      try:'Tap 10 Oct, select a slot, tap 14 Oct, select another, then Register.' },
+    C: { name:'Option C · Two-week calendar + list (chosen)', what:'A two-week calendar block (a full week per row, Monday to Sunday) with big ‹ › arrows and the month name, above a list of the next 2 weeks. Each date shows how many sessions still have places, and a green dot where you are registered. Tap a date to jump to it; "Show 2 more weeks" extends the list. Select slots, choose how often to repeat, Register once.',
+      pro:['Whole week visible at once, readable on a phone','Big arrows instead of sideways swiping','Month always shown; dates far ahead load when tapped','Multi-select, repeat, per-date Release built in'],
+      con:['Calendar block takes about a third of the phone screen (it scrolls away as you read the list)','Most work of the in-page options'],
+      effort:'About 70,000–100,000 tokens', fit:'Best overall',
+      try:'Press › to see later weeks, tap a date to jump to it, select the 7 AM daily session and see the repeat choices change to days.' },
+    D: { name:'Option D · Week time grid', what:'Days as columns and hours as rows, like a desktop calendar week. Tap a block to select it.',
+      pro:['Shows timing and overlaps visually','Looks like a familiar calendar'],
+      con:['Seven columns on a phone are tiny (look at the text)','Needs exact start/end times for every slot','Most complex to build and keep working'],
+      effort:'About 100,000–150,000 tokens', fit:'Poor on phones · not recommended',
+      try:'Notice how small the blocks are at phone width. Use ‹ › to change week. Tap one of your green blocks to release it.' },
+    E: { name:'Option E · Slots in the phone\'s calendar', what:'The program is published as a calendar volunteers subscribe to in their own calendar app. Tapping an event opens the sign-up page; places left refresh every 15 minutes or so.',
+      pro:['Volunteers see the program next to their own appointments, with their calendar\'s reminders','Good add-on to A, B or C'],
+      con:['Signing up still happens on our page: two places to look','"Places left" in the calendar can be a few minutes old','Organiser authorises calendar access once'],
+      effort:'About 40,000–60,000 tokens (on top of A/B/C)', fit:'Add-on, not a replacement',
+      try:'Tap any event to see what a volunteer would do next.' }
+  };
+
+  function renderNotes() {
+    var n = NOTES[opt];
+    document.getElementById('notes').innerHTML =
+      '<h2>' + n.name + '</h2><p>' + n.what + '</p>' +
+      '<div class="meta"><span class="chip">' + n.effort + '</span><span class="chip">Phone fit: ' + n.fit + '</span></div>' +
+      '<div class="try"><b>Try it:</b> ' + n.try + '</div>' +
+      '<div class="pc"><div class="pro"><h3>Good</h3><ul>' + n.pro.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul></div>' +
+      '<div class="con"><h3>Watch out</h3><ul>' + n.con.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul></div></div>' +
+      '<p><b>Can\'t make it?</b> Every date you signed up for has its own <b>Release</b> button, so a volunteer booked for 8 Saturdays can free just one; the others stay booked and the place reopens at once. <b>Release closes 12 hours before the start</b> (see Wed 7 Oct): after that the card shows the organiser\'s number instead.</p>' +
+      '<p><b>Cancelled dates</b> (see Sat 17 Oct) are struck through for everyone, and volunteers who were on them see a red notice at the top. How else to tell them is in "Sheet setup".</p>' +
+      '<p class="lede" style="font-size:14px">In every option: Telugu/Hindi, "My Registrations", Release, registering others and the live sheet stay as they are today. Time clashes are checked across all the slots you pick.</p>' +
+      '<button class="reset" data-reset>Reset demo data</button>';
+  }
+  function render() {
+    var keep = screen.scrollTop;
+    screen.innerHTML = views[opt]() + bar();
+    screen.scrollTop = keep;
+  }
+  function show(o) {
+    opt = o;
+    document.querySelectorAll('.tab').forEach(function (t) { t.setAttribute('aria-selected', String(t.dataset.opt === o)); });
+    var isOpt = 'ABCDE'.indexOf(o) >= 0;
+    document.getElementById('stage').hidden = !isOpt;
+    document.getElementById('sheetPanel').hidden = o !== 'S';
+    document.getElementById('comparePanel').hidden = o !== 'X';
+    if (isOpt) { screen.scrollTop = 0; render(); renderNotes(); }
+    try { localStorage.setItem('followonOpt', o); } catch (e) {}
+  }
+
+  // ---------- events ----------
+  document.querySelector('.tabs').addEventListener('click', function (e) { var t = e.target.closest('.tab'); if (t) show(t.dataset.opt); });
+  document.getElementById('notes').addEventListener('click', function (e) { if (e.target.closest('[data-reset]')) { build(); sel = {}; repeat = '1'; render(); } });
+  screen.addEventListener('change', function (e) {
+    if (e.target.id === 'repeatSel') repeat = e.target.value;
+    if (e.target.id === 'oo') { openOnly = e.target.checked; render(); }
+  });
+  phoneEl.addEventListener('click', function (e) {
+    var t;
+    if (e.target.closest('.sheet') && e.target.closest('[data-close]') && (e.target.matches('[data-close]') || e.target.tagName === 'BUTTON')) { var sh = phoneEl.querySelector('.sheet'); if (sh) sh.remove(); return; }
+    if ((t = e.target.closest('[data-rel]'))) {
+      var r = slots.filter(function (x) { return x.id === t.dataset.rel; })[0];
+      if (late(r) || r.cancelled) return;
+      r.people = r.people.filter(function (n) { return n !== ME; });
+      var others = upcoming().filter(function (x) { return isMine(x) && x.plan === r.plan; }).length;
+      render();
+      phoneEl.insertAdjacentHTML('beforeend', '<div class="toast" role="status">Released ' + dayLabel(r.date) + ', ' + ampm(r.start) + ' only.' +
+        (others ? ' Your other ' + others + ' ' + WD[r.date.getDay()] + ' date' + (others > 1 ? 's stay' : ' stays') + ' booked.' : '') + '</div>');
+      setTimeout(function () { var x = phoneEl.querySelector('.toast'); if (x) x.remove(); }, 3500);
+      return;
+    }
+    if ((t = e.target.closest('[data-pick]'))) { var id = t.dataset.pick; if (sel[id]) delete sel[id]; else sel[id] = 1; render(); return; }
+    if (e.target.closest('[data-clear]')) { sel = {}; render(); return; }
+    if (e.target.closest('[data-go]')) { confirmSheet(); return; }
+    if ((t = e.target.closest('[data-day]'))) { pickedDay = t.dataset.day; render(); return; }
+    if ((t = e.target.closest('[data-mo]'))) { monthOff = Math.max(0, Math.min(1, monthOff + +t.dataset.mo)); render(); return; }
+    if ((t = e.target.closest('[data-wk]'))) { weekOff = Math.max(0, Math.min(7, weekOff + +t.dataset.wk)); render(); return; }
+    if (e.target.closest('[data-more]')) { aDays += 7; render(); return; }
+    if ((t = e.target.closest('[data-cw]'))) { cOff = Math.max(0, Math.min(3, cOff + +t.dataset.cw)); render(); return; }
+    if (e.target.closest('[data-cmore]')) { cDays += 14; render(); return; }
+    if ((t = e.target.closest('[data-jump]'))) {
+      var jk = t.dataset.jump, need = Math.round((new Date(+jk.slice(0, 4), +jk.slice(5, 7) - 1, +jk.slice(8)) - TODAY) / 864e5) + 1;
+      if (need > cDays) { cDays = Math.ceil(need / 14) * 14; render(); }
+      var el = screen.querySelector('#d-' + jk); if (el) screen.scrollTo({ top: el.offsetTop, behavior: 'smooth' });
+      return;
+    }
+    if ((t = e.target.closest('[data-ev]'))) {
+      var s = slots.filter(function (x) { return x.id === t.dataset.ev; })[0];
+      phoneEl.insertAdjacentHTML('beforeend', '<div class="sheet" data-close><div class="in"><h4>Volunteer: ' + esc(s.centre) + '</h4>' +
+        '<p style="font-size:15px">' + dayLabel(s.date) + ', ' + ampm(s.start) + '–' + ampm(s.end) + ' · ' + esc(s.area) + '<br>' + (left(s) === 0 ? 'Full' : left(s) + ' of ' + s.places + ' places left') + ' (as of a few minutes ago)</p>' +
+        '<p style="font-size:15px">' + (isMine(s) ? 'You\'re on this date. To release just this date, open the sign-up page and tap Release on it.' : 'Description: "To sign up, open the sign-up page." The calendar itself cannot register you.') + '</p>' +
+        '<button data-close>Open sign-up page (goes to Option C)</button></div></div>');
+      phoneEl.querySelector('.sheet button').addEventListener('click', function () { show('C'); });
+      return;
+    }
+  });
+
+  // ---------- sheet setup + compare panels ----------
+  document.getElementById('sheetPanel').innerHTML =
+    '<h2>Sheet setup for the new program</h2>' +
+    '<p>Two tabs instead of one tab per day. Organisers type each regular session once in <b>Program plan</b>, with how often it repeats and from/until which date. A script turns every line into dated rows in <b>Slots</b>, by itself, every week. The page only writes the highlighted columns, exactly like today.</p>' +
+    '<h3>Tab 1 · Program plan (typed by organisers)</h3>' +
+    '<div class="tbl"><table><tr><th>Day</th><th>Start</th><th>End</th><th>Frequency</th><th>Centre</th><th>Address</th><th>Google map</th><th>Places</th><th>From</th><th>Until</th><th>Contact</th></tr>' +
+    PLAN.map(function (p) { return '<tr><td>' + (p.dow < 0 ? 'Every day' : WDL[p.dow]) + '</td><td>' + ampm(p.start) + '</td><td>' + ampm(p.end) + '</td><td><b>' + p.freq + '</b></td><td>' + p.centre + '</td><td>' + p.area + ', Hyderabad</td><td>maps link</td><td>' + p.places + '</td><td>5 Oct 2026</td><td>31 Mar 2027</td><td>Mr. Rao</td></tr>'; }).join('') +
+    '</table></div>' +
+    '<p class="lede" style="font-size:14px">Frequency is a dropdown: <b>Daily</b> · <b>Daily, weekdays only (Mon–Fri)</b> · <b>Weekly</b> · <b>Every 2 weeks</b> · <b>Monthly, same weekday</b> (1st/2nd/3rd/4th/last, e.g. "2nd Saturday") · <b>Monthly, same date</b> (e.g. the 15th) · <b>One-off</b>.</p>' +
+    '<h3>Tab 2 · Slots (one row per dated session; written by the script, editable by organisers)</h3>' +
+    '<div class="tbl"><table><tr><th>Slot ID</th><th>Date</th><th>Day</th><th>Start</th><th>End</th><th>Centre</th><th>Places</th><th>Status</th><th class="written">Volunteers (written by page)</th><th class="written">Still needed (written)</th><th class="written">Cancellation notice sent</th></tr>' +
+    slots.filter(function (x) { return (x.key >= '2026-10-07' && x.key <= '2026-10-10') || x.cancelled; }).map(function (x) { return '<tr><td>P' + (x.plan + 1) + '-' + x.key.replace(/-/g, '') + '</td><td>' + x.date.getDate() + ' ' + MON[x.date.getMonth()] + '</td><td>' + WD[x.date.getDay()] + '</td><td>' + ampm(x.start) + '</td><td>' + ampm(x.end) + '</td><td>' + x.centre + '</td><td>' + x.places + '</td><td' + (x.cancelled ? ' style="color:var(--bad);font-weight:700"' : '') + '>' + (x.cancelled ? 'Cancelled' : 'Open') + '</td><td class="written">' + (x.people.join('<br>') || '') + '</td><td class="written">' + left(x) + '</td><td class="written">' + (x.cancelled ? 'Yes, 7 Oct 09:12' : '') + '</td></tr>'; }).join('') +
+    '<tr><td colspan="11" style="color:var(--muted)">… and so on until each line\'s "Until" date</td></tr></table></div>' +
+    '<h3>How it runs</h3>' +
+    '<div class="pc"><div><h3>Every week, by itself</h3><ul>' +
+    '<li>A script runs every Sunday night (a Google time-based trigger, set up once) and adds the dates each plan line needs, up to its "Until" date. Volunteers can book any date that exists, so the whole program is bookable.</li>' +
+    '<li>It never deletes or moves a date that has volunteers. If organisers change a plan line (new time or centre), only future dates with nobody on them follow the change; the script lists the others for the organisers to decide.</li>' +
+    '<li>An organiser can also run it at once from a menu in the sheet ("Program → Update slots now").</li></ul></div>' +
+    '<div><h3>Cancelling a date</h3><ul>' +
+    '<li>Organisers set Status = Cancelled on that row (or delete the plan line to cancel the rest of the program).</li>' +
+    '<li>The page strikes the date through and shows a red notice to everyone who was on it, as soon as they open the page.</li>' +
+    '<li>To reach them before that, see the notification choices below; "Cancellation notice sent" records who was told.</li></ul></div></div>' +
+    '<div class="pc"><div><h3>The 12-hour rule</h3><ul>' +
+    '<li>Release is allowed until 12 hours before the start. After that the card shows the organiser\'s phone number instead.</li>' +
+    '<li>The rule is checked again on the server, so an old open page cannot get round it.</li>' +
+    '<li>Still to decide: may people still <i>register</i> inside the last 12 hours (helpful for last-minute gaps)?</li></ul></div>' +
+    '<div><h3>Telling volunteers about a cancellation</h3><ul>' +
+    '<li><b>On the page</b> (free, automatic): the red notice. Only seen when they open the page.</li>' +
+    '<li><b>Organiser WhatsApp list</b> (free, one tap each): the sheet menu opens a list of the affected volunteers with a ready-written WhatsApp message per person.</li>' +
+    '<li><b>Email</b> (free, automatic): needs volunteers to give an email address; a free Gmail account can send about 100 a day.</li>' +
+    '<li><b>Automatic SMS/WhatsApp</b> (paid, plus registration with a provider): fully automatic, takes days or weeks to set up.</li></ul></div></div>';
+
+  var CMP = [
+    ['', 'A · List', 'B · Month', 'C · Strip + list ★', 'D · Week grid', 'E · Phone calendar'],
+    ['Easy to read and tap on a phone', 'y:Yes', 'm:So-so', 'y:Yes', 'n:No', 'y:Yes'],
+    ['See the week/month at a glance', 'm:Partly', 'y:Yes', 'y:Yes', 'y:Yes', 'y:Yes'],
+    ['Tick several slots, register once', 'y:Yes', 'm:Yes, day by day', 'y:Yes', 'm:Yes, fiddly', 'n:No (opens page)'],
+    ['Repeat same day & time for N weeks', 'y:Yes', 'y:Yes', 'y:Yes', 'y:Yes', 'n:No (opens page)'],
+    ['Change for current users', 'y:Small', 'm:Medium', 'm:Medium', 'n:Large', 'y:None (add-on)'],
+    ['Build effort (tokens, rough)', '50–80k', '40–60k', '70–100k', '100–150k', '40–60k extra']
+  ];
+  document.getElementById('comparePanel').innerHTML = '<h2>Side by side</h2><div class="tbl"><table>' + CMP.map(function (r, i) {
+    return '<tr>' + r.map(function (c, j) { var p = c.split(':'); return i === 0 ? '<th>' + c + '</th>' : j === 0 ? '<th>' + c + '</th>' : p.length > 1 ? '<td class="' + p[0] + '">' + p[1] + '</td>' : '<td>' + c + '</td>'; }).join('') + '</tr>';
+  }).join('') + '</table></div><p class="lede">All estimates have moderate confidence and assume the new "Weekly plan" + "Slots" sheet layout. Telugu/Hindi wording and a new demo video would come after the option is chosen.</p>';
+
+  var start = 'C';
+  try { var s0 = localStorage.getItem('followonOpt'); if (s0 && 'ABCDESX'.indexOf(s0) >= 0) start = s0; } catch (e) {}
+  if (/^#(A|B|C|D|E|S|X)$/.test(location.hash)) start = location.hash.slice(1);
+  show(start);
+})();
+</script>
