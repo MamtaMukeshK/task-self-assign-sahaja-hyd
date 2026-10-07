@@ -74,4 +74,15 @@ writes) | Notes.
 2. Page: calendar + list + multi-select + repeat + release rules + register others, phone/tablet/laptop, en/te/hi.
    ~60-85k tokens (register others adds ~15-25k across stages 1 and 2).
 3. Cancellations: page notice + organiser WhatsApp list menu; setup guide for the new sheet. ~25-40k tokens.
-Estimates have moderate confidence. Stop and ask before any stage passes 100,000 tokens.
+4. **Demo videos in English, Telugu and Hindi, and the demo button** (added by the user 2026-10-07). A gold "Watch the
+   1-minute demo" button at the top of the new page, as on the tour page today, playing the video for the page's
+   language (`DEMO_VIDEO_URLS.en/.te/.hi`: the organiser's Google Drive link first, GitHub copies as fallback).
+   Record on a phone screen with the existing tooling (`tools/record_demo.js`, `tools/voiceover/`: English Kokoro
+   voice, Hindi Piper "Priyamvada", Telugu AI4Bharat; see HANDOFF "Re-record the demo"), using demo data for the new
+   sheet (made-up names). Steps to show: pick dates on the one-week calendar, select two sessions, repeat for the
+   next 4 dates, register others, Register; see them under My Registrations; release one date; a cancelled date's
+   notice; changing language. First write the narration lines and captions in all three languages and get the user's
+   (and ideally native speakers') OK before recording. Then the user uploads the three videos to Drive ("Anyone with
+   the link") and sends the links; put them in `DEMO_VIDEO_URLS`. ~60-100k tokens (low confidence; the Telugu voice
+   setup alone is a large download, see HANDOFF).
+Estimates have moderate confidence (stage 4: low). Stop and ask before any stage passes 100,000 tokens.
