@@ -119,6 +119,7 @@
   </select></label>
   <label><span data-t="yourName">Your name</span> <input id="name" autocomplete="off" list="speakerNames"><datalist id="speakerNames"></datalist></label>
   <label><span data-t="mobile">Mobile</span> <input id="mobile" autocomplete="tel" inputmode="tel" maxlength="16"></label>
+  <button id="who" class="light"></button>
   <label><input type="checkbox" id="openOnly"> <span data-t="openOnly">Open only</span></label>
 </header>
 <p id="note" role="status"></p>
@@ -137,7 +138,6 @@
 <div id="bar" hidden>
   <span id="barCount"></span>
   <button id="clear" class="light" data-t="clear">Clear</button>
-  <button id="who" class="light"></button>
   <select id="repeat" aria-label="Repeat"></select>
   <button id="register" data-t="register">Register</button>
 </div>
@@ -486,12 +486,12 @@
   }
 
   function renderBar() {
-    var ids = Object.keys(sel), bar = $('bar');
+    // "Who" sits at the top under Mobile (as "Register others" does on the tour page) and always shows the group.
+    var ids = Object.keys(sel), bar = $('bar'), g = groupSize(), solo = includeMe.checked && g === 1;
+    $('who').textContent = solo ? t('whoMe') : t('whoN', g);
     bar.hidden = !ids.length;
     if (!ids.length) return;
-    var g = groupSize(), solo = includeMe.checked && g === 1;
     $('barCount').textContent = solo ? t('countSel', ids.length) : t('groupSel', g, ids.length);
-    $('who').textContent = solo ? t('whoMe') : t('whoN', g);
     var daily = ids.every(function (id) { var s = byId(id); return s && isDaily(s.line); });
     var opts = daily ? [['1', 'rep1day'], ['7', 'rep7'], ['14', 'rep14'], ['all', 'repAll']] : [['1', 'rep1d'], ['4', 'rep4'], ['8', 'rep8'], ['all', 'repAll']];
     var rep = $('repeat'), cur = rep.value;

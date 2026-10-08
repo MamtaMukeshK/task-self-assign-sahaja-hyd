@@ -7,7 +7,7 @@
  * Design: docs/followup/SPEC.md and docs/followup/STAGE1_PLAN.md.
  */
 
-var VERSION = 'followup-2026-10-08.2';
+var VERSION = 'followup-2026-10-08.3';
 
 /** Serves the page with the first weeks' dates already inside, so it shows without a second trip to the server. */
 function doGet() {
@@ -77,6 +77,9 @@ var COL_ALIASES = { centre: ['center'], map: ['google map'], dom: ['date of mont
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Program')
     .addItem('Update slots now', 'menuUpdateSlots')
+    .addItem('Cancellation WhatsApp list', 'menuCancellationList')
+    .addItem('Mark cancellation notices as sent', 'menuMarkNoticesSent')
+    .addSeparator()
     .addItem('Set up the sheet (first time)', 'setUpSheet')
     .addToUi();
 }
@@ -587,6 +590,39 @@ function cancellationList_() {
         return { name: p.name, phone: digits, by: p.by, link: digits.length === 10 ? 'https://wa.me/91' + digits + '?text=' + encodeURIComponent(text) : '' };
       }) };
     });
+}
+
+/**
+ * Menu "Program -> Cancellation WhatsApp list": one line per affected person with a ready-written WhatsApp message.
+ * Needs the sheet's menu (SpreadsheetApp.getUi), and returns nothing, so the public page link gets no data from it.
+ */
+function menuCancellationList() {
+  var list = cancellationList_();
+  var esc = function (v) { return String(v).replace(/[&<>"']/g, function (ch) { return '&#' + ch.charCodeAt(0) + ';'; }); };
+  var body = list.map(function (d) {
+    return '<h3>' + esc(longDate_(d.date) + ', ' + twelveHour_(d.start) + (d.centre ? ', ' + d.centre : '')) + '</h3><ol>' +
+      d.people.map(function (p) {
+        return '<li>' + esc(p.name) + (p.phone ? ' · ' + esc(p.phone) : '') + (p.by ? ' (via ' + esc(p.by) + ')' : '') +
+          (p.link ? ' <a href="' + esc(p.link) + '">Open WhatsApp</a>' : ' <b>- no mobile number, please phone</b>') + '</li>';
+      }).join('') + '</ol>';
+  }).join('');
+  var html = '<base target="_blank"><style>body{font:15px/1.5 sans-serif;color:#1A3A5C}h3{margin:14px 0 4px}li{margin:6px 0}' +
+    'a{display:inline-block;margin-left:6px;padding:3px 10px;border-radius:14px;background:#25D366;color:#fff;font-weight:bold;text-decoration:none}</style>' +
+    (list.length ? body + '<p>Tap each <b>Open WhatsApp</b>, check the message and press Send. When everyone has it, close this box and choose ' +
+      '<b>Program &rarr; Mark cancellation notices as sent</b>.</p>' : '<p>No cancelled dates are waiting for a notice.</p>');
+  SpreadsheetApp.getUi().showModalDialog(HtmlService.createHtmlOutput(html).setWidth(600).setHeight(480), 'Cancellation WhatsApp list');
+}
+
+/** Menu "Program -> Mark cancellation notices as sent": asks first, naming the dates. */
+function menuMarkNoticesSent() {
+  var ui = SpreadsheetApp.getUi(), list = cancellationList_();
+  if (!list.length) { ui.alert('No cancelled dates are waiting for a notice.'); return; }
+  var what = list.map(function (d) {
+    return longDate_(d.date) + ', ' + twelveHour_(d.start) + (d.centre ? ', ' + d.centre : '') + ' (' + d.people.length + ' people)';
+  }).join('\n');
+  if (ui.alert('Mark notices as sent?', 'Say Yes only if everyone on these dates has been sent the message:\n\n' + what, ui.ButtonSet.YES_NO) !== ui.Button.YES) return;
+  markNoticeSent_(list.map(function (d) { return d.id; }));
+  ui.alert('Done: ' + list.length + ' date(s) marked as sent.');
 }
 
 /** Records that the WhatsApp notices for these dates were sent. */

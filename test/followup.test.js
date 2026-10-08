@@ -159,3 +159,26 @@ test('getSlots: today onwards only, my dates, flags; cancellation list with What
   assert.match(t.row('P1-20261019')[S('Cancellation notice sent')], /^Sent 7 Oct 05:00$/);
   assert.equal(t.gs.cancellationList_().length, 0);
 });
+
+test('organiser menu: WhatsApp list in a dialog (everyone affected, own mobile); "mark as sent" asks first and names the dates', () => {
+  const t = setup([weekly]);
+  t.gs.generateSlots();
+  t.gs.registerSlots(['P1-20261017'], 1, 'Asha', '9876543210', 'Ravi 9123456789');
+  t.row('P1-20261017')[S('Status')] = 'Cancelled';
+  t.gs.menuCancellationList();
+  const d = t.gs._dialogs[0];
+  assert.equal(d.title, 'Cancellation WhatsApp list');
+  assert.match(d.html, /<h3>Sat 17 Oct 2026, 6:30 PM, Ameerpet<\/h3>/);
+  assert.match(d.html, /Ravi · 9123456789 \(via Asha\) <a href="https:\/\/wa\.me\/919123456789\?text=Namaste%20Ravi\./, 'registered by someone else: own mobile');
+  assert.equal((d.html.match(/<a href="https:\/\/wa\.me\//g) || []).length, 2, 'one WhatsApp link per person');
+  t.gs._answer = 'NO';
+  t.gs.menuMarkNoticesSent();
+  assert.equal(t.row('P1-20261017')[S('Cancellation notice sent')], '', 'No = nothing marked');
+  assert.match(t.gs._alerts.pop(), /Say Yes only if everyone on these dates has been sent the message:\n\nSat 17 Oct 2026, 6:30 PM, Ameerpet \(2 people\)/);
+  t.gs._answer = 'YES';
+  t.gs.menuMarkNoticesSent();
+  assert.match(t.row('P1-20261017')[S('Cancellation notice sent')], /^Sent /);
+  assert.equal(t.gs._alerts.pop(), 'Done: 1 date(s) marked as sent.');
+  t.gs.menuCancellationList();
+  assert.match(t.gs._dialogs[1].html, /No cancelled dates are waiting for a notice\./);
+});

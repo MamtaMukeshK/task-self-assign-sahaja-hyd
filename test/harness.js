@@ -62,19 +62,20 @@ function load(sheets, now, file) {
   const builder = () => { const b = { requireValueInList: l => { b.list = l; return b; }, setAllowInvalid: () => b, build: () => ({ list: b.list }) }; return b; };
   const ctx = {
     SpreadsheetApp: { openById: id => ({ ...ss, openedById: id }), getActiveSpreadsheet: () => ss, flush: () => {},
-      newDataValidation: builder, getUi: () => ({ alert: m => { ctx._alerts.push(m); } }) },
+      newDataValidation: builder, getUi: () => ({ alert: (...a) => { ctx._alerts.push(a.join('\n')); return ctx._answer || 'YES'; }, ButtonSet: { YES_NO: 'YES_NO' },
+        Button: { YES: 'YES', NO: 'NO' }, showModalDialog: (o, title) => { ctx._dialogs.push({ html: o.getContent(), title }); } }) },
     PropertiesService: { getScriptProperties: () => ({ getProperty: k => props[k] == null ? null : props[k],
       setProperty: (k, v) => { props[k] = String(v); }, deleteProperty: k => { delete props[k]; }, getProperties: () => ({ ...props }) }) },
     ScriptApp: { WeekDay: { SUNDAY: 'SUNDAY' }, getProjectTriggers: () => triggers.map(t => ({ getHandlerFunction: () => t.handler })),
       newTrigger: h => { const t = { handler: h }, b = { timeBased: () => b, onWeekDay: d => { t.day = d; return b; },
         atHour: n => { t.hour = n; return b; }, inTimezone: z => { t.tz = z; return b; }, create: () => { triggers.push(t); } }; return b; } },
-    _alerts: [], _props: props, _triggers: triggers,
+    _alerts: [], _dialogs: [], _props: props, _triggers: triggers,
     LockService: { getScriptLock: () => ({ tryLock: () => true, releaseLock: () => {} }) },
     CacheService: { getScriptCache: () => ({ get: k => store[k] || null, put: (k, v) => { store[k] = v; }, remove: k => { delete store[k]; }, removeAll: ks => ks.forEach(k => { delete store[k]; }) }) },
     Utilities: { formatDate: (d, tz, f) => formatDate(d, tz, f), DigestAlgorithm: { MD5: 'md5' }, Charset: { UTF_8: 'utf8' },
       computeDigest: (a, s) => crypto.createHash('md5').update(s, 'utf8').digest(), base64Encode: b => Buffer.from(b).toString('base64') },
     HtmlService: (() => {
-      const out = html => { const o = { getContent: () => html, setTitle: () => o, addMetaTag: () => o }; return o; };
+      const out = html => { const o = { getContent: () => html, setTitle: () => o, addMetaTag: () => o, setWidth: () => o, setHeight: () => o }; return o; };
       return { createHtmlOutputFromFile: () => out(fs.readFileSync(path.join(__dirname, '..', path.dirname(file || 'Code.gs'), 'Index.html'), 'utf8')), createHtmlOutput: out };
     })(), JSON, Date: fakeDate(now), String, Number, Math, Error, _cache: store
   };

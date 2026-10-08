@@ -134,6 +134,9 @@ test('follow-up page: register others, ✕ and Release all, My registrations, ca
     // Register others only (as the tour test does): ticked speakers + typed lines; a bad line is caught on the page first.
     await p.click('article[data-id="P1-20261010"] button[data-sel]');
     assert.equal(await p.textContent('#who'), 'Who: Just me ▾');
+    assert.equal(await p.evaluate(() => document.getElementById('who').closest('header') !== null &&
+      document.getElementById('mobile').compareDocumentPosition(document.getElementById('who')) === Node.DOCUMENT_POSITION_FOLLOWING), true,
+      '"Who" is at the top, right after the Mobile box');
     await p.click('#who');
     await p.uncheck('#includeMe');
     await p.click('#pickSummary');
