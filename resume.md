@@ -16,7 +16,7 @@ every session: replace "Where things stand" and "Next steps", and add to "Learni
 | Follow-up columns (2026-10-08, user's sample) | Program plan titles renamed by the user: Day of the Week, Start Time, End Time, Institution Name, Volunteers Needed, **Principal Contact** (new; shown under "Details" on each card - phones need a tap, tablets/laptops show it), Sahaji Contact (was Contact: shown when release is closed). Slots titles renamed to match. Old titles still accepted (`COL_ALIASES`). **One value per line** (user's choice): lists in Day of the Week / Week of month / Day of month are refused and listed in the Update report (they used to be silently cut to one value - a stage-1 bug). Week of month accepts 5th (months without one skipped) as well as last. Version followup-2026-10-08.4. |
 | Follow-up stages 4, 4b | **Started 2026-10-08**: demo button + player on the page (copied from the tour page; hidden while `DEMO_VIDEO_URLS` is empty); narration and captions drafted in `docs/followup/demo-script.md` (A: Follow-up video en/te/hi, B: one Ongoing programs scene added to the tour video, C: organiser video, English). **Wording approved by the user 2026-10-08 (as written). Recording waits for the user's real-setup report** (their choice, so the videos show the page as it really looks). |
 | Branch | `claude/vibrant-planck-gsxjay`, pushed, up to date. No pull request (the user has not asked for one). |
-| Tests | `cd test && npm install && npm test`: 90 tests (77 tour page + 10 Follow-up server + 3 Follow-up page/guide), passing on 2026-10-08. **Known intermittent:** the tour "demo video button" browser test failed in 2 of 4 full runs (passes alone; tour files untouched) - suggested as its own task; don't treat it as caused by Follow-up work, but don't ignore it either. |
+| Tests | `cd test && npm install && npm test`: 90 tests (77 tour page + 10 Follow-up server + 3 Follow-up page/guide), passing on 2026-10-08. (The tour "demo video button" test was intermittent in full runs; fixed 2026-10-08, 10 full runs in a row passed.) |
 
 ## 2. Waiting on the user (do not build past these without an answer)
 1. ~~Confirm the 5 stage-1 assumptions~~ **All 5 confirmed by the user 2026-10-08** (details in `docs/followup/STAGE1_PLAN.md`):
@@ -144,6 +144,13 @@ every session: replace "Where things stand" and "Next steps", and add to "Learni
   take only the structure (column titles), and never commit their data. Keep made-up data in the repository sample.
 - When a full test run fails a test that passes alone and whose files are untouched, run the full suite a few more
   times, record the rate, and raise it (suggested task) rather than calling it a flake and moving on.
+
+- Browser-test race (fixed 2026-10-08): the tour "demo video button" test waited for the video's address to change to
+  the second copy, then at once checked that Chromium had requested it. Setting the address and sending the request
+  are separate steps, so under load (several browsers in parallel) the check ran in between. Wait for the event the
+  check is about (here: a promise resolved inside the route handler, bounded at 8 s), not for something that only
+  precedes it. Catch the real failure message first (loop the full suite until it fails), then prove the fix with
+  several full runs in a row (10 here; 5 alone could pass by luck about 1 time in 10 at the old failure rate).
 
 **Stage 3 cost** about 40,000 tokens. **Stage 2b cost** about 65,000 tokens. **Stage 2a cost** about 60,000 tokens (estimate for all of stage 2: 60,000-85,000), helped by reading only the needed
 parts of the tour `Index.html` with grep/sed and writing the page in one pass from the agreed mock-up.

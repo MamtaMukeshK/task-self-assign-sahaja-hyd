@@ -19,7 +19,7 @@ _Last updated: 2026-10-07 (Follow-up Program stage 1 built: server + tests in `f
   1L1A_FmlOukDZMTnOXa73RlzQfdaHS9Zg, Telugu 1ut0WKW9gVrnG0qRQltc7qC3P2O5GCybq, Hindi 1Hf3clK7tYRimgm3ispbHwCw4RvTKPJIM.
   The user replaces a Drive file via Drive -> Manage versions after every re-record (the link stays the same).
   The GitHub copies after each Drive link are only used if that Drive link is removed.
-- **Tests:** `cd test && npm install && npm test` (90 tests: 77 tour page + 10 Follow-up server + 3 Follow-up page/guide; the tour "demo video button" test is intermittent in full runs, see 2026-10-08; browser tests need Chromium at
+- **Tests:** `cd test && npm install && npm test` (90 tests: 77 tour page + 10 Follow-up server + 3 Follow-up page/guide; the tour "demo video button" test race was fixed 2026-10-08; browser tests need Chromium at
   `/opt/pw-browsers/chromium`). Rebuild the guides after any code change: `python3 tools/build_guide.py` (builds `SETUP_GUIDE.html` and `followup/SETUP_GUIDE.html`).
   Bump `VERSION` in `Code.gs` (and the matching string in `test/code.test.js`) for every page change.
 - **Re-record the demo:** in `tools/`: `npm i playwright-core ffmpeg-static @fontsource/dm-sans
@@ -311,6 +311,11 @@ _Last updated: 2026-10-07 (Follow-up Program stage 1 built: server + tests in `f
   if not, the page errors loudly rather than guessing.
 
 ## Next step
+- **2026-10-08: tour "demo video button" browser test made reliable (test only; no page change).** Failure caught in a
+  full run: "tried the first copy, then the second" saw only the first copy's request. Cause: the test checked the
+  request log right after the video's address changed, before Chromium had sent the second request (a race under the
+  load of parallel browser tests). Fix in `test/page.test.js`: the route handler for the second copy resolves a
+  promise and the test waits for it (at most 8 s) before the same check. Full suite then passed 10 runs in a row (90 tests).
 - **2026-10-08: user's updated sample applied (version followup-2026-10-08.4).** Column titles as the user renamed them
   (Day of the Week, Start Time, End Time, Institution Name, Volunteers Needed, Sahaji Contact) plus a new **Principal
   Contact** column, copied to every date and shown on each card under "Details" (phones: tap "Details ▾", kept open across

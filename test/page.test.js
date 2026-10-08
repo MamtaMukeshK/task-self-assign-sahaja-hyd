@@ -451,7 +451,9 @@ test('demo video button: prominent; opens the Drive video for the page language 
     const hits = [];
     await ctx.route('https://drive.google.com/**', r => { hits.push('drive'); return r.fulfill({ contentType: 'text/html', body: 'drive player' }); });
     await ctx.route('https://cdn.jsdelivr.net/**', r => { hits.push('jsdelivr'); return r.fulfill({ status: 404, body: 'nope' }); });
-    await ctx.route('https://raw.githubusercontent.com/**', r => { hits.push('raw'); return r.fulfill({ status: 404, body: 'nope' }); });
+    // The page sets the video's address before Chromium sends that request, so the test waits for the request itself.
+    let rawRequested; const rawHit = new Promise(res => { rawRequested = res; });
+    await ctx.route('https://raw.githubusercontent.com/**', r => { hits.push('raw'); rawRequested(); return r.fulfill({ status: 404, body: 'nope' }); });
     const open = async body => {
       const p = await ctx.newPage();
       p.setDefaultTimeout(8000);
@@ -488,6 +490,7 @@ test('demo video button: prominent; opens the Drive video for the page language 
     await p.click('#demoBtn');
     assert.equal(await p.isVisible('#demoVideo'), true);
     await p.waitForFunction(() => /^https:\/\/raw\.githubusercontent\.com\/.*\/docs\/demo\.mp4$/.test(document.getElementById('demoVideo').src));
+    await Promise.race([rawHit, new Promise(res => setTimeout(res, 8000))]);
     assert.deepEqual([...new Set(hits)], ['jsdelivr', 'raw'], 'tried the first copy, then the second');
     assert.match(await p.getAttribute('#demoLink', 'href'), /^https:\/\/cdn\.jsdelivr\.net\/gh\/MamtaMukeshK\/task-self-assign-sahaja-hyd@[0-9a-f]{40}\/docs\/demo\.mp4$/);
     assert.equal(await p.getAttribute('#demoVideo', 'playsinline'), '', 'plays inline on iPhones');
