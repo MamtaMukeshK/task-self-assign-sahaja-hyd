@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Follow-up Program Setup</title>
+<style>
+  :root { --fg:#1b1b1f; --muted:#5f6368; --bg:#ffffff; --panel:#f6f8fa; --line:#dadce0; --accent:#1a73e8;
+          --warn-bg:#fff8e1; --warn-line:#f0c36d; --ok-bg:#e6f4ea; --ok-line:#81c995; --code-bg:#0d1117; --code-fg:#e6edf3; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --fg:#e8eaed; --muted:#9aa0a6; --bg:#16171a; --panel:#202124; --line:#3c4043; --accent:#8ab4f8;
+          --warn-bg:#3a3016; --warn-line:#7a6320; --ok-bg:#16301f; --ok-line:#2e6b3f; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:860px; margin:0 auto; padding:24px 16px 80px; }
+  h1 { font-size:28px; line-height:1.25; margin:0 0 4px; }
+  h2 { font-size:21px; margin:40px 0 8px; padding-top:16px; border-top:1px solid var(--line); }
+  h3 { font-size:17px; margin:20px 0 6px; }
+  .sub { color:var(--muted); margin:0 0 20px; }
+  ol, ul { padding-left:24px; } li { margin:6px 0; }
+  code { background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-size:.9em; }
+  kbd { border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:0 5px; font-size:.85em; background:var(--panel); }
+  .box { border:1px solid var(--line); background:var(--panel); border-radius:10px; padding:12px 16px; margin:14px 0; }
+  .warn { background:var(--warn-bg); border-color:var(--warn-line); }
+  .ok { background:var(--ok-bg); border-color:var(--ok-line); }
+  .toc a { color:var(--accent); text-decoration:none; } .toc li { margin:2px 0; }
+  table { border-collapse:collapse; width:100%; margin:10px 0; font-size:15px; }
+  th, td { border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:var(--panel); }
+  .table-wrap { overflow-x:auto; }
+  .codehead { display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:center; margin-top:14px;
+              background:var(--panel); border:1px solid var(--line); border-bottom:0; border-radius:10px 10px 0 0; padding:8px 12px; }
+  .codehead b { font-family:ui-monospace, Menlo, Consolas, monospace; }
+  button.copy { font:inherit; font-size:15px; font-weight:600; padding:6px 16px; border-radius:6px; border:0; background:#1a73e8; color:#fff; cursor:pointer; }
+  button.copy.done { background:#188038; }
+  pre { margin:0 0 8px; max-height:340px; overflow:auto; background:var(--code-bg); color:var(--code-fg);
+        border-radius:0 0 10px 10px; padding:12px; font:13px/1.45 ui-monospace, Menlo, Consolas, monospace; white-space:pre; }
+  .step-num { display:inline-block; min-width:26px; height:26px; border-radius:13px; background:var(--accent); color:var(--bg);
+              text-align:center; font-weight:700; margin-right:8px; font-size:15px; line-height:26px; }
+  @media print { pre { max-height:none; white-space:pre-wrap; } button.copy { display:none; } }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Follow-up Program sign-up: complete setup guide</h1>
+<p class="sub">One page, everything included. Follow the parts in order and use the blue <b>Copy</b> buttons for the code.
+Takes about 20 minutes on a laptop or desktop computer (not a phone).</p>
+
+<div class="box">
+  <b>What this sets up:</b> a <b>new</b> Google Sheet and its <b>own</b> page link for the Follow-up Program. Organisers type
+  the regular sessions once (for example "every Saturday 6:30 PM at Ameerpet"); the sheet makes one row per date. Volunteers
+  open the link, see the week as large day boxes, tick one or more sessions (and repeat them for the next 4 or 8 dates, or the
+  whole program), register themselves and others, and release a single date up to 12 hours before it starts.
+  The tour sheet and the tour page are <b>not touched</b>.
+</div>
+
+<div class="box toc">
+  <b>Contents</b>
+  <ol>
+    <li><a href="#p1">Make the new sheet</a></li>
+    <li><a href="#p2">Open the script editor</a></li>
+    <li><a href="#p3">Paste Code.gs</a></li>
+    <li><a href="#p4">Add and paste Index.html</a></li>
+    <li><a href="#p5">Set up the sheet and give permission (one time)</a></li>
+    <li><a href="#p6">Type the Program plan</a></li>
+    <li><a href="#p7">Make the dates</a></li>
+    <li><a href="#p8">Publish the page</a></li>
+    <li><a href="#p9">Test it</a></li>
+    <li><a href="#p10">Share it with volunteers</a></li>
+    <li><a href="#p11">Day-to-day: changes and cancellations</a></li>
+    <li><a href="#p12">If something goes wrong</a></li>
+    <li><a href="#p13">Changing the code later</a></li>
+  </ol>
+</div>
+
+<h2 id="p1"><span class="step-num">1</span>Make the new sheet</h2>
+<ol>
+  <li>Go to <code>sheets.new</code> in your browser (signed in with the Google account that will own the program). A blank sheet opens.</li>
+  <li>Click <b>Untitled spreadsheet</b> at the top left and type a name, e.g. <code>Follow-up Program 2026</code>.</li>
+</ol>
+<div class="box warn">Use the account that should <b>own</b> this. The page runs as that account, and only people with edit access to
+  the sheet can change it.</div>
+
+<h2 id="p2"><span class="step-num">2</span>Open the script editor</h2>
+<ol>
+  <li>In the new sheet, click the menu <b>Extensions → Apps Script</b>. A new browser tab opens.</li>
+  <li>At the top left, click <b>Untitled project</b>, type <code>Follow-up Sign-up</code>, and click <b>Rename</b>.</li>
+</ol>
+<div class="box warn">Open the editor <b>from the sheet's Extensions menu</b>, not from script.google.com. That's what connects
+  the script to this sheet.</div>
+
+<h2 id="p3"><span class="step-num">3</span>Paste Code.gs</h2>
+<ol>
+  <li>On the left under <b>Files</b>, click <b>Code.gs</b>. It contains a few starter lines.</li>
+  <li>Click inside the code area, press <kbd>Ctrl</kbd>+<kbd>A</kbd> (Mac: <kbd>⌘</kbd>+<kbd>A</kbd>), then <kbd>Delete</kbd>.</li>
+  <li>Click the blue <b>Copy Code.gs</b> button below, click in the empty code area and paste with <kbd>Ctrl</kbd>+<kbd>V</kbd>
+    (Mac: <kbd>⌘</kbd>+<kbd>V</kbd>).</li>
+  <li>Save with <kbd>Ctrl</kbd>+<kbd>S</kbd> (Mac: <kbd>⌘</kbd>+<kbd>S</kbd>).</li>
+  <li>Check: the first line is <code>/**</code> and the last line starts with <code>function norm_</code>. Do not change anything in it.</li>
+</ol>
+<div class="codehead"><b>Code.gs</b> <button class="copy" data-target="code-gs">Copy Code.gs</button></div>
+<pre id="code-gs">/**
+ * Follow-up Program sign-up: the server for the Follow-up workbook (a separate sheet and page link from the tour).
+ *
+ * Organisers type regular sessions into "Program plan"; generateSlots turns each line into one row per date in
+ * "Slots" (weekly trigger + "Program -&gt; Update slots now"). Volunteers book and release single dates on the page;
+ * their entries go into the date's Volunteers cell ("Name 9876543210", "(via X)" when registered by someone else).
+ * Design: docs/followup/SPEC.md and docs/followup/STAGE1_PLAN.md.
+ */
+
+var VERSION = 'followup-2026-10-08.3';
+
+/** Serves the page with the first weeks' dates already inside, so it shows without a second trip to the server. */
+function doGet() {
+  var html = HtmlService.createHtmlOutputFromFile('Index').getContent();
+  var initial = 'null';
+  try {
+    initial = JSON.stringify(getSlots('', '', '')).replace(/&lt;/g, '\\u003c'); // sheet text can't close the &lt;script&gt;
+  } catch (e) {}
+  return HtmlService.createHtmlOutput(html.replace('/*INITIAL_STATE*/null', function () { return initial; }))
+    .setTitle('Follow-up Program: Sign-up')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+var CONFIG = {
+  TIME_ZONE: 'Asia/Kolkata',
+  SHEET_ID: '',                // leave empty when installed via the sheet's Extensions -&gt; Apps Script
+  PLAN_TAB: 'Program plan',
+  SLOTS_TAB: 'Slots',
+  REPORT_TAB: 'Update report',
+  CACHE_SECONDS: 30,
+  LOCK_WAIT_MS: 10000,
+  GENERATOR_LOCK_WAIT_MS: 30000,
+  MAX_NAME_LENGTH: 60,
+  MAX_PEOPLE_PER_REGISTER: 10,
+  MAX_ENTRIES_PER_REGISTER: 100, // people x dates
+  RELEASE_CLOSES_HOURS: 12,
+  OPEN_ENDED_DAYS: 84,         // a line with no Until date keeps 12 weeks of dates ahead
+  MAX_DAYS_AHEAD: 366,
+  DEFAULT_DAYS: 21,            // getSlots range when the page gives no end date
+  WEEKLY_HOUR: 22,             // the weekly update runs on Sunday between 22:00 and 23:00 India time
+  SPEAKERS_TAB_NAMES: ['speaker', 'speakers'],
+  SPEAKERS_NEW_TAB_NAME: 'Speakers',
+  SPEAKERS_MOBILE_HEADER: 'Mobile'
+};
+
+var FREQUENCIES = ['Daily', 'Daily, weekdays only (Mon-Fri)', 'Weekly', 'Every 2 weeks', 'Monthly, same weekday',
+  'Monthly, same date', 'One-off'];
+var DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+// Column titles the script creates. Columns are found by title (any order, any case), so organisers may move them.
+var PLAN_COLS = [
+  ['line', 'Line ID', 'Filled in by the script (P1, P2...). Do not change or copy it.'],
+  ['day', 'Day', 'Monday...Sunday, or Every day (Daily lines).'],
+  ['start', 'Start', 'e.g. 6:30 PM'], ['end', 'End', 'e.g. 7:30 PM (blank = 1 hour)'],
+  ['freq', 'Frequency', 'Pick from the list.'],
+  ['week', 'Week of month', 'Monthly, same weekday only: 1st, 2nd, 3rd, 4th or last.'],
+  ['dom', 'Day of month', 'Monthly, same date only: 1 to 31. Months without that date are skipped.'],
+  ['centre', 'Centre', ''], ['address', 'Address', ''], ['map', 'Google map', 'Link to the place on Google Maps.'],
+  ['places', 'Places', 'Volunteers needed per date (blank = 1, 0 = closed).'],
+  ['from', 'From', 'First date (the date itself for One-off).'],
+  ['until', 'Until', 'Last date. Blank = keep 12 weeks of dates ahead.'],
+  ['contact', 'Contact', 'Organiser name + phone, shown when release is closed.'], ['notes', 'Notes', '']
+];
+var SLOT_COLS = [
+  ['id', 'Slot ID', 'Filled in by the script. Never change it.'], ['date', 'Date', ''], ['day', 'Day', ''],
+  ['start', 'Start', ''], ['end', 'End', ''], ['centre', 'Centre', ''], ['address', 'Address', ''], ['map', 'Map', ''],
+  ['contact', 'Contact', 'Organisers may change.'], ['places', 'Places', 'Organisers may change.'],
+  ['status', 'Status', 'Open or Cancelled. To drop a date, set Cancelled (do not delete the row).'],
+  ['volunteers', 'Volunteers', 'Written by the page. Fix by hand only when needed.'],
+  ['remaining', 'Still needed', 'Written by the page.'],
+  ['notice', 'Cancellation notice sent', 'Written by the WhatsApp-list tool.'], ['notes', 'Notes', 'Organisers may change.']
+];
+var COL_ALIASES = { centre: ['center'], map: ['google map'], dom: ['date of month'] };
+
+// ---------------------------------------------------------------- sheet menu, setup, triggers
+
+function onOpen() {
+  SpreadsheetApp.getUi().createMenu('Program')
+    .addItem('Update slots now', 'menuUpdateSlots')
+    .addItem('Cancellation WhatsApp list', 'menuCancellationList')
+    .addItem('Mark cancellation notices as sent', 'menuMarkNoticesSent')
+    .addSeparator()
+    .addItem('Set up the sheet (first time)', 'setUpSheet')
+    .addToUi();
+}
+
+/** Clears the shared read cache when someone types in the sheet. */
+function onEdit(e) {
+  bumpCache_();
+}
+
+/** Creates the missing tabs (existing tabs are never changed), sets India time and turns on the weekly update. */
+function setUpSheet() {
+  var ss = openSpreadsheet_();
+  ss.setSpreadsheetTimeZone(CONFIG.TIME_ZONE);
+  var made = [];
+  if (makeTab_(ss, CONFIG.PLAN_TAB, PLAN_COLS, {
+    start: 'h:mm am/pm', end: 'h:mm am/pm', from: 'd mmm yyyy', until: 'd mmm yyyy', line: '@', centre: '@', address: '@',
+    map: '@', contact: '@', notes: '@' }, {
+    day: ['Every day'].concat(DAY_NAMES.slice(1), DAY_NAMES.slice(0, 1)), freq: FREQUENCIES,
+    week: ['1st', '2nd', '3rd', '4th', 'last'] })) made.push(CONFIG.PLAN_TAB);
+  if (makeTab_(ss, CONFIG.SLOTS_TAB, SLOT_COLS, slotFormats_(), { status: ['Open', 'Cancelled'] })) made.push(CONFIG.SLOTS_TAB);
+  if (!speakersTab_(ss)) {
+    ss.insertSheet(CONFIG.SPEAKERS_NEW_TAB_NAME).getRange(1, 1, 1, 3).setValues([['Sr. No.', 'Speaker', CONFIG.SPEAKERS_MOBILE_HEADER]]);
+    made.push(CONFIG.SPEAKERS_NEW_TAB_NAME);
+  }
+  var hasTrigger = ScriptApp.getProjectTriggers().some(function (t) { return t.getHandlerFunction() === 'generateSlots'; });
+  if (!hasTrigger) {
+    ScriptApp.newTrigger('generateSlots').timeBased().onWeekDay(ScriptApp.WeekDay.SUNDAY).atHour(CONFIG.WEEKLY_HOUR)
+      .inTimezone(CONFIG.TIME_ZONE).create();
+  }
+  var msg = (made.length ? 'Created: ' + made.join(', ') + '.' : 'All tabs were already there (nothing changed).') +
+    (hasTrigger ? '' : ' The weekly update (Sunday night) is on.');
+  try { SpreadsheetApp.getUi().alert(msg); } catch (e) {}
+  return msg;
+}
+
+function slotFormats_() {
+  return { id: '@', date: 'ddd d mmm yyyy', day: '@', start: 'h:mm am/pm', end: 'h:mm am/pm', centre: '@', address: '@',
+    map: '@', contact: '@', volunteers: '@', notice: '@', notes: '@' };
+}
+
+function makeTab_(ss, name, cols, formats, lists) {
+  if (ss.getSheetByName(name)) return false;
+  var sheet = ss.insertSheet(name);
+  var head = sheet.getRange(1, 1, 1, cols.length);
+  head.setValues([cols.map(function (c) { return c[1]; })]).setFontWeight('bold');
+  head.setNotes([cols.map(function (c) { return c[2]; })]);
+  sheet.setFrozenRows(1);
+  var rows = sheet.getMaxRows() - 1;
+  cols.forEach(function (c, i) {
+    var range = sheet.getRange(2, i + 1, rows, 1);
+    if (formats[c[0]]) range.setNumberFormat(formats[c[0]]);
+    if (lists[c[0]]) range.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(lists[c[0]], true).setAllowInvalid(false).build());
+  });
+  return true;
+}
+
+/** Menu "Program -&gt; Update slots now". */
+function menuUpdateSlots() {
+  var r = generateSlots();
+  SpreadsheetApp.getUi().alert(r.summary + (r.notes.length ? '\n\nPlease look at the "' + CONFIG.REPORT_TAB + '" tab: ' +
+    r.notes.length + ' item(s) need you.' : ''));
+}
+
+// ---------------------------------------------------------------- generator
+
+/**
+ * Brings "Slots" in line with "Program plan": adds missing dates; for a plan line whose settings changed, updates or
+ * removes its future dates that nobody is on. Dates with volunteers and past dates are never changed; anything that
+ * needs an organiser's decision is listed in the report. Safe to run any number of times.
+ */
+function generateSlots() {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(CONFIG.GENERATOR_LOCK_WAIT_MS)) throw new Error('Busy with registrations right now. Please try again in a minute.');
+  var notes = [], added = 0, updated = 0, removed = 0;
+  try {
+    var ss = openSpreadsheet_(), props = PropertiesService.getScriptProperties();
+    var today = todayKey_();
+    var slots = readSlots_(ss);
+    var plan = readPlan_(ss, slots, props, notes);
+    var sheet = slots.sheet, c = slots.cols;
+
+    // Rows typed straight into Slots get an ID.
+    var taken = {};
+    slots.rows.forEach(function (r) { if (r.id) taken[r.id] = true; });
+    slots.rows.forEach(function (r) {
+      if (r.id) return;
+      if (!r.date || !r.start) {
+        if (r.raw.some(function (v) { return String(v).trim(); })) notes.push('Slots row ' + r.row + ': needs a Date and a Start time before volunteers can see it.');
+        return;
+      }
+      var base = 'X-' + r.date.replace(/-/g, '') + '-' + r.start.replace(':', ''), id = base, n = 2;
+      while (taken[id]) id = base + '-' + n++;
+      taken[id] = true;
+      r.id = id;
+      writeText_(sheet, r.row, c.id, id);
+    });
+
+    var byLine = {};
+    slots.rows.forEach(function (r) { if (r.line) (byLine[r.line] = byLine[r.line] || []).push(r); });
+    var updates = [], deletes = [], fresh = [];
+    var handle = function (lineId, line, label) {
+      var want = {};
+      if (line) planDates_(line, today).forEach(function (d) { want[d] = true; });
+      var hash = line ? lineHash_(line) : '';
+      var changed = !line || props.getProperty('line:' + lineId) !== hash;
+      var have = {};
+      (byLine[lineId] || []).forEach(function (r) {
+        have[r.date] = true;
+        if (!changed || r.date &lt; today) return;
+        var diff = line &amp;&amp; want[r.date] ? differences_(r, line) : [];
+        if (r.people.length) {
+          if (!want[r.date]) notes.push(label + ', ' + longDate_(r.date) + ': ' + r.people.length + ' volunteer(s) on it, so it was kept. ' +
+            'The plan no longer has this date: set Status to Cancelled, or keep it.');
+          else if (diff.length) notes.push(label + ', ' + longDate_(r.date) + ': ' + r.people.length + ' volunteer(s) on it, so it was not changed (' +
+            diff.join('; ') + '). Change it by hand if they agree.');
+        } else if (!want[r.date]) deletes.push(r.row);
+        else if (diff.length) updates.push({ row: r, line: line });
+      });
+      if (line) Object.keys(want).sort().forEach(function (d) { if (!have[d]) fresh.push(newSlot_(line, d)); });
+      if (line) props.setProperty('line:' + lineId, hash);
+      else props.deleteProperty('line:' + lineId);
+    };
+    plan.lines.forEach(function (line) { handle(line.id, line, line.id + ' (' + line.label + ')'); });
+    Object.keys(byLine).forEach(function (id) {
+      if (!plan.ids[id] &amp;&amp; !plan.broken[id] &amp;&amp; id.charAt(0) === 'P') handle(id, null, id + ' (no longer in the plan)');
+    });
+
+    updates.forEach(function (u) {
+      var r = u.row.row, l = u.line;
+      sheet.getRange(r, c.start).setValue(l.start);
+      sheet.getRange(r, c.end).setValue(l.end);
+      ['centre', 'address', 'map', 'contact'].forEach(function (k) { if (c[k]) writeText_(sheet, r, c[k], l[k]); });
+      sheet.getRange(r, c.places).setValue(l.places);
+      setRemaining_(sheet, r, c, l.places);
+      updated++;
+    });
+    deletes.sort(function (a, b) { return b - a; }).forEach(function (r) { sheet.deleteRow(r); removed++; });
+    if (fresh.length) {
+      var first = sheet.getLastRow() + 1, width = slots.width;
+      if (first + fresh.length - 1 &gt; sheet.getMaxRows()) sheet.insertRowsAfter(sheet.getMaxRows(), first + fresh.length - 1 - sheet.getMaxRows());
+      var formats = slotFormats_();
+      Object.keys(formats).forEach(function (k) { if (c[k]) sheet.getRange(first, c[k], fresh.length, 1).setNumberFormat(formats[k]); });
+      sheet.getRange(first, 1, fresh.length, width).setValues(fresh.map(function (s) {
+        var row = [];
+        for (var i = 0; i &lt; width; i++) row.push('');
+        Object.keys(s).forEach(function (k) { if (c[k]) row[c[k] - 1] = s[k]; });
+        return row;
+      }));
+      added = fresh.length;
+    }
+    if (added || removed) {
+      var last = sheet.getLastRow();
+      if (last &gt; 2) sheet.getRange(2, 1, last - 1, slots.width).sort([{ column: c.date, ascending: true }, { column: c.start, ascending: true }]);
+    }
+    SpreadsheetApp.flush();
+    bumpCache_();
+  } finally {
+    lock.releaseLock();
+  }
+  var summary = 'Slots updated: ' + added + ' added, ' + updated + ' changed, ' + removed + ' removed.';
+  writeReport_(ss, summary, notes);
+  return { summary: summary, added: added, updated: updated, removed: removed, notes: notes };
+}
+
+function writeReport_(ss, summary, notes) {
+  var sheet = ss.getSheetByName(CONFIG.REPORT_TAB) || ss.insertSheet(CONFIG.REPORT_TAB);
+  var lines = ['Last update: ' + Utilities.formatDate(new Date(), CONFIG.TIME_ZONE, 'EEE d MMM yyyy HH:mm'), summary]
+    .concat(notes.length ? ['Needs you:'].concat(notes) : ['Nothing needs you.']);
+  var rows = Math.max(lines.length, sheet.getLastRow());
+  var values = [];
+  for (var i = 0; i &lt; rows; i++) values.push([lines[i] || '']);
+  sheet.getRange(1, 1, rows, 1).setValues(values);
+}
+
+/** The plan's valid lines (missing Line IDs filled in); mistakes are added to notes. */
+function readPlan_(ss, slots, props, notes) {
+  var sheet = ss.getSheetByName(CONFIG.PLAN_TAB);
+  if (!sheet) throw new Error('There is no "' + CONFIG.PLAN_TAB + '" tab. Use Program -&gt; Set up the sheet first.');
+  var t = readTable_(sheet, PLAN_COLS, ['line', 'day', 'start', 'freq', 'from']);
+  var tz = ss.getSpreadsheetTimeZone(), c = t.cols;
+  var max = 0, seen = {}, out = { lines: [], ids: {}, broken: {} };
+  var idOf = function (row) { return String(row.display[c.line - 1]).trim().toUpperCase(); };
+  t.rows.forEach(function (row) { var m = /^P(\d+)$/.exec(idOf(row)); if (m) max = Math.max(max, +m[1]); });
+  slots.rows.forEach(function (r) { var m = /^P(\d+)$/.exec(r.line); if (m) max = Math.max(max, +m[1]); });
+  t.rows.forEach(function (row) { var id = idOf(row); if (id) seen[id] = (seen[id] || 0) + 1; });
+  var stored = props.getProperties();
+  t.rows.forEach(function (row) {
+    var get = function (k) { return c[k] ? String(row.display[c[k] - 1]).trim() : ''; };
+    if (!PLAN_COLS.some(function (col) { return col[0] !== 'line' &amp;&amp; get(col[0]); })) return; // empty line
+    var line = parsePlanLine_(get, function (k) { return c[k] ? dateKey_(row.values[c[k] - 1], tz) : ''; });
+    var id = get('line').toUpperCase();
+    if (id &amp;&amp; seen[id] &gt; 1) {
+      out.broken[id] = true;
+      notes.push('Program plan row ' + row.row + ': Line ID ' + id + ' appears ' + seen[id] + ' times. Clear the Line ID of the copied line.');
+      return;
+    }
+    if (line.error) {
+      if (id) out.broken[id] = true;
+      notes.push('Program plan row ' + row.row + (id ? ' (' + id + ')' : '') + ': ' + line.error + ' This line was skipped.');
+      return;
+    }
+    if (!id) {
+      // A line whose ID was cleared by mistake gets its old ID back when its settings are unchanged.
+      var hash = lineHash_(line);
+      id = Object.keys(stored).filter(function (k) { return k.indexOf('line:') === 0 &amp;&amp; stored[k] === hash &amp;&amp; !seen[k.slice(5)]; }).map(function (k) { return k.slice(5); })[0] ||
+        'P' + (++max);
+      seen[id] = 1;
+      writeText_(sheet, row.row, c.line, id);
+    }
+    line.id = id;
+    out.ids[id] = true;
+    out.lines.push(line);
+  });
+  return out;
+}
+
+/** One plan line, checked: {freq, weekday, week, dom, start, end, from, until, centre, ...} or {error}. */
+function parsePlanLine_(get, getDate) {
+  var f = norm_(get('freq')), freq;
+  if (/one.?off|once/.test(f)) freq = 'once';
+  else if (/month/.test(f)) freq = /date/.test(f) ? 'monthDate' : /weekday|week/.test(f) ? 'monthWeekday' : '';
+  else if (/daily|every day/.test(f)) freq = /weekday|mon/.test(f) ? 'weekdays' : 'daily';
+  else if (/2 weeks|two weeks|fortnight|alternate/.test(f)) freq = 'biweekly';
+  else if (/week/.test(f)) freq = 'weekly';
+  if (!freq) return { error: 'Frequency "' + get('freq') + '" is not one of: ' + FREQUENCIES.join(' / ') + '.' };
+  var d = norm_(get('day')), weekday = -1;
+  DAY_NAMES.forEach(function (n, i) { if (d &amp;&amp; (d === n.toLowerCase() || d === n.slice(0, 3).toLowerCase())) weekday = i; });
+  if (/weekly|biweekly|monthWeekday/.test(freq) &amp;&amp; weekday &lt; 0) return { error: 'Day must be a weekday (Monday...Sunday) for ' + get('freq') + '.' };
+  var start = clock_(get('start')), end = get('end') ? clock_(get('end')) : start &amp;&amp; plusHour_(start);
+  if (!start) return { error: 'Start "' + get('start') + '" is not a time like 6:30 PM.' };
+  if (!end || end &lt;= start) return { error: 'End "' + get('end') + '" must be a time after the start.' };
+  var from = getDate('from'), until = getDate('until');
+  if (!from) return { error: 'From must be a date.' };
+  if (get('until') &amp;&amp; !until) return { error: 'Until must be a date (or blank).' };
+  if (until &amp;&amp; until &lt; from) return { error: 'Until is before From.' };
+  var line = { freq: freq, weekday: weekday, start: start, end: end, from: from, until: until, centre: get('centre'),
+    address: get('address'), map: get('map'), contact: get('contact'), places: slotsFrom_(get('places')) };
+  if (freq === 'monthWeekday') {
+    var w = norm_(get('week')), m = /^(\d)/.exec(w) || [];
+    line.week = /last/.test(w) ? 'last' : /first/.test(w) ? 1 : /second/.test(w) ? 2 : /third/.test(w) ? 3 : /fourth/.test(w) ? 4 : +m[1] || 0;
+    if (!line.week || line.week &gt; 4) return { error: 'Week of month must be 1st, 2nd, 3rd, 4th or last.' };
+  }
+  if (freq === 'monthDate') {
+    line.dom = parseInt(get('dom'), 10);
+    if (!(line.dom &gt;= 1 &amp;&amp; line.dom &lt;= 31)) return { error: 'Day of month must be a number from 1 to 31.' };
+  }
+  line.label = (freq === 'daily' ? 'Every day' : freq === 'weekdays' ? 'Mon-Fri' : freq === 'once' ? 'One-off' : freq === 'monthDate' ? 'Day ' + line.dom :
+    DAY_NAMES[weekday]) + ' ' + start + (line.centre ? ', ' + line.centre : '');
+  return line;
+}
+
+/** Every date ('yyyy-MM-dd') the line asks for, from today (never earlier) to Until (at most a year ahead). */
+function planDates_(line, today) {
+  var limit = addDays_(today, CONFIG.MAX_DAYS_AHEAD);
+  var until = line.until || addDays_(today, CONFIG.OPEN_ENDED_DAYS);
+  if (until &gt; limit) until = limit;
+  if (line.freq === 'once') return line.from &gt;= today &amp;&amp; line.from &lt;= limit ? [line.from] : [];
+  var out = [], firstMatch = '';
+  for (var d = line.from; d &lt;= until; d = addDays_(d, 1)) {
+    var wd = weekday_(d), dom = Number(d.slice(8)), ok;
+    if (line.freq === 'daily') ok = true;
+    else if (line.freq === 'weekdays') ok = wd &gt;= 1 &amp;&amp; wd &lt;= 5;
+    else if (line.freq === 'monthDate') ok = dom === line.dom;
+    else if (wd !== line.weekday) ok = false;
+    else if (line.freq === 'weekly') ok = true;
+    else if (line.freq === 'biweekly') { firstMatch = firstMatch || d; ok = daysBetween_(firstMatch, d) % 14 === 0; }
+    else ok = line.week === 'last' ? addDays_(d, 7).slice(5, 7) !== d.slice(5, 7) : Math.ceil(dom / 7) === line.week;
+    if (ok &amp;&amp; d &gt;= today) out.push(d);
+  }
+  return out;
+}
+
+function lineHash_(l) {
+  return [l.freq, l.weekday, l.week || '', l.dom || '', l.start, l.end, l.from, l.until, l.centre, l.address, l.map, l.contact, l.places].join('|');
+}
+
+function newSlot_(line, date) {
+  return { id: line.id + '-' + date.replace(/-/g, ''), date: date, day: DAY_NAMES[weekday_(date)].slice(0, 3), start: line.start,
+    end: line.end, centre: line.centre, address: line.address, map: line.map, contact: line.contact, places: line.places,
+    status: 'Open', remaining: line.places };
+}
+
+/** What differs between a Slots row and its plan line, in words. */
+function differences_(r, l) {
+  var out = [];
+  ['start', 'end', 'centre', 'address', 'map', 'contact', 'places'].forEach(function (k) {
+    if (String(r[k]) !== String(l[k])) out.push(k + ' is "' + r[k] + '", plan says "' + l[k] + '"');
+  });
+  return out;
+}
+
+// ---------------------------------------------------------------- reading Slots
+
+/** Finds columns by title; missing required ones are a clear error. */
+function readTable_(sheet, cols, required) {
+  var lastRow = sheet.getLastRow(), lastCol = Math.max(1, sheet.getLastColumn());
+  var display = lastRow ? sheet.getRange(1, 1, lastRow, lastCol).getDisplayValues() : [[]];
+  var values = lastRow ? sheet.getRange(1, 1, lastRow, lastCol).getValues() : [[]];
+  var heads = display[0].map(norm_), map = {};
+  cols.forEach(function (col) {
+    var names = [norm_(col[1])].concat(COL_ALIASES[col[0]] || []);
+    var i = -1;
+    heads.forEach(function (h, j) { if (i &lt; 0 &amp;&amp; names.indexOf(h) &gt;= 0) i = j; });
+    if (i &gt;= 0) map[col[0]] = i + 1;
+    else if (required.indexOf(col[0]) &gt;= 0) throw new Error('Tab "' + sheet.getName() + '" needs a column titled "' + col[1] + '".');
+  });
+  var rows = [];
+  for (var r = 1; r &lt; display.length; r++) rows.push({ row: r + 1, display: display[r], values: values[r] });
+  return { cols: map, rows: rows, width: lastCol };
+}
+
+function readSlots_(ss) {
+  var sheet = ss.getSheetByName(CONFIG.SLOTS_TAB);
+  if (!sheet) throw new Error('There is no "' + CONFIG.SLOTS_TAB + '" tab. Use Program -&gt; Set up the sheet first.');
+  var t = readTable_(sheet, SLOT_COLS, ['id', 'date', 'start', 'places', 'status', 'volunteers']);
+  var tz = ss.getSpreadsheetTimeZone(), c = t.cols;
+  var rows = t.rows.map(function (x) {
+    var get = function (k) { return c[k] ? String(x.display[c[k] - 1]).trim() : ''; };
+    var id = get('id'), start = clock_(get('start')), end = clock_(get('end'));
+    return { row: x.row, raw: x.display, id: id, line: (/^(P\d+)-/i.exec(id) || [])[1] || '',
+      date: dateKey_(x.values[c.date - 1], tz), start: start, end: end || (start &amp;&amp; plusHour_(start)),
+      centre: get('centre'), address: get('address'), map: get('map'), contact: get('contact'), places: slotsFrom_(get('places')),
+      cancelled: /cancel/i.test(get('status')), people: parseAssignees_(get('volunteers')), notice: get('notice'), notes: get('notes') };
+  });
+  return { sheet: sheet, cols: c, rows: rows, width: t.width };
+}
+
+/** What the page gets for one date (no row numbers, phones only as typed). */
+function pageSlot_(r, now) {
+  var start = minutes_(r.date, r.start), end = minutes_(r.date, r.end);
+  return { id: r.id, line: r.line, date: r.date, day: weekday_(r.date), start: r.start, end: r.end, centre: r.centre,
+    address: r.address, map: r.map, contact: r.contact, places: r.places, cancelled: r.cancelled, notes: r.notes,
+    people: r.people.map(function (p) { return { name: p.name, phone: p.phone, by: p.by }; }),
+    remaining: Math.max(0, r.places - r.people.length), over: Math.max(0, r.people.length - r.places),
+    started: now &gt;= start, ended: now &gt;= end, releaseClosed: start - now &lt; CONFIG.RELEASE_CLOSES_HOURS * 60 };
+}
+
+// ---------------------------------------------------------------- page functions
+
+/**
+ * Dates from `from` to `to` ('yyyy-MM-dd'; never before today), Open and Cancelled. With a name, also `mine`: every
+ * future date where that name is on the list or registered someone.
+ */
+function getSlots(from, to, name) {
+  var ss = openSpreadsheet_(), today = todayKey_();
+  from = dateKey_(from, 'UTC') || today;
+  if (from &lt; today) from = today;
+  to = dateKey_(to, 'UTC') || addDays_(from, CONFIG.DEFAULT_DAYS - 1);
+  if (to &gt; addDays_(from, CONFIG.MAX_DAYS_AHEAD)) to = addDays_(from, CONFIG.MAX_DAYS_AHEAD);
+  var me = name ? norm_(name) : '';
+  var cache = CacheService.getScriptCache(), sheet = ss.getSheetByName(CONFIG.SLOTS_TAB);
+  var base = 'slots:' + (cache.get('slots-gen') || '0') + ':' + (sheet ? sheet.getLastRow() + 'x' + sheet.getLastColumn() : '') + ':' + today + ':';
+  var rangeKey = base + from + ':' + to, mineKey = base + 'mine:' + me;
+  var list = JSON.parse(cache.get(rangeKey) || 'null'), mine = me ? JSON.parse(cache.get(mineKey) || 'null') : [];
+  if (!list || !mine) {
+    var rows = readSlots_(ss).rows.filter(function (r) { return r.id &amp;&amp; r.date &gt;= today &amp;&amp; r.start; });
+    rows.sort(function (a, b) { return a.date &lt; b.date ? -1 : a.date &gt; b.date ? 1 : a.start &lt; b.start ? -1 : a.start &gt; b.start ? 1 : 0; });
+    list = rows.filter(function (r) { return r.date &gt;= from &amp;&amp; r.date &lt;= to; });
+    mine = me ? rows.filter(function (r) { return r.people.some(function (p) { return norm_(p.name) === me || norm_(p.by) === me; }); }) : [];
+    try { cache.put(rangeKey, JSON.stringify(list), CONFIG.CACHE_SECONDS); if (me) cache.put(mineKey, JSON.stringify(mine), CONFIG.CACHE_SECONDS); } catch (e) {}
+  }
+  var now = nowMinutes_();
+  var show = function (r) { return pageSlot_(r, now); };
+  return { from: from, to: to, today: today, now: Utilities.formatDate(new Date(), CONFIG.TIME_ZONE, 'yyyy-MM-dd HH:mm'),
+    slots: list.map(show), mine: mine.map(show), speakers: speakerList_(ss), version: VERSION };
+}
+
+/**
+ * Books the person using the page (and/or the people in othersText, 'Name 98xxxxxxxx' per line) on the chosen dates,
+ * each repeated over `repeat` dates of the same plan line counting the chosen one (1, 4, 8, 7, 14 or 'all').
+ * Returns one result per date and person: booked / over (booked beyond the places) / already / skipped (+ reason).
+ * previewOnly = the same answer without writing anything, for the confirmation screen.
+ */
+function registerSlots(slotIds, repeat, name, mobile, othersText, includeSelf, previewOnly) {
+  var me = cleanName_(name);
+  var people = peopleToAdd_(me, { mobile: mobile, othersText: othersText, includeSelf: includeSelf !== false });
+  var ids = [].concat(slotIds || []).map(String);
+  if (!ids.length) throw new Error('Please pick at least one date.');
+  var count = repeat === 'all' ? Infinity : Number(repeat || 1);
+  if (!(count === Infinity || (count &gt;= 1 &amp;&amp; count % 1 === 0))) throw new Error('Unknown repeat choice.');
+
+  var lock = LockService.getScriptLock();
+  if (!previewOnly &amp;&amp; !lock.tryLock(CONFIG.LOCK_WAIT_MS)) throw new Error('Lots of people are registering right now. Please try again.');
+  try {
+    var ss = openSpreadsheet_(), slots = readSlots_(ss), today = todayKey_(), now = nowMinutes_();
+    var live = slots.rows.filter(function (r) { return r.id &amp;&amp; r.date &gt;= today &amp;&amp; r.start; });
+    var targets = [], seen = {}, missing = [];
+    ids.forEach(function (id) {
+      var pick = live.filter(function (r) { return r.id === id; })[0];
+      if (!pick) { missing.push(id); return; }
+      var run = pick.line &amp;&amp; count &gt; 1 ? live.filter(function (r) { return r.line === pick.line &amp;&amp; r.date &gt;= pick.date; }) : [pick];
+      run.sort(function (a, b) { return a.date &lt; b.date ? -1 : 1; }).slice(0, count).forEach(function (r) {
+        if (!seen[r.id]) { seen[r.id] = true; targets.push(r); }
+      });
+    });
+    if (missing.length &amp;&amp; !targets.length) throw new Error('Those dates are no longer in the list. Please refresh the page.');
+    if (targets.length * people.length &gt; CONFIG.MAX_ENTRIES_PER_REGISTER) {
+      throw new Error('That is ' + targets.length * people.length + ' bookings (' + people.length + ' people x ' + targets.length +
+        ' dates). The most at one time is ' + CONFIG.MAX_ENTRIES_PER_REGISTER + '. Please choose fewer dates or people.');
+    }
+    targets.sort(function (a, b) { return a.date &lt; b.date ? -1 : a.date &gt; b.date ? 1 : a.start &lt; b.start ? -1 : 1; });
+    var on = function (r, n) { return r.people.some(function (p) { return sameName_(p.name, n); }); };
+    var results = [], changed = [], booked = {};
+    targets.forEach(function (r) {
+      var res = { id: r.id, date: r.date, start: r.start, end: r.end, centre: r.centre, people: [] };
+      var shut = r.cancelled ? 'cancelled' : now &gt;= minutes_(r.date, r.start) ? 'started' : r.places &lt;= 0 ? 'closed' :
+        r.people.length &gt;= r.places ? 'full' : '';
+      var before = r.people.length;
+      people.forEach(function (p) {
+        var out = { name: p.name, self: p.self };
+        if (on(r, p.name)) out.status = 'already';
+        else if (shut) { out.status = 'skipped'; out.reason = shut; }
+        else {
+          var clash = slots.rows.filter(function (x) {
+            return x !== r &amp;&amp; x.date === r.date &amp;&amp; !x.cancelled &amp;&amp; x.start &lt; r.end &amp;&amp; r.start &lt; x.end &amp;&amp; on(x, p.name);
+          })[0];
+          if (clash) { out.status = 'skipped'; out.reason = 'clash'; out.clash = { id: clash.id, start: clash.start, end: clash.end, centre: clash.centre }; }
+          else {
+            r.people.push({ name: p.name, phone: p.mobile, by: p.self ? '' : me, text: p.name + ' ' + p.mobile + (p.self ? '' : ' (via ' + me + ')') });
+            out.status = r.people.length &gt; r.places ? 'over' : 'booked';
+            booked[norm_(p.name)] = p;
+          }
+        }
+        res.people.push(out);
+      });
+      if (r.people.length &gt; before) changed.push(r);
+      results.push(res);
+    });
+    if (!previewOnly &amp;&amp; changed.length) {
+      changed.forEach(function (r) { writePeople_(slots, r); });
+      saveSpeakers_(ss, Object.keys(booked).map(function (k) { return booked[k]; }));
+      SpreadsheetApp.flush();
+      bumpCache_();
+    }
+  } finally {
+    if (!previewOnly) lock.releaseLock();
+  }
+  var tally = { booked: 0, over: 0, already: 0, skipped: 0 };
+  results.forEach(function (d) { d.people.forEach(function (p) { tally[p.status]++; }); });
+  return { preview: !!previewOnly, results: results, missing: missing, tally: tally,
+    slots: changed.map(function (r) { return pageSlot_(r, now); }) };
+}
+
+/** Takes one person (the caller by default, or someone they registered) off one date. */
+function releaseSlot(slotId, name, personName) {
+  var me = cleanName_(name), target = personName ? cleanName_(personName) : me;
+  return release_(slotId, me, function (p) { return sameName_(p.name, target); }, false,
+    sameName_(target, me) ? 'Your name is not on this date.' : target + ' is not on this date.');
+}
+
+/** "Release all N for this date": everyone the caller registered on that date, and the caller. */
+function releaseGroup(slotId, name) {
+  var me = cleanName_(name);
+  return release_(slotId, me, function (p) { return sameName_(p.name, me) || sameName_(p.by, me); }, true, 'You have nobody to release on this date.');
+}
+
+function release_(slotId, me, pick, all, notFound) {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(CONFIG.LOCK_WAIT_MS)) throw new Error('Lots of people are registering right now. Please try again.');
+  try {
+    var ss = openSpreadsheet_(), slots = readSlots_(ss), now = nowMinutes_();
+    var r = slots.rows.filter(function (x) { return x.id &amp;&amp; x.id === String(slotId); })[0];
+    if (!r || !r.start) throw new Error('That date is no longer in the list. Please refresh the page.');
+    var picked = r.people.filter(pick);
+    if (!picked.length) throw new Error(notFound);
+    var allowed = picked.filter(function (p) { return sameName_(p.name, me) || sameName_(p.by, me); });
+    if (!allowed.length) throw new Error('Only ' + picked[0].name + (picked[0].by ? ' or ' + picked[0].by : '') + ' can remove ' + picked[0].name + '.');
+    if (pageSlot_(r, now).releaseClosed) {
+      throw new Error('Release is closed: there are under ' + CONFIG.RELEASE_CLOSES_HOURS + ' hours to go. Please call the organiser' +
+        (r.contact ? ' (' + r.contact + ')' : '') + '.');
+    }
+    var drop = all ? allowed : allowed.slice(0, 1); // one person: the first entry the caller may remove
+    r.people = r.people.filter(function (p) { return drop.indexOf(p) &lt; 0; });
+    writePeople_(slots, r);
+    SpreadsheetApp.flush();
+    bumpCache_();
+  } finally {
+    lock.releaseLock();
+  }
+  return { removed: drop.map(function (p) { return p.name; }), slot: pageSlot_(r, now) };
+}
+
+/** Writes a date's Volunteers cell and keeps "Still needed" up to date (left alone if it holds a formula). */
+function writePeople_(slots, r) {
+  var text = joinPeople_(r.people.map(function (p) { return p.text; }));
+  if (text) writeText_(slots.sheet, r.row, slots.cols.volunteers, text);
+  else slots.sheet.getRange(r.row, slots.cols.volunteers).clearContent();
+  setRemaining_(slots.sheet, r.row, slots.cols, r.places - r.people.length);
+}
+
+function setRemaining_(sheet, row, c, n) {
+  if (!c.remaining) return;
+  var cell = sheet.getRange(row, c.remaining);
+  if (!cell.getFormula()) cell.setValue(Math.max(0, n));
+}
+
+// ---------------------------------------------------------------- cancellations (organiser side; menu screen in stage 3)
+
+/** Every person on a future Cancelled date whose notice is not sent yet, each with a ready-written WhatsApp link. */
+function cancellationList_() {
+  var ss = openSpreadsheet_(), today = todayKey_();
+  return readSlots_(ss).rows.filter(function (r) { return r.id &amp;&amp; r.cancelled &amp;&amp; !r.notice &amp;&amp; r.date &gt;= today &amp;&amp; r.people.length; })
+    .map(function (r) {
+      return { id: r.id, date: r.date, start: r.start, centre: r.centre, people: r.people.map(function (p) {
+        var digits = String(p.phone).replace(/\D/g, '').slice(-10);
+        var text = 'Namaste ' + p.name + '. The Follow-up Program session on ' + longDate_(r.date) + ' at ' + twelveHour_(r.start) +
+          (r.centre ? ', ' + r.centre : '') + ' is cancelled. Please don\'t go. Your other dates are unchanged.' + (r.contact ? ' - ' + r.contact : '');
+        return { name: p.name, phone: digits, by: p.by, link: digits.length === 10 ? 'https://wa.me/91' + digits + '?text=' + encodeURIComponent(text) : '' };
+      }) };
+    });
+}
+
+/**
+ * Menu "Program -&gt; Cancellation WhatsApp list": one line per affected person with a ready-written WhatsApp message.
+ * Needs the sheet's menu (SpreadsheetApp.getUi), and returns nothing, so the public page link gets no data from it.
+ */
+function menuCancellationList() {
+  var list = cancellationList_();
+  var esc = function (v) { return String(v).replace(/[&amp;&lt;&gt;"']/g, function (ch) { return '&amp;#' + ch.charCodeAt(0) + ';'; }); };
+  var body = list.map(function (d) {
+    return '&lt;h3&gt;' + esc(longDate_(d.date) + ', ' + twelveHour_(d.start) + (d.centre ? ', ' + d.centre : '')) + '&lt;/h3&gt;&lt;ol&gt;' +
+      d.people.map(function (p) {
+        return '&lt;li&gt;' + esc(p.name) + (p.phone ? ' · ' + esc(p.phone) : '') + (p.by ? ' (via ' + esc(p.by) + ')' : '') +
+          (p.link ? ' &lt;a href="' + esc(p.link) + '"&gt;Open WhatsApp&lt;/a&gt;' : ' &lt;b&gt;- no mobile number, please phone&lt;/b&gt;') + '&lt;/li&gt;';
+      }).join('') + '&lt;/ol&gt;';
+  }).join('');
+  var html = '&lt;base target="_blank"&gt;&lt;style&gt;body{font:15px/1.5 sans-serif;color:#1A3A5C}h3{margin:14px 0 4px}li{margin:6px 0}' +
+    'a{display:inline-block;margin-left:6px;padding:3px 10px;border-radius:14px;background:#25D366;color:#fff;font-weight:bold;text-decoration:none}&lt;/style&gt;' +
+    (list.length ? body + '&lt;p&gt;Tap each &lt;b&gt;Open WhatsApp&lt;/b&gt;, check the message and press Send. When everyone has it, close this box and choose ' +
+      '&lt;b&gt;Program &amp;rarr; Mark cancellation notices as sent&lt;/b&gt;.&lt;/p&gt;' : '&lt;p&gt;No cancelled dates are waiting for a notice.&lt;/p&gt;');
+  SpreadsheetApp.getUi().showModalDialog(HtmlService.createHtmlOutput(html).setWidth(600).setHeight(480), 'Cancellation WhatsApp list');
+}
+
+/** Menu "Program -&gt; Mark cancellation notices as sent": asks first, naming the dates. */
+function menuMarkNoticesSent() {
+  var ui = SpreadsheetApp.getUi(), list = cancellationList_();
+  if (!list.length) { ui.alert('No cancelled dates are waiting for a notice.'); return; }
+  var what = list.map(function (d) {
+    return longDate_(d.date) + ', ' + twelveHour_(d.start) + (d.centre ? ', ' + d.centre : '') + ' (' + d.people.length + ' people)';
+  }).join('\n');
+  if (ui.alert('Mark notices as sent?', 'Say Yes only if everyone on these dates has been sent the message:\n\n' + what, ui.ButtonSet.YES_NO) !== ui.Button.YES) return;
+  markNoticeSent_(list.map(function (d) { return d.id; }));
+  ui.alert('Done: ' + list.length + ' date(s) marked as sent.');
+}
+
+/** Records that the WhatsApp notices for these dates were sent. */
+function markNoticeSent_(slotIds) {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(CONFIG.LOCK_WAIT_MS)) throw new Error('Busy right now. Please try again.');
+  try {
+    var slots = readSlots_(openSpreadsheet_());
+    if (!slots.cols.notice) throw new Error('Slots has no "Cancellation notice sent" column.');
+    var stamp = 'Sent ' + Utilities.formatDate(new Date(), CONFIG.TIME_ZONE, 'd MMM HH:mm');
+    slots.rows.forEach(function (r) { if (r.id &amp;&amp; [].concat(slotIds).indexOf(r.id) &gt;= 0) writeText_(slots.sheet, r.row, slots.cols.notice, stamp); });
+    bumpCache_();
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// ---------------------------------------------------------------- dates and times (India has no daylight saving)
+
+function todayKey_() { return Utilities.formatDate(new Date(), CONFIG.TIME_ZONE, 'yyyy-MM-dd'); }
+function nowMinutes_() {
+  var s = Utilities.formatDate(new Date(), CONFIG.TIME_ZONE, 'yyyy-MM-dd HH:mm');
+  return minutes_(s.slice(0, 10), s.slice(11));
+}
+/** Minutes since 1970 of a wall-clock date + 'HH:mm', for comparing moments. */
+function minutes_(key, hhmm) {
+  return Date.UTC(+key.slice(0, 4), +key.slice(5, 7) - 1, +key.slice(8, 10), +hhmm.slice(0, 2), +hhmm.slice(3, 5)) / 60000;
+}
+function addDays_(key, n) {
+  var d = new Date(Date.UTC(+key.slice(0, 4), +key.slice(5, 7) - 1, +key.slice(8, 10) + n, 12));
+  return d.getUTCFullYear() + '-' + pad2_(d.getUTCMonth() + 1) + '-' + pad2_(d.getUTCDate());
+}
+function weekday_(key) { return new Date(Date.UTC(+key.slice(0, 4), +key.slice(5, 7) - 1, +key.slice(8, 10), 12)).getUTCDay(); }
+function daysBetween_(a, b) { return Math.round((minutes_(b, '00:00') - minutes_(a, '00:00')) / 1440); }
+function pad2_(n) { return (n &lt; 10 ? '0' : '') + n; }
+function plusHour_(hhmm) { var m = Math.min(23 * 60 + 59, +hhmm.slice(0, 2) * 60 + +hhmm.slice(3) + 60); return pad2_(Math.floor(m / 60)) + ':' + pad2_(m % 60); }
+function longDate_(key) { var M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return DAY_NAMES[weekday_(key)].slice(0, 3) + ' ' + Number(key.slice(8)) + ' ' + M[+key.slice(5, 7) - 1] + ' ' + key.slice(0, 4); }
+function twelveHour_(hhmm) { var h = +hhmm.slice(0, 2); return (h % 12 || 12) + ':' + hhmm.slice(3) + (h &lt; 12 ? ' AM' : ' PM'); }
+
+/** 'HH:mm' from '6:30 PM', '6.30pm', '6 pm', '18:30', '18:30:00'; without AM/PM it is 24-hour time. '' if unreadable. */
+function clock_(text) {
+  var m = /^(\d{1,2})(?:\s*[:.]\s*(\d{2}))?(?::\d{2})?\s*(?:([ap])\.?\s*m?\.?)?$/.exec(String(text == null ? '' : text).trim().toLowerCase());
+  if (!m) return '';
+  var h = +m[1], min = +(m[2] || 0);
+  if (m[3]) { if (h &lt; 1 || h &gt; 12) return ''; h = h % 12 + (m[3] === 'p' ? 12 : 0); }
+  return h &gt; 23 || min &gt; 59 ? '' : pad2_(h) + ':' + pad2_(min);
+}
+
+// ---------------------------------------------------------------- shared with the tour page's Code.gs (copied)
+
+function bumpCache_() {
+  var cache = CacheService.getScriptCache();
+  cache.put('slots-gen', String(Number(cache.get('slots-gen') || 0) + 1), 21600); // new number = new cache keys
+  cache.remove('speakers');
+}
+
+function openSpreadsheet_() {
+  return CONFIG.SHEET_ID ? SpreadsheetApp.openById(CONFIG.SHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
+}
+
+var MONTHS_ = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+function dateKey_(v, tz) {
+  if (v &amp;&amp; typeof v.getTime === 'function') return isNaN(v.getTime()) ? '' : Utilities.formatDate(v, tz, 'yyyy-MM-dd');
+  var s = String(v == null ? '' : v).trim().toLowerCase(), x, y, m, d;
+  if ((x = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(s))) { y = +x[1]; m = +x[2]; d = +x[3]; }
+  else if ((x = /^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4}|\d{2})$/.exec(s))) { d = +x[1]; m = +x[2]; y = +x[3]; }
+  else if ((x = /^(\d{1,2})(?:st|nd|rd|th)?[\s\-\/]*([a-z]{3})[a-z]*\.?[\s\-\/,]*(\d{4})$/.exec(s))) { d = +x[1]; m = MONTHS_.indexOf(x[2]) + 1; y = +x[3]; }
+  else if ((x = /^([a-z]{3})[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})$/.exec(s))) { m = MONTHS_.indexOf(x[1]) + 1; d = +x[2]; y = +x[3]; }
+  else return '';
+  if (y &lt; 100) y += 2000;
+  var date = new Date(Date.UTC(y, m - 1, d, 12));
+  if (m &lt; 1 || date.getUTCMonth() !== m - 1 || date.getUTCDate() !== d) return '';
+  return Utilities.formatDate(date, 'UTC', 'yyyy-MM-dd');
+}
+
+var PHONE_ = /\+?\d[\d\s\-]{6,}\d/;
+
+function parseAssignees_(text) {
+  var people = [], cur = [];
+  String(text || '').split('\n').forEach(function (line) {
+    line = line.trim();
+    if (line) cur.push(line);
+    if (cur.length &amp;&amp; (!line || PHONE_.test(line))) { people.push(cur); cur = []; }
+  });
+  if (cur.length) people.push(cur);
+  return people.map(function (lines) {
+    var joined = lines.join(' ');
+    var via = /\s*\(via ([^)]+)\)\s*$/i.exec(joined);
+    if (via) joined = joined.slice(0, via.index);
+    var phone = joined.match(PHONE_);
+    var name = joined.replace(PHONE_, '').replace(/[\s,:;\-]+$/, '').replace(/\s+/g, ' ').trim() || lines[0];
+    return { name: name, phone: phone ? phone[0].trim() : '', by: via ? via[1].trim() : '', text: lines.join('\n') };
+  });
+}
+
+/** One person per line; a blank line after a person with no phone keeps the next one separate. */
+function joinPeople_(texts) {
+  return texts.reduce(function (out, t, i) {
+    if (!i) return t;
+    return out + (PHONE_.test(texts[i - 1]) ? '\n' : '\n\n') + t;
+  }, '');
+}
+
+/** Everyone a registration should add, each checked: [{name, mobile, self}]. */
+function peopleToAdd_(me, o) {
+  var list = [];
+  if (o.includeSelf) list.push({ name: me, mobile: cleanMobile_(o.mobile), self: true });
+  String(o.othersText || '').split('\n').forEach(function (line, i) {
+    line = line.trim();
+    if (!line) return;
+    var m = /^(.*?)[\s,:\-]*((?:\+?91|0)?[\d\s\-().]{10,})$/.exec(line);
+    if (!m || !m[1].trim()) throw new Error('Line ' + (i + 1) + ' of "Register others" should be a name then a 10-digit mobile, like "Ravi 9123456789".');
+    var mobile;
+    try { mobile = cleanMobile_(m[2]); } catch (e) { throw new Error('Line ' + (i + 1) + ' of "Register others" (' + line + '): ' + e.message); }
+    list.push({ name: cleanName_(m[1]), mobile: mobile, self: false });
+  });
+  if (!list.length) throw new Error('Nobody to register: tick "Include me too" or add people under "Register others".');
+  var seen = {};
+  list = list.filter(function (p) { var k = norm_(p.name); if (seen[k]) return false; seen[k] = true; return true; });
+  if (list.length &gt; CONFIG.MAX_PEOPLE_PER_REGISTER) throw new Error('Please register at most ' + CONFIG.MAX_PEOPLE_PER_REGISTER + ' people at a time.');
+  return list;
+}
+
+function speakersTab_(ss) {
+  return ss.getSheets().filter(function (s) { return CONFIG.SPEAKERS_TAB_NAMES.indexOf(norm_(s.getName())) &gt;= 0; })[0] || null;
+}
+
+function readSpeakers_(sheet) {
+  var lastRow = sheet.getLastRow(), lastCol = sheet.getLastColumn();
+  if (lastRow &lt; 1 || lastCol &lt; 1) return { headers: [], nameCol: 0, mobileCol: 0, people: [], maxSerial: 0 };
+  var values = sheet.getRange(1, 1, lastRow, lastCol).getDisplayValues();
+  var headers = values[0].map(norm_);
+  var nIdx = headers.indexOf('speaker');
+  if (nIdx &lt; 0) headers.forEach(function (h, i) { if (nIdx &lt; 0 &amp;&amp; (h.indexOf('speaker') &gt;= 0 || h.indexOf('name') &gt;= 0)) nIdx = i; });
+  var mIdx = -1;
+  headers.forEach(function (h, i) { if (mIdx &lt; 0 &amp;&amp; (h.indexOf('mobile') &gt;= 0 || h.indexOf('phone') &gt;= 0)) mIdx = i; });
+  var people = [], maxSerial = 0;
+  values.slice(1).forEach(function (r) { var v = Number(r[0]); if (v &gt; maxSerial) maxSerial = v; });
+  if (nIdx &gt;= 0) values.slice(1).forEach(function (r, i) {
+    var p = parseAssignees_(r[nIdx])[0];
+    if (!p) return;
+    var digits = String(mIdx &gt;= 0 &amp;&amp; r[mIdx] ? r[mIdx] : p.phone).replace(/\D/g, '');
+    if (digits.length &gt; 10 &amp;&amp; /^(91|0)/.test(digits)) digits = digits.slice(-10);
+    people.push({ row: i + 2, name: p.name, mobile: digits.length === 10 ? digits : '' });
+  });
+  return { headers: headers, nameCol: nIdx + 1, mobileCol: mIdx + 1, people: people, maxSerial: maxSerial };
+}
+
+function speakerList_(ss) {
+  var cache = CacheService.getScriptCache();
+  var hit = cache.get('speakers');
+  if (hit) return JSON.parse(hit);
+  var sheet = speakersTab_(ss);
+  var seen = {}, list = [];
+  (sheet ? readSpeakers_(sheet).people : []).forEach(function (p) {
+    var k = norm_(p.name) + '|' + p.mobile;
+    if (seen[k]) return;
+    seen[k] = true;
+    list.push({ name: p.name, mobile: p.mobile });
+  });
+  list = list.filter(function (p) { return p.mobile || !list.some(function (q) { return q.mobile &amp;&amp; sameName_(q.name, p.name); }); });
+  list.sort(function (a, b) { return norm_(a.name) &lt; norm_(b.name) ? -1 : norm_(a.name) &gt; norm_(b.name) ? 1 : 0; });
+  try { cache.put('speakers', JSON.stringify(list), CONFIG.CACHE_SECONDS); } catch (e) {}
+  return list;
+}
+
+function saveSpeakers_(ss, people) {
+  var sheet = speakersTab_(ss);
+  if (!sheet) {
+    sheet = ss.insertSheet(CONFIG.SPEAKERS_NEW_TAB_NAME);
+    sheet.getRange(1, 1, 1, 3).setValues([['Sr. No.', 'Speaker', CONFIG.SPEAKERS_MOBILE_HEADER]]);
+  }
+  var tab = readSpeakers_(sheet);
+  if (!tab.nameCol) return;
+  if (!tab.mobileCol) {
+    var col = tab.headers.indexOf('') + 1 || sheet.getLastColumn() + 1;
+    if (col &gt; sheet.getMaxColumns()) sheet.insertColumnsAfter(sheet.getMaxColumns(), col - sheet.getMaxColumns());
+    sheet.getRange(1, col).setValue(CONFIG.SPEAKERS_MOBILE_HEADER);
+    tab.mobileCol = col;
+  }
+  var serialCol = tab.headers[0] &amp;&amp; /^(s|sr)\.?\s*no/.test(tab.headers[0]) ? 1 : 0;
+  var nextRow = sheet.getLastRow() + 1;
+  var serial = tab.maxSerial;
+  people.forEach(function (p) {
+    var same = tab.people.filter(function (x) { return sameName_(x.name, p.name); });
+    if (same.some(function (x) { return x.mobile === p.mobile; })) return;
+    var blank = same.filter(function (x) { return !x.mobile; })[0];
+    if (blank) {
+      writeText_(sheet, blank.row, tab.mobileCol, p.mobile);
+      blank.mobile = p.mobile;
+      return;
+    }
+    if (serialCol) sheet.getRange(nextRow, 1).setValue(++serial);
+    writeText_(sheet, nextRow, tab.nameCol, p.name);
+    writeText_(sheet, nextRow, tab.mobileCol, p.mobile);
+    tab.people.push({ row: nextRow, name: p.name, mobile: p.mobile });
+    nextRow++;
+  });
+}
+
+/** Writes as plain text so a name is never turned into a formula, number or date. */
+function writeText_(sheet, row, col, text) {
+  sheet.getRange(row, col).setNumberFormat('@').setValue(text);
+}
+
+function slotsFrom_(value) {
+  var m = String(value).match(/\d+/);
+  return m ? parseInt(m[0], 10) : 1;
+}
+
+function cleanName_(raw) {
+  var name = String(raw == null ? '' : raw).replace(/[\u0000-\u001f\u007f]/g, '').replace(/\s+/g, ' ').trim();
+  if (!name) throw new Error('Please enter your name first.');
+  if (name.length &gt; CONFIG.MAX_NAME_LENGTH) throw new Error('Name is too long.');
+  if (/^[=+\-@]/.test(name)) throw new Error('Name cannot start with = + - or @.');
+  return name;
+}
+
+function cleanMobile_(raw) {
+  var digits = String(raw == null ? '' : raw).replace(/[\s\-().]/g, '');
+  if (/^\+?91\d{10}$/.test(digits)) digits = digits.slice(-10);
+  else if (/^0\d{10}$/.test(digits)) digits = digits.slice(1);
+  if (!/^\d{10}$/.test(digits)) throw new Error('Please enter a 10-digit mobile number.');
+  return digits;
+}
+
+function sameName_(a, b) { return norm_(a) === norm_(b); }
+function norm_(s) { return String(s).toLowerCase().replace(/\s+/g, ' ').trim(); }
+</pre>
+
+<h2 id="p4"><span class="step-num">4</span>Add and paste Index.html</h2>
+<ol>
+  <li>On the left, click the <b>+</b> next to <b>Files</b> and choose <b>HTML</b>.</li>
+  <li>Type the name exactly <code>Index</code> (capital I, <b>without</b> ".html") and press <kbd>Enter</kbd>.</li>
+  <li>Select everything in the new file and delete it, then click <b>Copy Index.html</b> below, paste, and save.</li>
+  <li>Check: <b>Files</b> now lists exactly <b>Code.gs</b> and <b>Index.html</b>.</li>
+</ol>
+<div class="codehead"><b>Index.html</b> <button class="copy" data-target="index-html">Copy Index.html</button></div>
+<pre id="index-html">&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+&lt;meta charset="utf-8"&gt;
+&lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
+&lt;title&gt;Follow-up Program: Sign-up&lt;/title&gt;
+&lt;link rel="preconnect" href="https://fonts.googleapis.com"&gt;
+&lt;link rel="preconnect" href="https://fonts.gstatic.com" crossorigin&gt;
+&lt;link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=Instrument+Serif:ital@0;1&amp;family=Noto+Sans+Devanagari:wght@400;600&amp;family=Noto+Sans+Telugu:wght@400;600&amp;display=swap" rel="stylesheet" media="print" onload="this.media='all'"&gt;
+&lt;style&gt;
+  /* Colours and fonts as on the tour page (from the deck). Large text throughout: many users are elderly. */
+  :root { --navy:#1A3A5C; --fg:#34485F; --muted:#5A6B82; --line:#D9E6F2; --bg:#FBFAF6; --band:#E1F0FB; --gold:#C9A84C;
+          --blue:#4A6FA5; --mine:#e6f4ea; --err:#b3261e; --amber:#8a5a00; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:16px 16px 140px; font:16px/1.45 'DM Sans', 'Noto Sans Telugu', 'Noto Sans Devanagari', system-ui, sans-serif;
+         color:var(--fg); background:var(--bg); }
+  #brand { display:flex; align-items:center; gap:14px; margin:-16px -16px 16px; padding:14px 16px 12px;
+           background:linear-gradient(180deg, var(--band), #f6fafd); border-bottom:3px solid var(--gold); }
+  #logo { height:52px; width:auto; flex:none; }
+  #brand h1 { margin:0; font:400 clamp(24px, 4.2vw, 32px)/1.1 'Instrument Serif', serif; color:var(--navy); }
+  #brandSub { display:block; margin-top:3px; font:500 clamp(14px, 2.4vw, 16px)/1.3 'DM Sans', sans-serif; color:var(--blue); }
+  header { display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center; margin-bottom:14px; font-size:18px; }
+  header input:not([type=checkbox]) { font:inherit; padding:6px 8px; border:1px solid var(--line); border-radius:8px; min-width:180px;
+         max-width:100%; background:#fff; color:var(--navy); }
+  header input[type=checkbox] { width:22px; height:22px; margin:0 4px 0 0; vertical-align:middle; }
+  button { font:inherit; cursor:pointer; border-radius:10px; border:1px solid var(--navy); background:var(--navy); color:#fff; padding:8px 14px; }
+  button.light { background:#fff; color:var(--navy); }
+  button.light:hover { background:var(--band); }
+  button:disabled { opacity:.45; cursor:default; }
+  #note { min-height:1.4em; margin:0 0 10px; font-size:17px; }
+  #note.err { color:var(--err); font-weight:700; }
+  /* One-week calendar: Mon-Thu on top, Fri-Sun + week total below; large arrow buttons move one week. */
+  #cal { max-width:760px; margin:0 0 18px; }
+  #calHead { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  #calHead button { width:56px; height:56px; padding:0; font-size:30px; line-height:1; flex:none; }
+  #calTitle { flex:1; text-align:center; }
+  #calMonth { display:block; font:400 26px/1.1 'Instrument Serif', serif; color:var(--navy); }
+  #calRange { color:var(--muted); font-size:16px; }
+  #calGrid { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
+  .dbox { display:flex; flex-direction:column; align-items:flex-start; gap:2px; min-height:92px; padding:8px 10px; text-align:left;
+          background:#fff; color:var(--fg); border:1px solid var(--line); border-radius:12px; }
+  .dbox .wd { font-weight:700; color:var(--navy); }
+  .dbox .dn { font-size:24px; font-weight:700; color:var(--navy); line-height:1.1; }
+  .dbox .mt { font-size:14px; font-weight:500; color:var(--blue); margin-left:3px; }
+  .dbox .st { font-size:15px; }
+  .dbox .you { font-size:14px; font-weight:700; color:#1e7a3a; }
+  .dbox.today { border:3px solid var(--gold); }
+  .dbox.past { background:#f1f1ee; color:#8a8f96; }
+  .dbox.past .wd, .dbox.past .dn { color:#8a8f96; }
+  .dbox.full .st { color:var(--amber); font-weight:700; }
+  .dbox.week { background:var(--band); cursor:default; }
+  /* Date list and cards: one column on phones, two on tablets, three on laptops. */
+  .dayhead { margin:22px 0 8px; font:400 24px/1.2 'Instrument Serif', serif; color:var(--navy); scroll-margin-top:12px; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap:10px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 14px; overflow-wrap:anywhere; }
+  .card.sel { border:3px solid var(--blue); background:#f3f8fd; }
+  .card.mine { background:var(--mine); }
+  .card .r1 { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .card .time { font-size:19px; font-weight:700; color:var(--navy); }
+  .badge { flex:none; font-size:15px; font-weight:700; padding:2px 8px; border-radius:12px; background:var(--band); color:var(--navy); }
+  .badge.full { background:#fff1d6; color:var(--amber); }
+  .badge.over { background:#fde7e5; color:var(--err); }
+  .card .where { margin-top:2px; }
+  .card .notes { margin-top:4px; color:var(--muted); }
+  .card a { color:var(--blue); }
+  .people { margin:8px 0 0; padding-left:24px; }
+  .people li.over { color:var(--err); }
+  .act { margin-top:10px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .act button { min-width:130px; font-size:17px; }
+  .tag { font-weight:700; color:var(--muted); }
+  .closed { color:var(--amber); font-weight:700; }
+  .card.cancelled .time, .card.cancelled .where { text-decoration:line-through; color:var(--muted); }
+  .card.cancelled .tag { color:var(--err); }
+  .card.ended { opacity:.7; }
+  #more { margin:20px 0; }
+  #empty { color:var(--muted); }
+  /* Bottom bar: shown once a date is selected. */
+  #bar { position:fixed; left:0; right:0; bottom:0; z-index:20; display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center;
+         padding:10px 16px; background:#fff; border-top:3px solid var(--gold); box-shadow:0 -2px 10px rgba(26,58,92,.15); font-size:17px; }
+  #bar[hidden] { display:none; }
+  #bar select { font:inherit; padding:6px; border-radius:8px; border:1px solid var(--line); max-width:100%; }
+  #bar #register { margin-left:auto; font-weight:700; padding:10px 22px; }
+  /* Confirmation list before anything is written. */
+  #confirm, #whoBox { position:fixed; inset:0; z-index:40; background:rgba(10,25,40,.6); display:flex; align-items:center; justify-content:center; padding:12px; }
+  #confirm[hidden], #whoBox[hidden] { display:none; }
+  #confirmInner, #whoInner { background:#fff; border-radius:14px; width:min(560px, 100%); max-height:88vh; overflow:auto; padding:16px 18px; }
+  #confirmInner h2, #whoInner h2 { margin:0 0 8px; font:400 26px/1.2 'Instrument Serif', serif; color:var(--navy); }
+  #confirmList &gt; div { padding:8px 0; border-top:1px solid var(--line); }
+  #confirmList .who { margin-left:12px; }
+  .ok { color:#1e7a3a; font-weight:700; } .warn { color:var(--err); font-weight:700; } .skip { color:var(--amber); font-weight:700; }
+  #confirmBtns, #whoBtns { display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+  #alerts .alert { margin:0 0 10px; padding:10px 12px; border-radius:10px; background:#fde7e5; color:var(--err); font-weight:700; border:2px solid var(--err); }
+  #mineBox { margin:0 0 14px; padding:10px 12px; border-radius:10px; background:var(--mine); border:1px solid #bfe0c9; font-size:17px; }
+  #mineBox[hidden] { display:none; }
+  #mineBox button { margin-left:8px; padding:4px 12px; }
+  button.x { padding:0 8px; margin-left:8px; background:#fff; color:var(--err); border-color:var(--err); font-size:14px; line-height:1.6; }
+  button.warn { background:#fff; color:var(--err); border-color:var(--err); }
+  header select { font:inherit; padding:5px; border-radius:8px; border:1px solid var(--line); }
+  #whoInner &gt; label { display:block; margin:10px 0; font-size:17px; }
+  #whoInner input[type=checkbox] { width:22px; height:22px; vertical-align:middle; margin:0 6px 0 0; }
+  #picker summary { cursor:pointer; padding:6px 10px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--navy); }
+  #pickSearch { display:block; width:100%; margin:0; padding:6px 8px; font:inherit; border:1px solid var(--line); }
+  #pickList { max-height:240px; overflow:auto; border:1px solid var(--line); border-top:0; padding:4px 0; }
+  #pickList label { display:block; padding:4px 10px; }
+  #pickList label.nomobile { color:var(--muted); }
+  #pickList input.firstmobile { width:150px; margin-left:8px; padding:2px 6px; font:inherit; }
+  #others { display:block; width:100%; min-height:96px; margin-top:6px; padding:6px 8px; font:inherit; border:1px solid var(--line); border-radius:8px; }
+  footer { margin-top:28px; color:var(--muted); font-size:13px; }
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;div id="brand"&gt;
+  &lt;img id="logo" alt="" src="data:image/png;base64,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"&gt;
+  &lt;div&gt;&lt;h1 data-t="title"&gt;Follow-up Program&lt;/h1&gt;&lt;span id="brandSub" data-t="subtitle"&gt;Sign up for sessions&lt;/span&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;header&gt;
+  &lt;label&gt;&lt;span data-t="language"&gt;Language&lt;/span&gt; &lt;select id="lang"&gt;
+    &lt;option value="en"&gt;English&lt;/option&gt;&lt;option value="te"&gt;తెలుగు&lt;/option&gt;&lt;option value="hi"&gt;हिन्दी&lt;/option&gt;
+  &lt;/select&gt;&lt;/label&gt;
+  &lt;label&gt;&lt;span data-t="yourName"&gt;Your name&lt;/span&gt; &lt;input id="name" autocomplete="off" list="speakerNames"&gt;&lt;datalist id="speakerNames"&gt;&lt;/datalist&gt;&lt;/label&gt;
+  &lt;label&gt;&lt;span data-t="mobile"&gt;Mobile&lt;/span&gt; &lt;input id="mobile" autocomplete="tel" inputmode="tel" maxlength="16"&gt;&lt;/label&gt;
+  &lt;button id="who" class="light"&gt;&lt;/button&gt;
+  &lt;label&gt;&lt;input type="checkbox" id="openOnly"&gt; &lt;span data-t="openOnly"&gt;Open only&lt;/span&gt;&lt;/label&gt;
+&lt;/header&gt;
+&lt;p id="note" role="status"&gt;&lt;/p&gt;
+&lt;div id="alerts" role="alert"&gt;&lt;/div&gt;
+&lt;div id="mineBox" hidden&gt;&lt;/div&gt;
+&lt;section id="cal" aria-label="Calendar"&gt;
+  &lt;div id="calHead"&gt;
+    &lt;button id="prevWeek" class="light" data-ta="prevWeek" aria-label="Previous week"&gt;‹&lt;/button&gt;
+    &lt;div id="calTitle"&gt;&lt;span id="calMonth"&gt;&lt;/span&gt;&lt;span id="calRange"&gt;&lt;/span&gt;&lt;/div&gt;
+    &lt;button id="nextWeek" class="light" data-ta="nextWeek" aria-label="Next week"&gt;›&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;div id="calGrid"&gt;&lt;/div&gt;
+&lt;/section&gt;
+&lt;main id="list"&gt;&lt;/main&gt;
+&lt;button id="more" class="light" data-t="more"&gt;Show 2 more weeks&lt;/button&gt;
+&lt;div id="bar" hidden&gt;
+  &lt;span id="barCount"&gt;&lt;/span&gt;
+  &lt;button id="clear" class="light" data-t="clear"&gt;Clear&lt;/button&gt;
+  &lt;select id="repeat" aria-label="Repeat"&gt;&lt;/select&gt;
+  &lt;button id="register" data-t="register"&gt;Register&lt;/button&gt;
+&lt;/div&gt;
+&lt;div id="confirm" hidden role="dialog" aria-modal="true" aria-labelledby="confirmTitle"&gt;
+  &lt;div id="confirmInner"&gt;
+    &lt;h2 id="confirmTitle" data-t="checkTitle"&gt;Please check&lt;/h2&gt;
+    &lt;div id="confirmList"&gt;&lt;/div&gt;
+    &lt;div id="confirmBtns"&gt;&lt;button id="confirmBack" class="light" data-t="back"&gt;Back&lt;/button&gt;&lt;button id="confirmGo" data-t="confirm"&gt;Confirm&lt;/button&gt;&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+&lt;div id="whoBox" hidden role="dialog" aria-modal="true" aria-labelledby="whoTitle"&gt;
+  &lt;div id="whoInner"&gt;
+    &lt;h2 id="whoTitle" data-t="whoTitle"&gt;Who is going?&lt;/h2&gt;
+    &lt;label&gt;&lt;input type="checkbox" id="includeMe" checked&gt; &lt;span data-t="includeMe"&gt;Include me too&lt;/span&gt;&lt;/label&gt;
+    &lt;details id="picker"&gt;&lt;summary id="pickSummary"&gt;&lt;/summary&gt;&lt;input id="pickSearch" data-tp="searchNames"&gt;&lt;div id="pickList"&gt;&lt;/div&gt;&lt;/details&gt;
+    &lt;label&gt;&lt;span data-t="othersLabel"&gt;Register others&lt;/span&gt;&lt;textarea id="others" data-tp="othersPh"&gt;&lt;/textarea&gt;&lt;/label&gt;
+    &lt;div id="whoBtns"&gt;&lt;button id="whoDone" data-t="whoDone"&gt;Done&lt;/button&gt;&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+&lt;footer id="foot"&gt;&lt;/footer&gt;
+&lt;script&gt;
+(function () {
+  // All wording lives here so Telugu and Hindi can be added as further blocks (stage 2b). {0} = first value.
+  var TEXT = { en: {
+    title: 'Follow-up Program', subtitle: 'Sign up for sessions', yourName: 'Your name', mobile: 'Mobile', openOnly: 'Open only',
+    prevWeek: 'Previous week', nextWeek: 'Next week', more: 'Show 2 more weeks', clear: 'Clear', register: 'Register',
+    checkTitle: 'Please check', back: 'Back', confirm: 'Confirm', loading: 'Loading…',
+    days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    monthsLong: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+    am: 'AM', pm: 'PM', today: 'Today', past: 'past', open: '{0} open', full: 'full', none: '–', you: '● You', thisWeek: 'This week',
+    left: '{0} of {1} left', fullBadge: 'Full', overBy: 'Over by {0}', closedBadge: 'Closed', openMap: 'Open map', via: 'via {0}',
+    select: 'Select', selected: 'Selected ✓', release: 'Release', releaseClosed: 'Release closed - under 12 h to go.',
+    call: 'Please call {0}', cancelled: 'Cancelled', ended: 'Ended', started: 'Started', closed: 'Closed', fullTag: 'Full',
+    noSessions: 'No sessions in these dates.', countSel: '{0} selected',
+    rep1d: 'Just this date', rep4: 'Same session, next 4 dates', rep8: 'Same session, next 8 dates',
+    rep1day: 'Just this day', rep7: 'Same session, next 7 days', rep14: 'Same session, next 14 days', repAll: 'Same session, whole program',
+    needName: 'Please enter your name first.', needMobile: 'Please enter a 10-digit mobile number.', youWord: 'You',
+    stBooked: 'booked', stOver: 'booked, over the limit', stAlready: 'already registered', stSkipped: 'skipped: {0}',
+    rsCancelled: 'cancelled', rsStarted: 'already started', rsClosed: 'closed', rsFull: 'full', rsClash: 'time clash with {0}',
+    nothing: 'Nothing can be booked on these dates.', done: 'Registered: {0} booking(s).', doneSkip: 'Skipped: {0}.',
+    released: 'Released: {0}.', sheetTime: 'Sheet time: {0}',
+    "language": "Language",
+    "includeMe": "Include me too",
+    "chooseSpeakers": "Choose speakers ({0} selected)",
+    "searchNames": "Search names",
+    "othersPh": "One person per line: name, then 10-digit mobile\nRavi Kumar 9123456789\nAsha 9000000002",
+    "noMobileYet": "(no mobile saved yet)",
+    "mobile10Ph": "10-digit mobile",
+    "noMatch": "No match.",
+    "noSpeakers": "No speakers saved yet.",
+    "whoMe": "Who: Just me ▾",
+    "whoN": "Who: {0} people ▾",
+    "whoTitle": "Who is going?",
+    "othersLabel": "Register others",
+    "whoDone": "Done",
+    "groupSel": "{0} people · {1} selected",
+    "removeX": "Remove {0}",
+    "releaseAll": "Release all {0} for this date",
+    "mineTitle": "My registrations",
+    "mineCount": "{0} date(s).",
+    "mineNext": "Next: {0}",
+    "show": "Show",
+    "youOnly": "you",
+    "youPlus": "you + {0} others",
+    "othersOnly": "{0} people you registered",
+    "openWord": "open",
+    "or": "or",
+    "cancelNotice": "⚠ Cancelled: {0}. Please don't go. Your other dates are unchanged.",
+    "cancelOthers": "You registered {0} for it: please tell them.",
+    "lineBad": "Line {0} of \"Register others\" should be a name then a 10-digit mobile, like \"Ravi 9123456789\".",
+    "nobody": "Nobody to register: tick \"Include me too\" or add people under \"Register others\".",
+    "srvBusy": "Lots of people are registering right now. Please try again.",
+    "srvOnlyRemove": "Only {0} can remove {1}.",
+    "srvMax": "Please register at most {0} people at a time.",
+    "srvNameLong": "Name is too long.",
+    "srvNameStart": "Name cannot start with = + - or @.",
+    "srvLineMobile": "Line {0} of \"Register others\" ({1}): please enter a 10-digit mobile number.",
+    "srvPick": "Please pick at least one date.",
+    "srvGone": "That date is no longer in the list. Please refresh the page.",
+    "srvTooMany": "That is {0} bookings ({1} people x {2} dates). The most at one time is {3}. Please choose fewer dates or people.",
+    "srvReleaseClosed": "Release is closed: there are under {0} hours to go. Please call the organiser{1}.",
+    "srvNotOnMe": "Your name is not on this date.",
+    "srvNotOn": "{0} is not on this date.",
+    "srvNobodyRelease": "You have nobody to release on this date."
+  },
+  // Telugu and Hindi: not yet checked by native speakers.
+  te: {"title": "ఫాలో-అప్ ప్రోగ్రామ్", "subtitle": "సెషన్‌లకు పేరు నమోదు చేయండి", "yourName": "మీ పేరు", "mobile": "మొబైల్", "openOnly": "ఖాళీలు ఉన్నవి మాత్రమే", "prevWeek": "గత వారం", "nextWeek": "తర్వాతి వారం", "more": "ఇంకా 2 వారాలు చూపించండి", "clear": "ఎంపిక తీసేయండి", "register": "నమోదు చేయండి", "checkTitle": "దయచేసి సరిచూడండి", "back": "వెనక్కి", "confirm": "నిర్ధారించండి", "loading": "లోడ్ అవుతోంది…", "days": ["ఆది", "సోమ", "మంగళ", "బుధ", "గురు", "శుక్ర", "శని"], "months": ["జన", "ఫిబ్ర", "మార్చి", "ఏప్రి", "మే", "జూన్", "జులై", "ఆగ", "సెప్టెం", "అక్టో", "నవం", "డిసెం"], "monthsLong": ["జనవరి", "ఫిబ్రవరి", "మార్చి", "ఏప్రిల్", "మే", "జూన్", "జులై", "ఆగస్టు", "సెప్టెంబర్", "అక్టోబర్", "నవంబర్", "డిసెంబర్"], "today": "ఈరోజు", "past": "గడిచింది", "open": "{0} ఖాళీ", "openWord": "ఖాళీ", "full": "నిండింది", "you": "● మీరు", "thisWeek": "ఈ వారం", "left": "{1}లో {0} ఖాళీ", "fullBadge": "నిండింది", "overBy": "{0} ఎక్కువ", "closedBadge": "మూసివేశారు", "openMap": "మ్యాప్ తెరవండి", "via": "{0} ద్వారా", "select": "ఎంచుకోండి", "selected": "ఎంచుకున్నారు ✓", "release": "పేరు తీసేయండి", "releaseClosed": "పేరు తీసేయడం మూసివేశారు - 12 గంటల కంటే తక్కువ ఉంది.", "call": "దయచేసి {0}కి ఫోన్ చేయండి", "cancelled": "రద్దు చేశారు", "ended": "ముగిసింది", "started": "మొదలైంది", "closed": "మూసివేశారు", "fullTag": "నిండింది", "noSessions": "ఈ తేదీల్లో సెషన్‌లు లేవు.", "countSel": "{0} ఎంచుకున్నారు", "rep1d": "ఈ తేదీ మాత్రమే", "rep4": "ఇదే సెషన్, తర్వాతి 4 తేదీలు", "rep8": "ఇదే సెషన్, తర్వాతి 8 తేదీలు", "rep1day": "ఈ రోజు మాత్రమే", "rep7": "ఇదే సెషన్, తర్వాతి 7 రోజులు", "rep14": "ఇదే సెషన్, తర్వాతి 14 రోజులు", "repAll": "ఇదే సెషన్, మొత్తం ప్రోగ్రామ్", "needName": "దయచేసి ముందుగా మీ పేరు ఇవ్వండి.", "needMobile": "దయచేసి 10 అంకెల మొబైల్ నంబర్ ఇవ్వండి.", "youWord": "మీరు", "stBooked": "నమోదైంది", "stOver": "నమోదైంది, పరిమితి దాటింది", "stAlready": "ఇప్పటికే నమోదై ఉంది", "stSkipped": "వదిలేశాం: {0}", "rsCancelled": "రద్దు చేశారు", "rsStarted": "ఇప్పటికే మొదలైంది", "rsClosed": "మూసివేశారు", "rsFull": "నిండింది", "rsClash": "{0}తో సమయం కలుస్తోంది", "nothing": "ఈ తేదీల్లో ఏదీ నమోదు చేయలేము.", "done": "నమోదైంది: {0}.", "doneSkip": "వదిలేసినవి: {0}.", "released": "పేరు తీసేశాం: {0}.", "sheetTime": "షీట్ సమయం: {0}", "language": "భాష", "includeMe": "నన్ను కూడా చేర్చండి", "chooseSpeakers": "వక్తలను ఎంచుకోండి ({0} ఎంచుకున్నారు)", "searchNames": "పేర్లు వెతకండి", "othersPh": "ప్రతి లైన్‌లో ఒకరు: పేరు, తర్వాత 10 అంకెల మొబైల్\nRavi Kumar 9123456789\nAsha 9000000002", "noMobileYet": "(మొబైల్ ఇంకా సేవ్ కాలేదు)", "mobile10Ph": "10 అంకెల మొబైల్", "noMatch": "సరిపోలేదు.", "noSpeakers": "ఇంకా వక్తలు సేవ్ కాలేదు.", "whoMe": "ఎవరు: నేను మాత్రమే ▾", "whoN": "ఎవరు: {0} మంది ▾", "whoTitle": "ఎవరు వెళ్తున్నారు?", "othersLabel": "ఇతరులను నమోదు చేయండి", "whoDone": "సరే", "groupSel": "{0} మంది · {1} ఎంచుకున్నారు", "removeX": "{0}ను తీసేయండి", "releaseAll": "ఈ తేదీకి {0} మంది పేర్లూ తీసేయండి", "mineTitle": "నా నమోదులు", "mineCount": "{0} తేదీలు.", "mineNext": "తర్వాతిది: {0}", "show": "చూపించండి", "youOnly": "మీరు", "youPlus": "మీరు + ఇంకా {0} మంది", "othersOnly": "మీరు నమోదు చేసిన {0} మంది", "or": "లేదా", "cancelNotice": "⚠ రద్దు చేశారు: {0}. దయచేసి వెళ్ళకండి. మీ ఇతర తేదీలు మారలేదు.", "cancelOthers": "దీనికి మీరు {0}ను నమోదు చేశారు: దయచేసి వారికి చెప్పండి.", "lineBad": "\"ఇతరులను నమోదు చేయండి\"లో లైన్ {0}: పేరు తర్వాత 10 అంకెల మొబైల్ ఉండాలి, ఉదా. \"Ravi 9123456789\".", "nobody": "నమోదు చేయడానికి ఎవరూ లేరు: \"నన్ను కూడా చేర్చండి\" ఎంచుకోండి లేదా \"ఇతరులను నమోదు చేయండి\"లో పేర్లు చేర్చండి.", "srvBusy": "ఇప్పుడు చాలా మంది ఒకేసారి నమోదు చేస్తున్నారు. దయచేసి మళ్ళీ ప్రయత్నించండి.", "srvOnlyRemove": "{0} మాత్రమే {1}ను తొలగించగలరు.", "srvMax": "ఒకేసారి గరిష్ఠంగా {0} మందిని నమోదు చేయండి.", "srvNameLong": "పేరు చాలా పొడవుగా ఉంది.", "srvNameStart": "పేరు = + - లేదా @ తో మొదలవకూడదు.", "srvLineMobile": "\"ఇతరులను నమోదు చేయండి\"లో లైన్ {0} ({1}): దయచేసి 10 అంకెల మొబైల్ నంబర్ ఇవ్వండి.", "srvPick": "దయచేసి కనీసం ఒక తేదీ ఎంచుకోండి.", "srvGone": "ఆ తేదీ ఇప్పుడు జాబితాలో లేదు. దయచేసి పేజీని రిఫ్రెష్ చేయండి.", "srvTooMany": "ఇవి {0} నమోదులు ({1} మంది x {2} తేదీలు). ఒకేసారి గరిష్ఠంగా {3}. దయచేసి తక్కువ తేదీలు లేదా తక్కువ మందిని ఎంచుకోండి.", "srvReleaseClosed": "పేరు తీసేయడం మూసివేశారు: {0} గంటల కంటే తక్కువ సమయం ఉంది. దయచేసి నిర్వాహకులకు ఫోన్ చేయండి{1}.", "srvNotOnMe": "ఈ తేదీలో మీ పేరు లేదు.", "srvNotOn": "ఈ తేదీలో {0} పేరు లేదు.", "srvNobodyRelease": "ఈ తేదీలో మీరు తీసేయగల పేర్లు లేవు."},
+  hi: {"title": "फ़ॉलो-अप प्रोग्राम", "subtitle": "सत्रों के लिए पंजीकरण करें", "yourName": "आपका नाम", "mobile": "मोबाइल", "openOnly": "केवल खाली स्थान वाले", "prevWeek": "पिछला सप्ताह", "nextWeek": "अगला सप्ताह", "more": "2 सप्ताह और दिखाएँ", "clear": "चयन हटाएँ", "register": "पंजीकरण करें", "checkTitle": "कृपया जाँच लें", "back": "वापस", "confirm": "पक्का करें", "loading": "लोड हो रहा है…", "days": ["रवि", "सोम", "मंगल", "बुध", "गुरु", "शुक्र", "शनि"], "months": ["जन", "फ़र", "मार्च", "अप्रै", "मई", "जून", "जुला", "अग", "सित", "अक्टू", "नव", "दिस"], "monthsLong": ["जनवरी", "फ़रवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"], "today": "आज", "past": "बीता हुआ", "open": "{0} खाली", "openWord": "खाली", "full": "भरा", "you": "● आप", "thisWeek": "इस सप्ताह", "left": "{1} में से {0} खाली", "fullBadge": "भरा", "overBy": "{0} ज़्यादा", "closedBadge": "बंद", "openMap": "नक्शा खोलें", "via": "{0} द्वारा", "select": "चुनें", "selected": "चुना गया ✓", "release": "नाम हटाएँ", "releaseClosed": "नाम हटाना बंद - 12 घंटे से कम बचे हैं।", "call": "कृपया {0} को फ़ोन करें", "cancelled": "रद्द", "ended": "समाप्त", "started": "शुरू हो गया", "closed": "बंद", "fullTag": "भरा", "noSessions": "इन तारीख़ों में कोई सत्र नहीं।", "countSel": "{0} चुने गए", "rep1d": "केवल यह तारीख़", "rep4": "यही सत्र, अगली 4 तारीख़ें", "rep8": "यही सत्र, अगली 8 तारीख़ें", "rep1day": "केवल यह दिन", "rep7": "यही सत्र, अगले 7 दिन", "rep14": "यही सत्र, अगले 14 दिन", "repAll": "यही सत्र, पूरा प्रोग्राम", "needName": "कृपया पहले अपना नाम लिखें।", "needMobile": "कृपया 10 अंकों का मोबाइल नंबर डालें।", "youWord": "आप", "stBooked": "पंजीकृत", "stOver": "पंजीकृत, सीमा से ज़्यादा", "stAlready": "पहले से पंजीकृत", "stSkipped": "छोड़ा गया: {0}", "rsCancelled": "रद्द", "rsStarted": "पहले ही शुरू हो गया", "rsClosed": "बंद", "rsFull": "भरा", "rsClash": "{0} से समय टकराता है", "nothing": "इन तारीख़ों पर कुछ भी पंजीकृत नहीं हो सकता।", "done": "पंजीकृत: {0}।", "doneSkip": "छोड़े गए: {0}।", "released": "नाम हटाया गया: {0}।", "sheetTime": "शीट का समय: {0}", "language": "भाषा", "includeMe": "मुझे भी शामिल करें", "chooseSpeakers": "वक्ता चुनें ({0} चुने गए)", "searchNames": "नाम खोजें", "othersPh": "हर पंक्ति में एक व्यक्ति: नाम, फिर 10 अंकों का मोबाइल\nRavi Kumar 9123456789\nAsha 9000000002", "noMobileYet": "(मोबाइल अभी सहेजा नहीं गया)", "mobile10Ph": "10 अंकों का मोबाइल", "noMatch": "कोई मेल नहीं मिला।", "noSpeakers": "अभी कोई वक्ता सहेजा नहीं गया।", "whoMe": "कौन: केवल मैं ▾", "whoN": "कौन: {0} लोग ▾", "whoTitle": "कौन जा रहा है?", "othersLabel": "दूसरों का पंजीकरण करें", "whoDone": "ठीक है", "groupSel": "{0} लोग · {1} चुने गए", "removeX": "{0} को हटाएँ", "releaseAll": "इस तारीख़ के सभी {0} नाम हटाएँ", "mineTitle": "मेरे पंजीकरण", "mineCount": "{0} तारीख़ें।", "mineNext": "अगला: {0}", "show": "दिखाएँ", "youOnly": "आप", "youPlus": "आप + {0} और", "othersOnly": "आपके पंजीकृत {0} लोग", "or": "या", "cancelNotice": "⚠ रद्द: {0}। कृपया न जाएँ। आपकी बाकी तारीख़ें नहीं बदलीं।", "cancelOthers": "इसके लिए आपने {0} का पंजीकरण किया था: कृपया उन्हें बता दें।", "lineBad": "\"दूसरों का पंजीकरण करें\" की पंक्ति {0} में पहले नाम और फिर 10 अंकों का मोबाइल होना चाहिए, जैसे \"Ravi 9123456789\"।", "nobody": "पंजीकरण के लिए कोई नहीं है: \"मुझे भी शामिल करें\" चुनें या \"दूसरों का पंजीकरण करें\" में लोग जोड़ें।", "srvBusy": "अभी बहुत से लोग एक साथ पंजीकरण कर रहे हैं। कृपया फिर से कोशिश करें।", "srvOnlyRemove": "केवल {0} ही {1} को हटा सकते हैं।", "srvMax": "एक बार में अधिकतम {0} लोगों का पंजीकरण करें।", "srvNameLong": "नाम बहुत लंबा है।", "srvNameStart": "नाम = + - या @ से शुरू नहीं हो सकता।", "srvLineMobile": "\"दूसरों का पंजीकरण करें\" की पंक्ति {0} ({1}): कृपया 10 अंकों का मोबाइल नंबर डालें।", "srvPick": "कृपया कम से कम एक तारीख़ चुनें।", "srvGone": "वह तारीख़ अब सूची में नहीं है। कृपया पेज रिफ़्रेश करें।", "srvTooMany": "यह {0} पंजीकरण हैं ({1} लोग x {2} तारीख़ें)। एक बार में अधिकतम {3}। कृपया कम तारीख़ें या कम लोग चुनें।", "srvReleaseClosed": "नाम हटाना बंद: {0} घंटे से कम बचे हैं। कृपया आयोजक को फ़ोन करें{1}।", "srvNotOnMe": "इस तारीख़ पर आपका नाम नहीं है।", "srvNotOn": "इस तारीख़ पर {0} का नाम नहीं है।", "srvNobodyRelease": "इस तारीख़ पर हटाने के लिए आपका कोई नाम नहीं है।"} };
+  var lang = 'en';
+  function t(key) {
+    var s = (TEXT[lang] &amp;&amp; TEXT[lang][key] != null ? TEXT[lang][key] : TEXT.en[key]);
+    if (s == null) return key;
+    var args = arguments;
+    return typeof s === 'string' ? s.replace(/\{(\d)\}/g, function (_, i) { return args[+i + 1]; }) : s;
+  }
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&amp;&lt;&gt;"']/g, function (c) { return '&amp;#' + c.charCodeAt(0) + ';'; }); };
+  var norm = function (s) { return String(s || '').toLowerCase().replace(/\s+/g, ' ').trim(); };
+
+  // Dates are 'yyyy-MM-dd' keys in India time, as the server sends them; "today" and "now" come from the server.
+  function addDays(k, n) { return new Date(Date.UTC(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10) + n)).toISOString().slice(0, 10); }
+  function wd(k) { return new Date(Date.UTC(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10))).getUTCDay(); }
+  function monday(k) { return addDays(k, -((wd(k) + 6) % 7)); }
+  function dayLabel(k) { return t('days')[wd(k)] + ' ' + Number(k.slice(8)) + ' ' + t('months')[+k.slice(5, 7) - 1]; }
+  function clock(hhmm) { var h = +hhmm.slice(0, 2); return (h % 12 || 12) + ':' + hhmm.slice(3) + ' ' + (h &lt; 12 ? t('am') : t('pm')); }
+
+  var nameInput = $('name'), mobileInput = $('mobile'), openOnly = $('openOnly');
+  var state = null, sel = {}, weekStart = '', listEnd = '', rangeEnd = '', busy = false, scrollTo = '';
+  [[nameInput, 'followupName'], [mobileInput, 'followupMobile']].forEach(function (p) {
+    try { p[0].value = localStorage.getItem(p[1]) || ''; } catch (e) {}
+    p[0].addEventListener('input', function () { try { localStorage.setItem(p[1], p[0].value); } catch (e) {} render(); });
+  });
+  nameInput.addEventListener('change', function () {
+    if (state) refresh();
+    var sp = (state &amp;&amp; state.speakers || []).filter(function (s) { return norm(s.name) === norm(nameInput.value); })[0];
+    if (sp &amp;&amp; sp.mobile &amp;&amp; !mobileInput.value) { mobileInput.value = sp.mobile; try { localStorage.setItem('followupMobile', sp.mobile); } catch (e) {} }
+  });
+  openOnly.addEventListener('change', render);
+  $('lang').addEventListener('change', function () { lang = this.value; document.documentElement.lang = lang; drawPicker(true); render(); });
+
+  function note(msg, isErr) { var n = $('note'); n.textContent = msg || ''; n.className = isErr ? 'err' : ''; }
+  function run(fn, args, ok) {
+    busy = true;
+    var r = google.script.run
+      .withSuccessHandler(function (x) { busy = false; ok(x); })
+      .withFailureHandler(function (e) { busy = false; note(translateServer((e &amp;&amp; e.message) || String(e)), true); render(); });
+    r[fn].apply(r, args);
+  }
+  var SERVER_TEXT = [
+    [/^Lots of people are registering right now/, 'srvBusy'],
+    [/^Please enter your name first/, 'needName'],
+    [/^Please enter a 10-digit mobile number/, 'needMobile'],
+    [/^Name is too long/, 'srvNameLong'],
+    [/^Name cannot start/, 'srvNameStart'],
+    [/^Line (\d+) of "Register others" should be/, 'lineBad'],
+    [/^Line (\d+) of "Register others" \(([\s\S]*)\): /, 'srvLineMobile'],
+    [/^Nobody to register/, 'nobody'],
+    [/^Please register at most (\d+)/, 'srvMax'],
+    [/^Please pick at least one date/, 'srvPick'],
+    [/^(?:Those dates are|That date is) no longer in the list/, 'srvGone', function () { return []; }],
+    [/^That is (\d+) bookings \((\d+) people x (\d+) dates\)\. The most at one time is (\d+)/, 'srvTooMany'],
+    [/^Release is closed: there are under (\d+) hours to go\. Please call the organiser(?: \(([\s\S]*)\))?\.$/, 'srvReleaseClosed',
+      function (m) { return [m[1], m[2] ? ' (' + m[2] + ')' : '']; }],
+    [/^Your name is not on this date\.$/, 'srvNotOnMe'],
+    [/^([\s\S]+) is not on this date\.$/, 'srvNotOn'],
+    [/^You have nobody to release on this date/, 'srvNobodyRelease'],
+    [/^Only ([\s\S]+?)(?: or ([\s\S]+?))? can remove ([\s\S]+)\.$/, 'srvOnlyRemove', function (m) { return [m[1] + (m[2] ? ' ' + t('or') + ' ' + m[2] : ''), m[3]]; }]
+  ];
+  function translateServer(msg) {
+    for (var i = 0; i &lt; SERVER_TEXT.length; i++) {
+      var m = SERVER_TEXT[i][0].exec(msg);
+      if (m) return t.apply(null, [SERVER_TEXT[i][1]].concat(SERVER_TEXT[i][2] ? SERVER_TEXT[i][2](m) : m.slice(1)));
+    }
+    return msg; // unknown (e.g. set-up problems): shown as sent
+  }
+
+  // "Who": the person using the page and/or others (ticked speakers + typed lines), as on the tour page.
+  var picked = {}, includeMe = $('includeMe'), othersInput = $('others'), pickList = $('pickList'), pickSearch = $('pickSearch');
+  try { othersInput.value = localStorage.getItem('followupOthers') || ''; } catch (e) {}
+  othersInput.addEventListener('input', function () { try { localStorage.setItem('followupOthers', othersInput.value); } catch (e) {} render(); });
+  includeMe.addEventListener('change', render);
+  pickSearch.addEventListener('input', function () { drawPicker(true); });
+  function digitsOf(v) { var d = String(v).replace(/\D/g, ''); return d.length &gt; 10 ? d.slice(-10) : d; }
+  function othersText() {
+    var lines = [othersInput.value].concat(Object.keys(picked).map(function (k) { return picked[k].name + ' ' + picked[k].mobile; }));
+    return lines.join('\n').trim() ? lines.join('\n') : '';
+  }
+  function checkOthers(text) { // same line rule as the server: a name, then a 10-digit mobile; returns the count or a message
+    var lines = text.split('\n'), n = 0;
+    for (var i = 0; i &lt; lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line) continue;
+      var m = /^(.*?)[\s,:\-]*((?:\+?91|0)?[\d\s\-().]{10,})$/.exec(line);
+      if (!m || !m[1].trim() || !cleanMobile(m[2])) return t('lineBad', i + 1);
+      n++;
+    }
+    return n;
+  }
+  function groupSize() { var n = checkOthers(othersText()); return (includeMe.checked ? 1 : 0) + (typeof n === 'number' ? n : 0); }
+  function drawPicker(force) {
+    var speakers = (state &amp;&amp; state.speakers) || [], sig = JSON.stringify(speakers) + '|' + pickSearch.value + '|' + lang;
+    if (!force &amp;&amp; pickList.dataset.sig === sig) return;
+    pickList.dataset.sig = sig;
+    var q = pickSearch.value.trim().toLowerCase();
+    pickList.textContent = '';
+    speakers.forEach(function (sp) {
+      if (q &amp;&amp; sp.name.toLowerCase().indexOf(q) &lt; 0 &amp;&amp; sp.mobile.indexOf(q) &lt; 0) return;
+      var key = sp.name.toLowerCase() + '|' + sp.mobile, label = document.createElement('label'), box = document.createElement('input');
+      box.type = 'checkbox';
+      box.checked = !!picked[key];
+      box.onchange = function () { if (box.checked) picked[key] = { name: sp.name, mobile: sp.mobile }; else delete picked[key]; drawPicker(true); render(); };
+      label.appendChild(box);
+      label.appendChild(document.createTextNode(' ' + sp.name + (sp.mobile ? ' · ' + sp.mobile : ' ' + t('noMobileYet'))));
+      if (!sp.mobile) {
+        label.className = 'nomobile';
+        if (picked[key]) { // first time only: their number is saved to the Speakers tab when they are registered
+          var num = document.createElement('input');
+          num.className = 'firstmobile'; num.placeholder = t('mobile10Ph'); num.inputMode = 'tel'; num.value = picked[key].mobile;
+          num.oninput = function () { picked[key].mobile = num.value; render(); };
+          label.appendChild(num);
+        }
+      }
+      pickList.appendChild(label);
+    });
+    if (!pickList.childNodes.length) pickList.textContent = speakers.length ? t('noMatch') : t('noSpeakers');
+  }
+  function updatePickCount() { $('pickSummary').textContent = t('chooseSpeakers', Object.keys(picked).length); }
+
+  // My registrations (count + next date) and a red notice for each cancelled date, from state.mine (every future date).
+  function renderMine() {
+    var list = (state.mine || []).filter(function (s) { return !s.ended; });
+    $('alerts').innerHTML = list.filter(function (s) { return s.cancelled; }).map(function (s) {
+      var others = s.people.filter(function (p) { return norm(p.by) === me() &amp;&amp; norm(p.name) !== me(); }).map(function (p) { return p.name; });
+      return '&lt;div class="alert"&gt;' + esc(t('cancelNotice', dayLabel(s.date) + ', ' + clock(s.start) + (s.centre ? ', ' + s.centre : ''))) +
+        (others.length ? ' ' + esc(t('cancelOthers', others.join(', '))) : '') + '&lt;/div&gt;';
+    }).join('');
+    var dates = {}; list.forEach(function (s) { dates[s.date] = true; });
+    var next = list.filter(function (s) { return !s.cancelled; })[0], box = $('mineBox');
+    box.hidden = !list.length;
+    if (!list.length) return;
+    var who = '';
+    if (next) {
+      var selfOn = meOn(next), n = next.people.filter(function (p) { return norm(p.by) === me() &amp;&amp; norm(p.name) !== me(); }).length;
+      who = selfOn &amp;&amp; n ? t('youPlus', n) : selfOn ? t('youOnly') : t('othersOnly', n);
+    }
+    box.innerHTML = '&lt;b&gt;' + t('mineTitle') + ':&lt;/b&gt; ' + esc(t('mineCount', Object.keys(dates).length)) +
+      (next ? ' ' + esc(t('mineNext', dayLabel(next.date) + ', ' + clock(next.start) + (next.centre ? ', ' + next.centre : '') + ' · ' + who)) +
+        '&lt;button class="light" data-date="' + next.date + '"&gt;' + t('show') + '&lt;/button&gt;' : '');
+  }
+
+  function refresh() { run('getSlots', [state ? state.today : '', rangeEnd, nameInput.value], show); }
+  function needUntil(k) { if (k &gt; rangeEnd) { rangeEnd = k; refresh(); return true; } return false; }
+
+  function show(st) {
+    state = st;
+    if (!weekStart) weekStart = monday(st.today);
+    if (!listEnd) listEnd = addDays(st.today, 13);
+    if (!rangeEnd || rangeEnd &lt; st.to) rangeEnd = st.to;
+    Object.keys(sel).forEach(function (id) { var s = byId(id); if (!s || !selectable(s)) delete sel[id]; });
+    var dl = $('speakerNames');
+    dl.innerHTML = (st.speakers || []).map(function (s) { return '&lt;option value="' + esc(s.name) + '"&gt;'; }).join('');
+    drawPicker();
+    render();
+    if (scrollTo) { var k = scrollTo; scrollTo = ''; goTo(k); }
+  }
+  function slots() { return state ? state.slots : []; }
+  function byId(id) { return slots().filter(function (s) { return s.id === id; })[0]; }
+  function me() { return norm(nameInput.value); }
+  function meOn(s) { return !!me() &amp;&amp; s.people.some(function (p) { return norm(p.name) === me(); }); }
+  function mine(s) { return !!me() &amp;&amp; s.people.some(function (p) { return norm(p.name) === me() || norm(p.by) === me(); }); }
+  function selectable(s) { return !s.cancelled &amp;&amp; !s.started &amp;&amp; s.places &gt; 0 &amp;&amp; s.remaining &gt; 0 &amp;&amp; !meOn(s); }
+  function isDaily(line) { // a line with dates on two days in a row is counted in days
+    var ds = slots().filter(function (s) { return s.line === line; }).map(function (s) { return s.date; });
+    return !!line &amp;&amp; ds.some(function (d) { return ds.indexOf(addDays(d, 1)) &gt;= 0; });
+  }
+
+  function render() {
+    document.querySelectorAll('[data-t]').forEach(function (el) { el.textContent = t(el.getAttribute('data-t')); });
+    document.querySelectorAll('[data-ta]').forEach(function (el) { el.setAttribute('aria-label', t(el.getAttribute('data-ta'))); });
+    document.querySelectorAll('[data-tp]').forEach(function (el) { el.placeholder = t(el.getAttribute('data-tp')); });
+    updatePickCount();
+    if (!state) { $('list').textContent = t('loading'); return; }
+    renderCalendar();
+    renderList();
+    renderBar();
+    renderMine();
+    $('foot').textContent = t('sheetTime', state.now) + ' · v' + state.version;
+  }
+
+  function renderCalendar() {
+    var today = state.today, end = addDays(weekStart, 6), m1 = +weekStart.slice(5, 7) - 1, m2 = +end.slice(5, 7) - 1;
+    $('calMonth').textContent = t('monthsLong')[m1] + (m2 !== m1 ? ' – ' + t('monthsLong')[m2] : '') + ' ' + end.slice(0, 4);
+    $('calRange').textContent = Number(weekStart.slice(8)) + ' ' + t('months')[m1] + ' – ' + Number(end.slice(8)) + ' ' + t('months')[m2];
+    $('prevWeek').disabled = weekStart &lt;= monday(today);
+    var weekOpen = 0, html = '';
+    for (var i = 0; i &lt; 7; i++) {
+      var k = addDays(weekStart, i), day = slots().filter(function (s) { return s.date === k; });
+      var open = day.filter(selectable).length, past = k &lt; today, cls = 'dbox', st;
+      weekOpen += past ? 0 : open;
+      if (past) { cls += ' past'; st = t('past'); }
+      else if (!day.length) st = k &gt; rangeEnd ? '…' : t('none');
+      else if (open) st = t('open', open);
+      else { cls += ' full'; st = t('full'); }
+      if (k === today) cls += ' today';
+      html += '&lt;button class="' + cls + '" data-date="' + k + '"' + (past ? ' disabled' : '') + '&gt;&lt;span class="wd"&gt;' +
+        (k === today ? t('today') : t('days')[wd(k)]) + '&lt;/span&gt;&lt;span class="dn"&gt;' + Number(k.slice(8)) +
+        (k.slice(8) === '01' || i === 0 ? '&lt;span class="mt"&gt;' + t('months')[+k.slice(5, 7) - 1] + '&lt;/span&gt;' : '') + '&lt;/span&gt;' +
+        '&lt;span class="st"&gt;' + esc(st) + '&lt;/span&gt;' + (day.some(mine) ? '&lt;span class="you"&gt;' + t('you') + '&lt;/span&gt;' : '') + '&lt;/button&gt;';
+    }
+    html += '&lt;div class="dbox week"&gt;&lt;span class="wd"&gt;' + t('thisWeek') + '&lt;/span&gt;&lt;span class="dn"&gt;' + weekOpen + '&lt;/span&gt;&lt;span class="st"&gt;' +
+      t('openWord') + '&lt;/span&gt;&lt;/div&gt;';
+    $('calGrid').innerHTML = html;
+  }
+
+  function renderList() {
+    var dates = {}, out = '';
+    slots().forEach(function (s) {
+      if (s.date &gt; listEnd) return;
+      if (openOnly.checked &amp;&amp; !selectable(s) &amp;&amp; !mine(s)) return;
+      (dates[s.date] = dates[s.date] || []).push(s);
+    });
+    Object.keys(dates).sort().forEach(function (k) {
+      out += '&lt;h3 class="dayhead" id="d-' + k + '"&gt;' + esc(dayLabel(k)) + (k === state.today ? ' · ' + t('today') : '') + '&lt;/h3&gt;&lt;div class="cards"&gt;' +
+        dates[k].map(card).join('') + '&lt;/div&gt;';
+    });
+    $('list').innerHTML = out || '&lt;p id="empty"&gt;' + t('noSessions') + '&lt;/p&gt;';
+  }
+
+  function card(s) {
+    var cls = 'card' + (sel[s.id] ? ' sel' : '') + (mine(s) ? ' mine' : '') + (s.cancelled ? ' cancelled' : '') + (s.ended ? ' ended' : '');
+    var badge = s.cancelled ? '' : s.places &lt;= 0 ? '&lt;span class="badge full"&gt;' + t('closedBadge') + '&lt;/span&gt;' :
+      s.over ? '&lt;span class="badge over"&gt;' + t('overBy', s.over) + '&lt;/span&gt;' :
+      !s.remaining ? '&lt;span class="badge full"&gt;' + t('fullBadge') + '&lt;/span&gt;' : '&lt;span class="badge"&gt;' + t('left', s.remaining, s.places) + '&lt;/span&gt;';
+    var canRelease = !s.cancelled &amp;&amp; !s.ended &amp;&amp; !s.releaseClosed;
+    var people = s.people.map(function (p, i) {
+      var x = canRelease &amp;&amp; norm(p.by) === me() &amp;&amp; norm(p.name) !== me() ? '&lt;button class="x" data-x="' + esc(s.id) + '" data-person="' + esc(p.name) +
+        '" aria-label="' + esc(t('removeX', p.name)) + '"&gt;✕&lt;/button&gt;' : '';
+      return '&lt;li' + (i &gt;= s.places ? ' class="over"' : '') + '&gt;' + esc(p.name) + (p.phone ? ' · ' + esc(p.phone) : '') +
+        (p.by ? ' (' + esc(t('via', p.by)) + ')' : '') + x + '&lt;/li&gt;';
+    }).join('');
+    var myPeople = s.people.filter(function (p) { return norm(p.name) === me() || norm(p.by) === me(); });
+    var act;
+    if (s.cancelled) act = '&lt;span class="tag"&gt;' + t('cancelled') + '&lt;/span&gt;';
+    else if (s.ended) act = '&lt;span class="tag"&gt;' + t('ended') + '&lt;/span&gt;';
+    else if (myPeople.length &amp;&amp; (meOn(s) || s.releaseClosed || s.started || !s.remaining)) {
+      act = s.releaseClosed ? '&lt;span class="closed"&gt;' + t('releaseClosed') + '&lt;/span&gt;' + (s.contact ? ' &lt;span&gt;' + contact(s.contact) + '&lt;/span&gt;' : '')
+        : (meOn(s) ? '&lt;button class="light" data-release="' + esc(s.id) + '"&gt;' + t('release') + '&lt;/button&gt;' : '') +
+          (myPeople.length &gt; 1 ? '&lt;button class="warn" data-group="' + esc(s.id) + '"&gt;' + t('releaseAll', myPeople.length) + '&lt;/button&gt;' : '');
+    }
+    else if (s.started) act = '&lt;span class="tag"&gt;' + t('started') + '&lt;/span&gt;';
+    else if (s.places &lt;= 0) act = '&lt;span class="tag"&gt;' + t('closed') + '&lt;/span&gt;';
+    else if (!s.remaining) act = '&lt;span class="tag"&gt;' + t('fullTag') + '&lt;/span&gt;';
+    else act = '&lt;button ' + (sel[s.id] ? '' : 'class="light" ') + 'data-sel="' + esc(s.id) + '" aria-pressed="' + !!sel[s.id] + '"&gt;' +
+      (sel[s.id] ? t('selected') : t('select')) + '&lt;/button&gt;' +
+      (myPeople.length &gt; 1 ? '&lt;button class="warn" data-group="' + esc(s.id) + '"&gt;' + t('releaseAll', myPeople.length) + '&lt;/button&gt;' : '');
+    return '&lt;article class="' + cls + '" data-id="' + esc(s.id) + '"&gt;&lt;div class="r1"&gt;&lt;span class="time"&gt;' + clock(s.start) + ' – ' + clock(s.end) +
+      '&lt;/span&gt;' + badge + '&lt;/div&gt;&lt;div class="where"&gt;&lt;b&gt;' + esc(s.centre) + '&lt;/b&gt;' + (s.address ? ' · ' + esc(s.address) : '') + '&lt;/div&gt;' +
+      (/^https?:\/\//i.test(s.map) ? '&lt;div&gt;&lt;a href="' + esc(s.map) + '" target="_blank" rel="noopener noreferrer"&gt;' + t('openMap') + '&lt;/a&gt;&lt;/div&gt;' : '') +
+      (s.notes ? '&lt;div class="notes"&gt;' + esc(s.notes) + '&lt;/div&gt;' : '') + (people ? '&lt;ol class="people"&gt;' + people + '&lt;/ol&gt;' : '') +
+      '&lt;div class="act"&gt;' + act + '&lt;/div&gt;&lt;/article&gt;';
+  }
+  function contact(text) {
+    var m = /\+?\d[\d\s\-]{8,}\d/.exec(text);
+    var parts = t('call', '\u0000').split('\u0000');
+    return esc(parts[0]) + (m ? '&lt;a href="tel:' + m[0].replace(/[^\d+]/g, '') + '"&gt;' + esc(text) + '&lt;/a&gt;' : esc(text)) + esc(parts[1] || '');
+  }
+
+  function renderBar() {
+    // "Who" sits at the top under Mobile (as "Register others" does on the tour page) and always shows the group.
+    var ids = Object.keys(sel), bar = $('bar'), g = groupSize(), solo = includeMe.checked &amp;&amp; g === 1;
+    $('who').textContent = solo ? t('whoMe') : t('whoN', g);
+    bar.hidden = !ids.length;
+    if (!ids.length) return;
+    $('barCount').textContent = solo ? t('countSel', ids.length) : t('groupSel', g, ids.length);
+    var daily = ids.every(function (id) { var s = byId(id); return s &amp;&amp; isDaily(s.line); });
+    var opts = daily ? [['1', 'rep1day'], ['7', 'rep7'], ['14', 'rep14'], ['all', 'repAll']] : [['1', 'rep1d'], ['4', 'rep4'], ['8', 'rep8'], ['all', 'repAll']];
+    var rep = $('repeat'), cur = rep.value;
+    if (!opts.some(function (o) { return o[0] === cur; })) cur = '1';
+    rep.innerHTML = opts.map(function (o) { return '&lt;option value="' + o[0] + '"' + (o[0] === cur ? ' selected' : '') + '&gt;' + t(o[1]) + '&lt;/option&gt;'; }).join('');
+  }
+
+  function goTo(k) {
+    if (k &gt; listEnd) listEnd = k;
+    if (needUntil(k)) { scrollTo = k; return; }
+    render();
+    var heads = Array.prototype.slice.call(document.querySelectorAll('.dayhead')).filter(function (h) { return h.id.slice(2) &gt;= k; });
+    (heads[0] || $('more')).scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function cleanMobile(raw) {
+    var d = String(raw || '').replace(/[\s\-().]/g, '');
+    if (/^\+?91\d{10}$/.test(d)) d = d.slice(-10); else if (/^0\d{10}$/.test(d)) d = d.slice(1);
+    return /^\d{10}$/.test(d) ? d : '';
+  }
+  var pendingArgs = null;
+  function startRegister() {
+    if (!nameInput.value.trim()) { note(t('needName'), true); nameInput.focus(); return; }
+    if (includeMe.checked &amp;&amp; !cleanMobile(mobileInput.value)) { note(t('needMobile'), true); mobileInput.focus(); return; }
+    var others = othersText(), n = checkOthers(others);
+    if (typeof n !== 'number') { note(n, true); return; }
+    if (!n &amp;&amp; !includeMe.checked) { note(t('nobody'), true); return; }
+    var rep = $('repeat').value;
+    pendingArgs = [Object.keys(sel), rep === 'all' ? 'all' : Number(rep), nameInput.value, mobileInput.value, others, includeMe.checked];
+    note('');
+    run('registerSlots', pendingArgs.concat([true]), showConfirm);
+  }
+  function why(p) {
+    if (p.status === 'booked') return '&lt;span class="ok"&gt;' + t('stBooked') + '&lt;/span&gt;';
+    if (p.status === 'over') return '&lt;span class="warn"&gt;' + t('stOver') + '&lt;/span&gt;';
+    if (p.status === 'already') return '&lt;span class="ok"&gt;' + t('stAlready') + '&lt;/span&gt;';
+    var r = p.reason === 'clash' ? t('rsClash', clock(p.clash.start) + (p.clash.centre ? ' ' + p.clash.centre : '')) : t('rs' + p.reason.charAt(0).toUpperCase() + p.reason.slice(1));
+    return '&lt;span class="skip"&gt;' + esc(t('stSkipped', r)) + '&lt;/span&gt;';
+  }
+  function showConfirm(res) {
+    var any = res.results.some(function (d) { return d.people.some(function (p) { return p.status === 'booked' || p.status === 'over'; }); });
+    $('confirmList').innerHTML = res.results.map(function (d) {
+      return '&lt;div&gt;&lt;b&gt;' + esc(dayLabel(d.date)) + ' · ' + clock(d.start) + '&lt;/b&gt;' + (d.centre ? ' · ' + esc(d.centre) : '') + d.people.map(function (p) {
+        return '&lt;div class="who"&gt;' + esc(p.self ? t('youWord') : p.name) + ': ' + why(p) + '&lt;/div&gt;';
+      }).join('') + '&lt;/div&gt;';
+    }).join('') + (any ? '' : '&lt;p class="skip"&gt;' + t('nothing') + '&lt;/p&gt;');
+    $('confirmGo').hidden = !any;
+    $('confirm').hidden = false;
+    $('confirmGo').focus();
+  }
+  function confirmRegister() {
+    $('confirm').hidden = true;
+    run('registerSlots', pendingArgs.concat([false]), function (res) {
+      var n = res.tally.booked + res.tally.over;
+      note(t('done', n) + (res.tally.skipped ? ' ' + t('doneSkip', res.tally.skipped) : ''));
+      sel = {};
+      refresh();
+    });
+  }
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b || b.disabled) return;
+    if (b.hasAttribute('data-sel')) { var id = b.getAttribute('data-sel'); if (sel[id]) delete sel[id]; else sel[id] = true; render(); }
+    else if (b.hasAttribute('data-release')) {
+      if (!nameInput.value.trim()) { note(t('needName'), true); return; }
+      run('releaseSlot', [b.getAttribute('data-release'), nameInput.value], function (r) { note(t('released', r.removed.join(', '))); refresh(); });
+    }
+    else if (b.hasAttribute('data-x')) {
+      run('releaseSlot', [b.getAttribute('data-x'), nameInput.value, b.getAttribute('data-person')], function (r) { note(t('released', r.removed.join(', '))); refresh(); });
+    }
+    else if (b.hasAttribute('data-group')) {
+      run('releaseGroup', [b.getAttribute('data-group'), nameInput.value], function (r) { note(t('released', r.removed.join(', '))); refresh(); });
+    }
+    else if (b.hasAttribute('data-date')) goTo(b.getAttribute('data-date'));
+    else if (b.id === 'who') { drawPicker(true); $('whoBox').hidden = false; includeMe.focus(); }
+    else if (b.id === 'whoDone') { $('whoBox').hidden = true; render(); }
+    else if (b.id === 'prevWeek') { weekStart = addDays(weekStart, -7); render(); }
+    else if (b.id === 'nextWeek') { weekStart = addDays(weekStart, 7); if (!needUntil(addDays(weekStart, 6))) render(); }
+    else if (b.id === 'more') { listEnd = addDays(listEnd, 14); if (!needUntil(listEnd)) render(); }
+    else if (b.id === 'clear') { sel = {}; render(); }
+    else if (b.id === 'register') startRegister();
+    else if (b.id === 'confirmBack') $('confirm').hidden = true;
+    else if (b.id === 'confirmGo') confirmRegister();
+  });
+  setInterval(function () { if (!document.hidden &amp;&amp; !busy &amp;&amp; $('confirm').hidden &amp;&amp; $('whoBox').hidden) refresh(); }, 15000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden &amp;&amp; !busy &amp;&amp; state) refresh(); });
+
+  var INITIAL_STATE = /*INITIAL_STATE*/null;
+  render();
+  if (INITIAL_STATE) { show(INITIAL_STATE); if (nameInput.value.trim()) refresh(); } else refresh();
+})();
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+
+<h2 id="p5"><span class="step-num">5</span>Set up the sheet and give permission (one time)</h2>
+<ol>
+  <li>Go back to the <b>sheet's</b> browser tab and reload it (<kbd>F5</kbd>). After a few seconds a new menu <b>Program</b> appears
+    at the top, next to Help.</li>
+  <li>Click <b>Program → Set up the sheet (first time)</b>. A box says <b>Authorization required</b>: click <b>OK</b> / <b>Review
+    permissions</b> and choose your account.</li>
+  <li>Google shows <b>"Google hasn't verified this app"</b>. This is normal for your own scripts, and the "developer" it names is
+    you. Click <b>Advanced</b>, then <b>Go to Follow-up Sign-up (unsafe)</b>, then <b>Allow</b>. It asks to see and edit your
+    spreadsheets (to write names into the sheet) and to run while you're away (the Sunday-night update).</li>
+  <li>If nothing else happens, click <b>Program → Set up the sheet (first time)</b> once more.</li>
+  <li>A message says <b>"Created: Program plan, Slots, Speakers. The weekly update (Sunday night) is on."</b> Three new tabs appear at the
+    bottom. You can delete the empty <b>Sheet1</b> tab.</li>
+</ol>
+<div class="box">Set-up also sets the sheet's time zone to India and adds drop-down lists and notes on each column title
+  (hover over a title to read who fills it). Running it again never changes tabs that already exist.</div>
+
+<h2 id="p6"><span class="step-num">6</span>Type the Program plan</h2>
+<p>Open the <b>Program plan</b> tab. Type <b>one line per regular session</b>. Leave <b>Line ID</b> empty: the script fills it in.</p>
+<div class="table-wrap"><table>
+  <tr><th>Column</th><th>What to type</th><th>Example</th></tr>
+  <tr><td>Day</td><td>Pick from the list (Monday…Sunday, or Every day)</td><td>Saturday</td></tr>
+  <tr><td>Start / End</td><td>Time with AM or PM (End blank = 1 hour)</td><td>6:30 PM / 7:30 PM</td></tr>
+  <tr><td>Frequency</td><td>Pick from the list (see below)</td><td>Weekly</td></tr>
+  <tr><td>Week of month</td><td>Only for "Monthly, same weekday": 1st, 2nd, 3rd, 4th or last</td><td>2nd</td></tr>
+  <tr><td>Day of month</td><td>Only for "Monthly, same date": 1 to 31</td><td>15</td></tr>
+  <tr><td>Centre, Address, Google map</td><td>Where it happens; the map link opens on volunteers' phones</td><td>Ameerpet Centre</td></tr>
+  <tr><td>Places</td><td>Volunteers needed per date (blank = 1, 0 = closed)</td><td>4</td></tr>
+  <tr><td>From / Until</td><td>First and last date. Until blank = always keep 12 weeks of dates ahead</td><td>1 Nov 2026 / 31 Mar 2027</td></tr>
+  <tr><td>Contact</td><td>Organiser name and phone, shown to volunteers when release is closed</td><td>Lakshmi 9000000009</td></tr>
+  <tr><td>Notes</td><td>Anything for organisers (not shown on the page)</td><td></td></tr>
+</table></div>
+<div class="table-wrap"><table>
+  <tr><th>Frequency</th><th>Dates made</th></tr>
+  <tr><td>Daily</td><td>Every day from From to Until</td></tr>
+  <tr><td>Daily, weekdays only (Mon-Fri)</td><td>Monday to Friday</td></tr>
+  <tr><td>Weekly</td><td>The chosen Day every week</td></tr>
+  <tr><td>Every 2 weeks</td><td>The chosen Day every other week, counting from the first such day on or after From</td></tr>
+  <tr><td>Monthly, same weekday</td><td>e.g. the 2nd Saturday or the last Sunday of each month</td></tr>
+  <tr><td>Monthly, same date</td><td>e.g. the 15th of each month (months without that date, like 31 November, are skipped)</td></tr>
+  <tr><td>One-off</td><td>Just the From date</td></tr>
+</table></div>
+<div class="box warn">Type times with <b>AM or PM</b>. If you type <code>6:30</code> the sheet shows <code>6:30 AM</code>: change it
+  if you meant evening. Never copy a line together with its Line ID; clear the Line ID of a copied line.</div>
+
+<h2 id="p7"><span class="step-num">7</span>Make the dates</h2>
+<ol>
+  <li>Click <b>Program → Update slots now</b>. A message says how many dates were added.</li>
+  <li>Open the <b>Slots</b> tab: one row per date, sorted by date and time. This is what volunteers see.</li>
+  <li>Open the <b>Update report</b> tab: it lists anything that needs you (for example a plan line with a mistake, which is
+    skipped until fixed). It is replaced on every update.</li>
+</ol>
+<p>The update also runs by itself <b>every Sunday night</b> (adds new dates for lines without an Until date, and applies plan changes).</p>
+<div class="table-wrap"><table>
+  <tr><th>Slots columns</th><th>Who changes them</th></tr>
+  <tr><td>Status (Open / Cancelled), Places, Contact, Notes</td><td><b>Organisers</b> may change these for one date</td></tr>
+  <tr><td>Slot ID, Date, Day, Start, End, Centre, Address, Map</td><td>The script (change the plan line instead)</td></tr>
+  <tr><td>Volunteers, Still needed</td><td>The page (fix by hand only when needed; one person per line, <code>Name 9876543210</code>)</td></tr>
+  <tr><td>Cancellation notice sent</td><td>The WhatsApp-list menu</td></tr>
+</table></div>
+<div class="box warn"><b>Never delete a Slots row.</b> To drop a date, set its Status to <b>Cancelled</b> (a deleted row comes back on
+  the next update). A one-off date can be typed into an empty Slots row (Date, Start, End, Centre, Places); it gets its Slot ID
+  and appears on the page after the next <b>Update slots now</b>.</div>
+
+<h2 id="p8"><span class="step-num">8</span>Publish the page</h2>
+<ol>
+  <li>In the Apps Script tab, top right: click the blue <b>Deploy</b> button → <b>New deployment</b>.</li>
+  <li>Next to <b>Select type</b>, click the <b>gear icon</b> → <b>Web app</b>.</li>
+  <li>Fill in:
+    <div class="table-wrap"><table>
+      <tr><th>Field</th><th>Set to</th></tr>
+      <tr><td>Description</td><td><code>v1</code></td></tr>
+      <tr><td>Execute as</td><td><b>Me</b> (your email)</td></tr>
+      <tr><td>Who has access</td><td><b>Anyone</b> (not "Anyone with Google account")</td></tr>
+    </table></div></li>
+  <li>Click <b>Deploy</b> (allow permission again if asked).</li>
+  <li>Copy the <b>Web app URL</b>. It's long and ends in <code>/exec</code>. <b>This is the volunteers' link.</b> Click <b>Done</b>.</li>
+</ol>
+
+<h2 id="p9"><span class="step-num">9</span>Test it</h2>
+<ol>
+  <li>Open the <code>/exec</code> link in a new tab. You should see the lotus header <b>Follow-up Program</b>, the week as large day boxes
+    (today has a gold border), and below it the next 2 weeks of sessions. The bottom line shows
+    <code>v followup-…</code>. <span class="sub">A grey Google bar at the top is normal and can't be removed.</span></li>
+  <li>Type a test name and a 10-digit mobile. Tap <b>Select</b> on a session, choose <b>Just this date</b> in the bar at the bottom,
+    tap <b>Register</b>, check the list, tap <b>Confirm</b>. In the Slots tab that date's <b>Volunteers</b> cell now has the name.</li>
+  <li>Tap <b>Release</b> on the card: the name disappears from the cell.</li>
+  <li>Tap <b>Who: Just me ▾</b> (under Mobile), add one person as <code>Ravi 9123456789</code>, register a date: it's written as
+    <code>Ravi 9123456789 (via [your name])</code>, and the card shows a ✕ next to Ravi.</li>
+  <li>Open the link on a phone too and try the language switch (English, తెలుగు, हिन्दी).</li>
+</ol>
+<div class="box ok"><b>All good?</b> Then it's live. If anything looked different from this description, tell Claude exactly what you saw
+  (a screenshot helps): this is the first run on real Google.</div>
+
+<h2 id="p10"><span class="step-num">10</span>Share it with volunteers</h2>
+<div class="codehead"><b>Message for volunteers</b> <button class="copy" data-target="msg">Copy message</button></div>
+<pre id="msg">Jai Shri Mataji! Please sign up for the Follow-up Program sessions here:
+[paste the /exec link]
+Type your name and mobile, tick the sessions you can take (you can repeat them for the next dates), and tap Register.
+You can release a date yourself up to 12 hours before it starts; after that please call the organiser.</pre>
+
+<h2 id="p11"><span class="step-num">11</span>Day-to-day: changes and cancellations</h2>
+<ul>
+  <li><b>Change a regular session</b> (time, place, frequency, dates): edit its Program plan line, then <b>Program → Update slots now</b>.
+    Future dates with nobody on them are updated; dates that already have volunteers are <b>kept as they are</b> and listed in the
+    Update report for you to decide.</li>
+  <li><b>Cancel one date:</b> in Slots set its Status to <b>Cancelled</b>. The page strikes it through, and everyone on it sees a red
+    notice at the top. Then:
+    <ol>
+      <li><b>Program → Cancellation WhatsApp list</b>: everyone affected (also people registered by someone else) with a green
+        <b>Open WhatsApp</b> button and a ready-written message. Tap each one and press Send. People without a mobile are marked
+        "please phone".</li>
+      <li><b>Program → Mark cancellation notices as sent</b>: it names the dates and asks Yes/No. Say Yes only when everyone has been
+        sent the message.</li>
+    </ol></li>
+  <li><b>Who is coming:</b> the Volunteers column of each date in Slots. Use <b>Data → Create a filter</b> on the Date column to see one day.</li>
+  <li><b>Privacy:</b> as on the tour page, everyone with the link can see the names and mobiles on the page.</li>
+</ul>
+
+<h2 id="p12"><span class="step-num">12</span>If something goes wrong</h2>
+<div class="table-wrap"><table>
+  <tr><th>What you see</th><th>What to do</th></tr>
+  <tr><td>No <b>Program</b> menu in the sheet</td><td>Reload the sheet and wait 10 seconds. Check Code.gs was saved (Part 3).</td></tr>
+  <tr><td>"There is no "Program plan" tab"</td><td>Run <b>Program → Set up the sheet (first time)</b>.</td></tr>
+  <tr><td>A plan line made no dates</td><td>Read the <b>Update report</b> tab: it says what is wrong with that line (e.g. "Start is not a time like 6:30 PM").</td></tr>
+  <tr><td>Sessions show the wrong time</td><td>Type the time with AM or PM in the plan, then Update slots now.</td></tr>
+  <tr><td>Dates are one day off</td><td><b>File → Settings → Time zone</b>: choose (GMT+05:30) India Standard Time, then Update slots now.</td></tr>
+  <tr><td>The page says it can't load, or asks volunteers to sign in</td><td>Deploy → Manage deployments: <b>Who has access</b> must be <b>Anyone</b>.</td></tr>
+  <tr><td>The page shows an old version</td><td>You pasted new code but didn't publish a new version: see Part 13.</td></tr>
+</table></div>
+
+<h2 id="p13"><span class="step-num">13</span>Changing the code later</h2>
+<ol>
+  <li>Paste the new Code.gs and/or Index.html as in Parts 3 and 4, and save.</li>
+  <li><b>Deploy → Manage deployments</b> → click the <b>pencil</b> (edit) → <b>Version: New version</b> → <b>Deploy</b>.
+    The link stays the same.</li>
+  <li>Open the page and check the version number at the bottom.</li>
+</ol>
+
+</main>
+<script>
+  // Copy buttons: clipboard API where allowed, otherwise select-and-copy fallback.
+  document.querySelectorAll('button.copy').forEach(function (btn) {
+    var label = btn.textContent;
+    btn.addEventListener('click', function () {
+      var el = document.getElementById(btn.dataset.target);
+      var text = el.textContent;
+      function done(ok) {
+        btn.textContent = ok ? 'Copied ✓' : 'Select the text and copy manually';
+        btn.classList.toggle('done', ok);
+        setTimeout(function () { btn.textContent = label; btn.classList.remove('done'); }, 2500);
+      }
+      function fallback() {
+        var range = document.createRange(); range.selectNodeContents(el);
+        var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+        var ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+        done(ok);
+      }
+      if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(function () { done(true); }, fallback);
+      else fallback();
+    });
+  });
+</script>
+</body>
+</html>

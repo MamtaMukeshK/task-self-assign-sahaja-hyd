@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Follow-up Program Setup</title>
+<style>
+  :root { --fg:#1b1b1f; --muted:#5f6368; --bg:#ffffff; --panel:#f6f8fa; --line:#dadce0; --accent:#1a73e8;
+          --warn-bg:#fff8e1; --warn-line:#f0c36d; --ok-bg:#e6f4ea; --ok-line:#81c995; --code-bg:#0d1117; --code-fg:#e6edf3; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --fg:#e8eaed; --muted:#9aa0a6; --bg:#16171a; --panel:#202124; --line:#3c4043; --accent:#8ab4f8;
+          --warn-bg:#3a3016; --warn-line:#7a6320; --ok-bg:#16301f; --ok-line:#2e6b3f; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:860px; margin:0 auto; padding:24px 16px 80px; }
+  h1 { font-size:28px; line-height:1.25; margin:0 0 4px; }
+  h2 { font-size:21px; margin:40px 0 8px; padding-top:16px; border-top:1px solid var(--line); }
+  h3 { font-size:17px; margin:20px 0 6px; }
+  .sub { color:var(--muted); margin:0 0 20px; }
+  ol, ul { padding-left:24px; } li { margin:6px 0; }
+  code { background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-size:.9em; }
+  kbd { border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:0 5px; font-size:.85em; background:var(--panel); }
+  .box { border:1px solid var(--line); background:var(--panel); border-radius:10px; padding:12px 16px; margin:14px 0; }
+  .warn { background:var(--warn-bg); border-color:var(--warn-line); }
+  .ok { background:var(--ok-bg); border-color:var(--ok-line); }
+  .toc a { color:var(--accent); text-decoration:none; } .toc li { margin:2px 0; }
+  table { border-collapse:collapse; width:100%; margin:10px 0; font-size:15px; }
+  th, td { border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:var(--panel); }
+  .table-wrap { overflow-x:auto; }
+  .codehead { display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:center; margin-top:14px;
+              background:var(--panel); border:1px solid var(--line); border-bottom:0; border-radius:10px 10px 0 0; padding:8px 12px; }
+  .codehead b { font-family:ui-monospace, Menlo, Consolas, monospace; }
+  button.copy { font:inherit; font-size:15px; font-weight:600; padding:6px 16px; border-radius:6px; border:0; background:#1a73e8; color:#fff; cursor:pointer; }
+  button.copy.done { background:#188038; }
+  pre { margin:0 0 8px; max-height:340px; overflow:auto; background:var(--code-bg); color:var(--code-fg);
+        border-radius:0 0 10px 10px; padding:12px; font:13px/1.45 ui-monospace, Menlo, Consolas, monospace; white-space:pre; }
+  .step-num { display:inline-block; min-width:26px; height:26px; border-radius:13px; background:var(--accent); color:var(--bg);
+              text-align:center; font-weight:700; margin-right:8px; font-size:15px; line-height:26px; }
+  @media print { pre { max-height:none; white-space:pre-wrap; } button.copy { display:none; } }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Follow-up Program sign-up: complete setup guide</h1>
+<p class="sub">One page, everything included. Follow the parts in order and use the blue <b>Copy</b> buttons for the code.
+Takes about 20 minutes on a laptop or desktop computer (not a phone).</p>
+
+<div class="box">
+  <b>What this sets up:</b> a <b>new</b> Google Sheet and its <b>own</b> page link for the Follow-up Program. Organisers type
+  the regular sessions once (for example "every Saturday 6:30 PM at Ameerpet"); the sheet makes one row per date. Volunteers
+  open the link, see the week as large day boxes, tick one or more sessions (and repeat them for the next 4 or 8 dates, or the
+  whole program), register themselves and others, and release a single date up to 12 hours before it starts.
+  The tour sheet and the tour page are <b>not touched</b>.
+</div>
+
+<div class="box toc">
+  <b>Contents</b>
+  <ol>
+    <li><a href="#p1">Make the new sheet</a></li>
+    <li><a href="#p2">Open the script editor</a></li>
+    <li><a href="#p3">Paste Code.gs</a></li>
+    <li><a href="#p4">Add and paste Index.html</a></li>
+    <li><a href="#p5">Set up the sheet and give permission (one time)</a></li>
+    <li><a href="#p6">Type the Program plan</a></li>
+    <li><a href="#p7">Make the dates</a></li>
+    <li><a href="#p8">Publish the page</a></li>
+    <li><a href="#p9">Test it</a></li>
+    <li><a href="#p10">Share it with volunteers</a></li>
+    <li><a href="#p11">Day-to-day: changes and cancellations</a></li>
+    <li><a href="#p12">If something goes wrong</a></li>
+    <li><a href="#p13">Changing the code later</a></li>
+  </ol>
+</div>
+
+<h2 id="p1"><span class="step-num">1</span>Make the new sheet</h2>
+<ol>
+  <li>Go to <code>sheets.new</code> in your browser (signed in with the Google account that will own the program). A blank sheet opens.</li>
+  <li>Click <b>Untitled spreadsheet</b> at the top left and type a name, e.g. <code>Follow-up Program 2026</code>.</li>
+</ol>
+<div class="box warn">Use the account that should <b>own</b> this. The page runs as that account, and only people with edit access to
+  the sheet can change it.</div>
+
+<h2 id="p2"><span class="step-num">2</span>Open the script editor</h2>
+<ol>
+  <li>In the new sheet, click the menu <b>Extensions → Apps Script</b>. A new browser tab opens.</li>
+  <li>At the top left, click <b>Untitled project</b>, type <code>Follow-up Sign-up</code>, and click <b>Rename</b>.</li>
+</ol>
+<div class="box warn">Open the editor <b>from the sheet's Extensions menu</b>, not from script.google.com. That's what connects
+  the script to this sheet.</div>
+
+<h2 id="p3"><span class="step-num">3</span>Paste Code.gs</h2>
+<ol>
+  <li>On the left under <b>Files</b>, click <b>Code.gs</b>. It contains a few starter lines.</li>
+  <li>Click inside the code area, press <kbd>Ctrl</kbd>+<kbd>A</kbd> (Mac: <kbd>⌘</kbd>+<kbd>A</kbd>), then <kbd>Delete</kbd>.</li>
+  <li>Click the blue <b>Copy Code.gs</b> button below, click in the empty code area and paste with <kbd>Ctrl</kbd>+<kbd>V</kbd>
+    (Mac: <kbd>⌘</kbd>+<kbd>V</kbd>).</li>
+  <li>Save with <kbd>Ctrl</kbd>+<kbd>S</kbd> (Mac: <kbd>⌘</kbd>+<kbd>S</kbd>).</li>
+  <li>Check: the first line is <code>/**</code> and the last line starts with <code>function norm_</code>. Do not change anything in it.</li>
+</ol>
+<div class="codehead"><b>Code.gs</b> <button class="copy" data-target="code-gs">Copy Code.gs</button></div>
+<pre id="code-gs">{{CODE_GS}}</pre>
+
+<h2 id="p4"><span class="step-num">4</span>Add and paste Index.html</h2>
+<ol>
+  <li>On the left, click the <b>+</b> next to <b>Files</b> and choose <b>HTML</b>.</li>
+  <li>Type the name exactly <code>Index</code> (capital I, <b>without</b> ".html") and press <kbd>Enter</kbd>.</li>
+  <li>Select everything in the new file and delete it, then click <b>Copy Index.html</b> below, paste, and save.</li>
+  <li>Check: <b>Files</b> now lists exactly <b>Code.gs</b> and <b>Index.html</b>.</li>
+</ol>
+<div class="codehead"><b>Index.html</b> <button class="copy" data-target="index-html">Copy Index.html</button></div>
+<pre id="index-html">{{INDEX_HTML}}</pre>
+
+<h2 id="p5"><span class="step-num">5</span>Set up the sheet and give permission (one time)</h2>
+<ol>
+  <li>Go back to the <b>sheet's</b> browser tab and reload it (<kbd>F5</kbd>). After a few seconds a new menu <b>Program</b> appears
+    at the top, next to Help.</li>
+  <li>Click <b>Program → Set up the sheet (first time)</b>. A box says <b>Authorization required</b>: click <b>OK</b> / <b>Review
+    permissions</b> and choose your account.</li>
+  <li>Google shows <b>"Google hasn't verified this app"</b>. This is normal for your own scripts, and the "developer" it names is
+    you. Click <b>Advanced</b>, then <b>Go to Follow-up Sign-up (unsafe)</b>, then <b>Allow</b>. It asks to see and edit your
+    spreadsheets (to write names into the sheet) and to run while you're away (the Sunday-night update).</li>
+  <li>If nothing else happens, click <b>Program → Set up the sheet (first time)</b> once more.</li>
+  <li>A message says <b>"Created: Program plan, Slots, Speakers. The weekly update (Sunday night) is on."</b> Three new tabs appear at the
+    bottom. You can delete the empty <b>Sheet1</b> tab.</li>
+</ol>
+<div class="box">Set-up also sets the sheet's time zone to India and adds drop-down lists and notes on each column title
+  (hover over a title to read who fills it). Running it again never changes tabs that already exist.</div>
+
+<h2 id="p6"><span class="step-num">6</span>Type the Program plan</h2>
+<p>Open the <b>Program plan</b> tab. Type <b>one line per regular session</b>. Leave <b>Line ID</b> empty: the script fills it in.</p>
+<div class="table-wrap"><table>
+  <tr><th>Column</th><th>What to type</th><th>Example</th></tr>
+  <tr><td>Day</td><td>Pick from the list (Monday…Sunday, or Every day)</td><td>Saturday</td></tr>
+  <tr><td>Start / End</td><td>Time with AM or PM (End blank = 1 hour)</td><td>6:30 PM / 7:30 PM</td></tr>
+  <tr><td>Frequency</td><td>Pick from the list (see below)</td><td>Weekly</td></tr>
+  <tr><td>Week of month</td><td>Only for "Monthly, same weekday": 1st, 2nd, 3rd, 4th or last</td><td>2nd</td></tr>
+  <tr><td>Day of month</td><td>Only for "Monthly, same date": 1 to 31</td><td>15</td></tr>
+  <tr><td>Centre, Address, Google map</td><td>Where it happens; the map link opens on volunteers' phones</td><td>Ameerpet Centre</td></tr>
+  <tr><td>Places</td><td>Volunteers needed per date (blank = 1, 0 = closed)</td><td>4</td></tr>
+  <tr><td>From / Until</td><td>First and last date. Until blank = always keep 12 weeks of dates ahead</td><td>1 Nov 2026 / 31 Mar 2027</td></tr>
+  <tr><td>Contact</td><td>Organiser name and phone, shown to volunteers when release is closed</td><td>Lakshmi 9000000009</td></tr>
+  <tr><td>Notes</td><td>Anything for organisers (not shown on the page)</td><td></td></tr>
+</table></div>
+<div class="table-wrap"><table>
+  <tr><th>Frequency</th><th>Dates made</th></tr>
+  <tr><td>Daily</td><td>Every day from From to Until</td></tr>
+  <tr><td>Daily, weekdays only (Mon-Fri)</td><td>Monday to Friday</td></tr>
+  <tr><td>Weekly</td><td>The chosen Day every week</td></tr>
+  <tr><td>Every 2 weeks</td><td>The chosen Day every other week, counting from the first such day on or after From</td></tr>
+  <tr><td>Monthly, same weekday</td><td>e.g. the 2nd Saturday or the last Sunday of each month</td></tr>
+  <tr><td>Monthly, same date</td><td>e.g. the 15th of each month (months without that date, like 31 November, are skipped)</td></tr>
+  <tr><td>One-off</td><td>Just the From date</td></tr>
+</table></div>
+<div class="box warn">Type times with <b>AM or PM</b>. If you type <code>6:30</code> the sheet shows <code>6:30 AM</code>: change it
+  if you meant evening. Never copy a line together with its Line ID; clear the Line ID of a copied line.</div>
+
+<h2 id="p7"><span class="step-num">7</span>Make the dates</h2>
+<ol>
+  <li>Click <b>Program → Update slots now</b>. A message says how many dates were added.</li>
+  <li>Open the <b>Slots</b> tab: one row per date, sorted by date and time. This is what volunteers see.</li>
+  <li>Open the <b>Update report</b> tab: it lists anything that needs you (for example a plan line with a mistake, which is
+    skipped until fixed). It is replaced on every update.</li>
+</ol>
+<p>The update also runs by itself <b>every Sunday night</b> (adds new dates for lines without an Until date, and applies plan changes).</p>
+<div class="table-wrap"><table>
+  <tr><th>Slots columns</th><th>Who changes them</th></tr>
+  <tr><td>Status (Open / Cancelled), Places, Contact, Notes</td><td><b>Organisers</b> may change these for one date</td></tr>
+  <tr><td>Slot ID, Date, Day, Start, End, Centre, Address, Map</td><td>The script (change the plan line instead)</td></tr>
+  <tr><td>Volunteers, Still needed</td><td>The page (fix by hand only when needed; one person per line, <code>Name 9876543210</code>)</td></tr>
+  <tr><td>Cancellation notice sent</td><td>The WhatsApp-list menu</td></tr>
+</table></div>
+<div class="box warn"><b>Never delete a Slots row.</b> To drop a date, set its Status to <b>Cancelled</b> (a deleted row comes back on
+  the next update). A one-off date can be typed into an empty Slots row (Date, Start, End, Centre, Places); it gets its Slot ID
+  and appears on the page after the next <b>Update slots now</b>.</div>
+
+<h2 id="p8"><span class="step-num">8</span>Publish the page</h2>
+<ol>
+  <li>In the Apps Script tab, top right: click the blue <b>Deploy</b> button → <b>New deployment</b>.</li>
+  <li>Next to <b>Select type</b>, click the <b>gear icon</b> → <b>Web app</b>.</li>
+  <li>Fill in:
+    <div class="table-wrap"><table>
+      <tr><th>Field</th><th>Set to</th></tr>
+      <tr><td>Description</td><td><code>v1</code></td></tr>
+      <tr><td>Execute as</td><td><b>Me</b> (your email)</td></tr>
+      <tr><td>Who has access</td><td><b>Anyone</b> (not "Anyone with Google account")</td></tr>
+    </table></div></li>
+  <li>Click <b>Deploy</b> (allow permission again if asked).</li>
+  <li>Copy the <b>Web app URL</b>. It's long and ends in <code>/exec</code>. <b>This is the volunteers' link.</b> Click <b>Done</b>.</li>
+</ol>
+
+<h2 id="p9"><span class="step-num">9</span>Test it</h2>
+<ol>
+  <li>Open the <code>/exec</code> link in a new tab. You should see the lotus header <b>Follow-up Program</b>, the week as large day boxes
+    (today has a gold border), and below it the next 2 weeks of sessions. The bottom line shows
+    <code>v followup-…</code>. <span class="sub">A grey Google bar at the top is normal and can't be removed.</span></li>
+  <li>Type a test name and a 10-digit mobile. Tap <b>Select</b> on a session, choose <b>Just this date</b> in the bar at the bottom,
+    tap <b>Register</b>, check the list, tap <b>Confirm</b>. In the Slots tab that date's <b>Volunteers</b> cell now has the name.</li>
+  <li>Tap <b>Release</b> on the card: the name disappears from the cell.</li>
+  <li>Tap <b>Who: Just me ▾</b> (under Mobile), add one person as <code>Ravi 9123456789</code>, register a date: it's written as
+    <code>Ravi 9123456789 (via [your name])</code>, and the card shows a ✕ next to Ravi.</li>
+  <li>Open the link on a phone too and try the language switch (English, తెలుగు, हिन्दी).</li>
+</ol>
+<div class="box ok"><b>All good?</b> Then it's live. If anything looked different from this description, tell Claude exactly what you saw
+  (a screenshot helps): this is the first run on real Google.</div>
+
+<h2 id="p10"><span class="step-num">10</span>Share it with volunteers</h2>
+<div class="codehead"><b>Message for volunteers</b> <button class="copy" data-target="msg">Copy message</button></div>
+<pre id="msg">Jai Shri Mataji! Please sign up for the Follow-up Program sessions here:
+[paste the /exec link]
+Type your name and mobile, tick the sessions you can take (you can repeat them for the next dates), and tap Register.
+You can release a date yourself up to 12 hours before it starts; after that please call the organiser.</pre>
+
+<h2 id="p11"><span class="step-num">11</span>Day-to-day: changes and cancellations</h2>
+<ul>
+  <li><b>Change a regular session</b> (time, place, frequency, dates): edit its Program plan line, then <b>Program → Update slots now</b>.
+    Future dates with nobody on them are updated; dates that already have volunteers are <b>kept as they are</b> and listed in the
+    Update report for you to decide.</li>
+  <li><b>Cancel one date:</b> in Slots set its Status to <b>Cancelled</b>. The page strikes it through, and everyone on it sees a red
+    notice at the top. Then:
+    <ol>
+      <li><b>Program → Cancellation WhatsApp list</b>: everyone affected (also people registered by someone else) with a green
+        <b>Open WhatsApp</b> button and a ready-written message. Tap each one and press Send. People without a mobile are marked
+        "please phone".</li>
+      <li><b>Program → Mark cancellation notices as sent</b>: it names the dates and asks Yes/No. Say Yes only when everyone has been
+        sent the message.</li>
+    </ol></li>
+  <li><b>Who is coming:</b> the Volunteers column of each date in Slots. Use <b>Data → Create a filter</b> on the Date column to see one day.</li>
+  <li><b>Privacy:</b> as on the tour page, everyone with the link can see the names and mobiles on the page.</li>
+</ul>
+
+<h2 id="p12"><span class="step-num">12</span>If something goes wrong</h2>
+<div class="table-wrap"><table>
+  <tr><th>What you see</th><th>What to do</th></tr>
+  <tr><td>No <b>Program</b> menu in the sheet</td><td>Reload the sheet and wait 10 seconds. Check Code.gs was saved (Part 3).</td></tr>
+  <tr><td>"There is no "Program plan" tab"</td><td>Run <b>Program → Set up the sheet (first time)</b>.</td></tr>
+  <tr><td>A plan line made no dates</td><td>Read the <b>Update report</b> tab: it says what is wrong with that line (e.g. "Start is not a time like 6:30 PM").</td></tr>
+  <tr><td>Sessions show the wrong time</td><td>Type the time with AM or PM in the plan, then Update slots now.</td></tr>
+  <tr><td>Dates are one day off</td><td><b>File → Settings → Time zone</b>: choose (GMT+05:30) India Standard Time, then Update slots now.</td></tr>
+  <tr><td>The page says it can't load, or asks volunteers to sign in</td><td>Deploy → Manage deployments: <b>Who has access</b> must be <b>Anyone</b>.</td></tr>
+  <tr><td>The page shows an old version</td><td>You pasted new code but didn't publish a new version: see Part 13.</td></tr>
+</table></div>
+
+<h2 id="p13"><span class="step-num">13</span>Changing the code later</h2>
+<ol>
+  <li>Paste the new Code.gs and/or Index.html as in Parts 3 and 4, and save.</li>
+  <li><b>Deploy → Manage deployments</b> → click the <b>pencil</b> (edit) → <b>Version: New version</b> → <b>Deploy</b>.
+    The link stays the same.</li>
+  <li>Open the page and check the version number at the bottom.</li>
+</ol>
+
+</main>
+<script>
+  // Copy buttons: clipboard API where allowed, otherwise select-and-copy fallback.
+  document.querySelectorAll('button.copy').forEach(function (btn) {
+    var label = btn.textContent;
+    btn.addEventListener('click', function () {
+      var el = document.getElementById(btn.dataset.target);
+      var text = el.textContent;
+      function done(ok) {
+        btn.textContent = ok ? 'Copied ✓' : 'Select the text and copy manually';
+        btn.classList.toggle('done', ok);
+        setTimeout(function () { btn.textContent = label; btn.classList.remove('done'); }, 2500);
+      }
+      function fallback() {
+        var range = document.createRange(); range.selectNodeContents(el);
+        var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+        var ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+        done(ok);
+      }
+      if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(function () { done(true); }, fallback);
+      else fallback();
+    });
+  });
+</script>
+</body>
+</html>

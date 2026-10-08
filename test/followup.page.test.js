@@ -188,3 +188,15 @@ test('follow-up page: register others, ✕ and Release all, My registrations, ca
     assert.deepEqual(p.errs, []);
   } finally { await browser.close(); }
 });
+
+test('follow-up setup guide: the Copy boxes hold the code files exactly', { timeout: 30000 }, async () => {
+  const fs = require('fs'), path = require('path'), root = path.join(__dirname, '..');
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
+  try {
+    const p = await browser.newPage();
+    await p.setContent(fs.readFileSync(path.join(root, 'followup', 'SETUP_GUIDE.html'), 'utf8'));
+    assert.equal(await p.textContent('#code-gs'), fs.readFileSync(path.join(root, 'followup', 'Code.gs'), 'utf8'), 'rebuild with python3 tools/build_guide.py');
+    assert.equal(await p.textContent('#index-html'), fs.readFileSync(path.join(root, 'followup', 'Index.html'), 'utf8'));
+    assert.equal(await p.locator('h2').count(), 13);
+  } finally { await browser.close(); }
+});
