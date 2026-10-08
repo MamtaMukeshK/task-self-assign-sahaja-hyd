@@ -13,7 +13,7 @@ every session: replace "Where things stand" and "Next steps", and add to "Learni
 | Follow-up stage 2a (page) | **Built and tested** in a browser against the simulated sheet, not run on real Google: `followup/Index.html` + `doGet` + `test/followup.page.test.js`. One-week calendar, date list (2 weeks, "Show 2 more weeks"), cards, select several dates, repeat, confirmation list, Release, 12-hour rule, phone/tablet/laptop. English only. |
 | Follow-up stage 2b (page) | **Built and tested** (same limits as 2a): "Who" button (speaker list with first-time mobile, typed others, Include me too), group confirmation, ✕ per person you registered, "Release all N for this date", My registrations (count + next date + Show), red cancellation notice (names the people you registered), language switch with Telugu and Hindi (**not checked by native speakers**), server messages translated. Page version followup-2026-10-08.2. |
 | Follow-up stage 3 | **Built and tested** (simulated): sheet menu Program -> "Cancellation WhatsApp list" (dialog, one green Open WhatsApp button per affected person, own mobile) and "Mark cancellation notices as sent" (Yes/No naming the dates); both need the sheet's menu and return nothing, so the public link can't use them. Setup guide `followup/SETUP_GUIDE.html` (13 parts, Copy buttons) built by `tools/build_guide.py` from `tools/followup_guide_template.html`. "Who" button moved to the top under Mobile (user request). Version followup-2026-10-08.3. |
-| Follow-up stages 4, 4b | Not started (demo videos in 3 languages incl. the Ongoing programs videos; organiser video). |
+| Follow-up stages 4, 4b | **Started 2026-10-08**: demo button + player on the page (copied from the tour page; hidden while `DEMO_VIDEO_URLS` is empty); narration and captions drafted in `docs/followup/demo-script.md` (A: Follow-up video en/te/hi, B: one Ongoing programs scene added to the tour video, C: organiser video, English). **Waiting for the user's approval of the wording before recording.** |
 | Branch | `claude/vibrant-planck-gsxjay`, pushed, up to date. No pull request (the user has not asked for one). |
 | Tests | `cd test && npm install && npm test`: 89 tests (77 tour page + 9 Follow-up server + 3 Follow-up page/guide), all passing on 2026-10-08. |
 
@@ -24,7 +24,8 @@ every session: replace "Where things stand" and "Next steps", and add to "Learni
    c. Empty "Until" = keep 12 weeks of dates ahead, topped up every Sunday; never more than 1 year ahead.
    d. "Release all N" also releases the registrar if they are on that date.
    e. Times typed without AM/PM are 24-hour; the time columns display AM/PM so mistakes show at once.
-2. **The user sets up the new sheet with `followup/SETUP_GUIDE.html` (first run on real Google) and reports what they
+2. **Approve `docs/followup/demo-script.md`** (and say whether to record now or after the real setup check), then
+   recording. **The user sets up the new sheet with `followup/SETUP_GUIDE.html` (first run on real Google) and reports what they
    see.** Fix whatever differs before stage 4. Ideally a native Telugu and a native Hindi speaker check the page's
    wording (`TEXT.te` / `TEXT.hi` in `followup/Index.html`).
 3. Older open items in `HANDOFF.md` "Next step": deploy tour version 2026-10-06.4; (demo videos for Ongoing programs: moved to stage 4 by the user 2026-10-08);
