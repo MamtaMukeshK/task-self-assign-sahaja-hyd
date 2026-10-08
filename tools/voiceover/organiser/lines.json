@@ -1,0 +1,12 @@
+[
+ ["o-intro", "This short video shows organisers how to run the Follow-up Program sheet: the Program plan and the Slots tab."],
+ ["o1", "In Program plan, type one line per regular session: the day of the week, start and end time with AM or PM, the frequency, the institution, volunteers needed, the first and last date, the principal's contact and the Sahaji contact. Leave Line ID empty. For two days a week, type two lines."],
+ ["o2", "Frequency can be daily, weekdays only, weekly, every two weeks, monthly on a weekday like the second Saturday, monthly on a date, or one-off."],
+ ["o3", "Then choose Program, Update slots now. The Slots tab fills with one row per date. This also runs by itself every Sunday night."],
+ ["o4", "In Slots you may change Status, Volunteers Needed, the contacts and Notes for one date. The page writes Volunteers and Still needed. Never delete a row."],
+ ["o5", "Changed a plan line? Run Update slots now again. Dates nobody has booked are updated. Dates with volunteers are kept, and listed in the Update report for you to decide."],
+ ["o6", "To cancel one date, set its Status to Cancelled. Volunteers see a red notice on the page."],
+ ["o7", "Then choose Program, Cancellation WhatsApp list. Tap Open WhatsApp for each person and send. Finally choose Mark cancellation notices as sent."],
+ ["o8", "To see who is coming, read the Volunteers column of each date."],
+ ["o-end", "That's all. The full steps are in the setup guide."]
+]
