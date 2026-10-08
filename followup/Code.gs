@@ -640,7 +640,7 @@ function clock_(text) {
 
 function bumpCache_() {
   var cache = CacheService.getScriptCache();
-  cache.put('slots-gen', String(new Date().getTime()), 21600);
+  cache.put('slots-gen', String(Number(cache.get('slots-gen') || 0) + 1), 21600); // new number = new cache keys
   cache.remove('speakers');
 }
 

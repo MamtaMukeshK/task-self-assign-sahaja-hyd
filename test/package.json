@@ -2,7 +2,7 @@
   "name": "sheet-self-assign-tests",
   "private": true,
   "scripts": {
-    "test": "node --test code.test.js followup.test.js page.test.js"
+    "test": "node --test code.test.js followup.test.js page.test.js followup.page.test.js"
   },
   "devDependencies": {
     "playwright-core": "^1.63.0"

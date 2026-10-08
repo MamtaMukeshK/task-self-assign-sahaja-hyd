@@ -51,7 +51,7 @@
   .dbox.week { background:var(--band); cursor:default; }
   /* Date list and cards: one column on phones, two on tablets, three on laptops. */
   .dayhead { margin:22px 0 8px; font:400 24px/1.2 'Instrument Serif', serif; color:var(--navy); scroll-margin-top:12px; }
-  .cards { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:10px; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap:10px; }
   .card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 14px; overflow-wrap:anywhere; }
   .card.sel { border:3px solid var(--blue); background:#f3f8fd; }
   .card.mine { background:var(--mine); }
