@@ -155,7 +155,8 @@ Anything you have already tried or ruled out:
 ## 12. Second app in this repository: Follow-up Program sign-up (2026-10-07)
 A separate sheet, Apps Script project and page link; the tour app above is unchanged. Design: `docs/followup/SPEC.md`;
 build choices: `docs/followup/STAGE1_PLAN.md`; state and server functions: `resume.md`. Server: `followup/Code.gs`
-(stage 1 built); page: `followup/Index.html` (stage 2, not built). Data: "Program plan" tab (one line per regular
+(stage 1 built); page: `followup/Index.html` (stage 2a built 2026-10-08: calendar, list, select, repeat, confirmation, release; 2b adds
+register others, My Registrations, the cancellation notice and Telugu/Hindi). Data: "Program plan" tab (one line per regular
 session, permanent Line ID) -> generator -> "Slots" tab (one row per date, found by Slot ID, Volunteers cell in the
 same format as the tour's speaker cell). Same rules as section 6, plus: release closes 12 hours before the start;
 the generator never changes past dates or dates with volunteers.

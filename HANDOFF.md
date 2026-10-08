@@ -19,7 +19,7 @@ _Last updated: 2026-10-07 (Follow-up Program stage 1 built: server + tests in `f
   1L1A_FmlOukDZMTnOXa73RlzQfdaHS9Zg, Telugu 1ut0WKW9gVrnG0qRQltc7qC3P2O5GCybq, Hindi 1Hf3clK7tYRimgm3ispbHwCw4RvTKPJIM.
   The user replaces a Drive file via Drive -> Manage versions after every re-record (the link stays the same).
   The GitHub copies after each Drive link are only used if that Drive link is removed.
-- **Tests:** `cd test && npm install && npm test` (85 tests: 77 tour page + 8 Follow-up server; browser tests need Chromium at
+- **Tests:** `cd test && npm install && npm test` (86 tests: 77 tour page + 8 Follow-up server + 1 Follow-up page; browser tests need Chromium at
   `/opt/pw-browsers/chromium`). Rebuild the guide after any code change: `python3 tools/build_guide.py`.
   Bump `VERSION` in `Code.gs` (and the matching string in `test/code.test.js`) for every page change.
 - **Re-record the demo:** in `tools/`: `npm i playwright-core ffmpeg-static @fontsource/dm-sans
@@ -311,6 +311,14 @@ _Last updated: 2026-10-07 (Follow-up Program stage 1 built: server + tests in `f
   if not, the page errors loudly rather than guessing.
 
 ## Next step
+- **2026-10-08: Follow-up Program stage 2a BUILT (the volunteers' page; English only; not run on real Google).**
+  `followup/Index.html` + `doGet` in `followup/Code.gs` (VERSION followup-2026-10-08.1): one-week calendar (Mon-Thu /
+  Fri-Sun + week total, arrows move a week), list of the next 2 weeks + "Show 2 more weeks", cards (time, centre,
+  address, map, places badge, people, Select / Release / Release closed + organiser phone / Full / Started / Ended /
+  Cancelled struck through), bottom bar (count, Clear, repeat in dates or days, Register), confirmation list before
+  writing, refresh every 15 s. Cache refresh now uses a counter (a time stamp served stale data in tests). User decisions
+  2026-10-08: all 5 stage-1 assumptions confirmed; stage 2 split into 2a/2b (each under 100,000 tokens); Ongoing
+  programs demo videos moved to stage 4. **Next: the user looks at 2a, then stage 2b** (plan in `resume.md` section 3).
 - **2026-10-07: Follow-up Program stage 1 BUILT (server only; not shown to the user's organisers, never run on real
   Google).** `followup/Code.gs` = the new sheet's server (separate Apps Script project; tour `Code.gs` untouched):
   menu Program -> Set up the sheet / Update slots now, weekly trigger (Sunday 22:00 India), generator for all 7
@@ -333,7 +341,7 @@ _Last updated: 2026-10-07 (Follow-up Program stage 1 built: server + tests in `f
   programs"; a card shows "8 Oct 2026 to 29 Oct 2026 · Weekly · Wed"; Register -> Backup writes column E and sets G;
   Release clears it; the footer reads v2026-10-06.4. If the dates line shows the sheet's text instead of "8 Oct 2026",
   the date cells are text, not real dates (still works, but say so).
-- **Next task (separate, user's choice): demo videos for Ongoing programs** in English, Telugu and Hindi. The recorder
+- **Moved to Follow-up stage 4 by the user 2026-10-08: demo videos for Ongoing programs** in English, Telugu and Hindi. The recorder
   (tools/record_demo.js, see "Re-record the demo" above) uses a demo copy of the 30-Sep layout; it needs an Ongoing tab
   in its demo data, new steps (pick "Ongoing programs", register as Backup, see it under My Registrations), new voice
   lines in tools/voiceover/lines.json and te/hi/lines.json, then re-pin the GitHub copies and replace the three Drive

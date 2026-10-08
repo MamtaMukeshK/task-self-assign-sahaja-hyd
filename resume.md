@@ -1,6 +1,6 @@
 # Resume here
 
-_Last updated: 2026-10-07, end of the session that built Follow-up Program stage 1. Read this first, then `HANDOFF.md`
+_Last updated: 2026-10-08, end of the session that built Follow-up Program stage 2a (stage 1 the day before). Read this first, then `HANDOFF.md`
 (full dated log) and, for design work, `ARCHITECTURE.md` and `docs/followup/SPEC.md`. Update this file at the end of
 every session: replace "Where things stand" and "Next steps", and add to "Learnings" (never delete a learning)._
 
@@ -10,9 +10,10 @@ every session: replace "Where things stand" and "Next steps", and add to "Learni
 | Tour page (`Code.gs`, `Index.html`) | Version 2026-10-06.4 pushed and merged to main; **not deployed** by the user as far as we know. Live: 2026-10-01.4 (confirmed 2026-10-01). Ask the user before assuming. |
 | Follow-up Program design | Final: `docs/followup/SPEC.md` + mock-up `docs/followup/mockup.html`. Build plan with the choices the spec left open: `docs/followup/STAGE1_PLAN.md`. |
 | Follow-up stage 1 (server) | **Built and tested**, not run on real Google: `followup/Code.gs` + `test/followup.test.js`. |
-| Follow-up stages 2, 3, 4, 4b | Not started (page; cancellations screen + setup guide; demo videos; organiser video). |
+| Follow-up stage 2a (page) | **Built and tested** in a browser against the simulated sheet, not run on real Google: `followup/Index.html` + `doGet` + `test/followup.page.test.js`. One-week calendar, date list (2 weeks, "Show 2 more weeks"), cards, select several dates, repeat, confirmation list, Release, 12-hour rule, phone/tablet/laptop. English only. |
+| Follow-up stages 2b, 3, 4, 4b | Not started (register others + My Registrations + cancellation notice + Telugu/Hindi; cancellations screen + setup guide; demo videos incl. the Ongoing programs videos; organiser video). |
 | Branch | `claude/vibrant-planck-gsxjay`, pushed, up to date. No pull request (the user has not asked for one). |
-| Tests | `cd test && npm install && npm test`: 85 tests (77 tour page + 8 Follow-up server), all passing on 2026-10-07. |
+| Tests | `cd test && npm install && npm test`: 86 tests (77 tour page + 8 Follow-up server + 1 Follow-up page), all passing on 2026-10-08. |
 
 ## 2. Waiting on the user (do not build past these without an answer)
 1. ~~Confirm the 5 stage-1 assumptions~~ **All 5 confirmed by the user 2026-10-08** (details in `docs/followup/STAGE1_PLAN.md`):
@@ -21,16 +22,21 @@ every session: replace "Where things stand" and "Next steps", and add to "Learni
    c. Empty "Until" = keep 12 weeks of dates ahead, topped up every Sunday; never more than 1 year ahead.
    d. "Release all N" also releases the registrar if they are on that date.
    e. Times typed without AM/PM are 24-hour; the time columns display AM/PM so mistakes show at once.
-2. Go-ahead for stage 2 (the page), estimated 60,000-85,000 tokens (moderate confidence).
-3. Older open items in `HANDOFF.md` "Next step": deploy tour version 2026-10-06.4; demo videos for Ongoing programs;
+2. Stage 2 was split by the user (2026-10-08) into 2a (built) and 2b, each under 100,000 tokens. **Wait for the user to
+   look at 2a and say go before building 2b.**
+3. Older open items in `HANDOFF.md` "Next step": deploy tour version 2026-10-06.4; (demo videos for Ongoing programs: moved to stage 4 by the user 2026-10-08);
    native-speaker check of Telugu/Hindi; whether the built-in first-day data reaches the live tour page.
 
 ## 3. Next steps (in order)
-1. Get the answers in section 2. Apply any changes to `followup/Code.gs` + tests first (each is small).
-2. Stage 2: `followup/Index.html` (based on the tour `Index.html`) + a `doGet` in `followup/Code.gs` that serves it
-   with the first data built in (as the tour page does). The harness's `HtmlService` always reads the root
-   `Index.html`; give `load()` a way to read `followup/Index.html` before writing page tests. Decide a VERSION string
-   check for the new page. The page talks to these server functions (all in `followup/Code.gs`):
+1. The user looks at stage 2a (phone screenshot in the chat; they can also paste `followup/Code.gs` + `Index.html`
+   into a test copy of a new sheet and run Program -> Set up the sheet, though the setup guide only comes in stage 3).
+2. Stage 2b, in `followup/Index.html` (all wording is in its `TEXT.en` table; add `te`/`hi` blocks): "Who: Just me"
+   button in the bottom bar opening the speaker list / name+mobile box / "Include me too" (copy the tour page's
+   picker); pass othersText/includeSelf to `registerSlots` (the confirmation list already shows every person);
+   per-person ✕ (`releaseSlot(id, name, person)`) and "Release all N for this date" (`releaseGroup`); My
+   Registrations summary and the red cancellation notice at the top, both from `getSlots(...).mine`; language switch
+   and translated server messages (the tour page's `SERVER_TEXT` regex approach). Extend `test/followup.page.test.js`.
+   Server functions the page uses (all in `followup/Code.gs`; `doGet` already serves the page with the first 3 weeks):
    - `getSlots(from, to, name)` -> `{from, to, today, now, slots[], mine[], speakers[], version}`; each slot
      `{id, line, date 'yyyy-MM-dd', day 0-6, start/end 'HH:mm', centre, address, map, contact, places, cancelled, notes,
      people[{name, phone, by}], remaining, over, started, ended, releaseClosed}`. `mine` = every future date where the
@@ -50,7 +56,12 @@ every session: replace "Where things stand" and "Next steps", and add to "Learni
 - `followup/Code.gs`: sections in order: menu/setup/triggers; generator (`generateSlots`, `readPlan_`,
   `parsePlanLine_`, `planDates_`); reading Slots (`readTable_`, `readSlots_`, `pageSlot_`); page functions; cancellations;
   date/time helpers; helpers copied from the tour `Code.gs` (bottom of the file - keep both copies in step if one is fixed).
+- `followup/Index.html`: the volunteers' page (no framework; `render()` draws calendar, list, bar from `state`; dates are
+  'yyyy-MM-dd' keys and "today"/"now" come from the server, never the browser clock). Logo and font link were copied
+  from the tour `Index.html` by a script (the logo is a long data address; do not read it into context).
 - `test/followup.test.js`: `setup(planLines)` builds a Program plan + empty Slots; "now" is Wed 7 Oct 2026 05:00.
+- `test/followup.page.test.js`: one browser test of the page (calendar, repeat, confirmation, release, 12-hour rule,
+  widths 320/390/1280). `SHOT=<path> npm test` also saves a phone screenshot for a visual check.
 - `test/harness.js`: `load(sheets, now, 'followup/Code.gs')` loads the new server; stand-ins added this session:
   `PropertiesService`, `ScriptApp` triggers (`ctx._triggers`), `getUi().alert` (`ctx._alerts`), dropdown builder,
   `deleteRow`, `insertRowsAfter`/`getMaxRows`, `Range.sort`, `setFrozenRows`, `setFontWeight`, `setNotes`.
@@ -94,3 +105,13 @@ every session: replace "Where things stand" and "Next steps", and add to "Learni
   11-digit number). Use letters in test names.
 - `Infinity % 1` is `NaN`: the "whole program" repeat was rejected until the check allowed Infinity (caught by a test).
 - The tests use the harness clock in UTC and treat it as India time; write fixture dates as 'yyyy-MM-dd' strings.
+- The harness clock is frozen (`new Date()` is always "now"), so anything keyed on the current time never changes in
+  tests. The cache refresh used a time stamp and served stale dates in the browser test; it now uses a counter
+  (also safer on real Google). Prefer counters over time stamps for "something changed" markers.
+- Count test expectations by hand carefully (the week total was 6, not 9): when a browser test fails, print the page
+  text at that step before changing code.
+- Card grid `minmax(min(340px, 100%), 1fr)` gives 3 columns at 1280 px, 2 on tablets, 1 on phones, and never overflows
+  a 320 px phone; plain `minmax(300px, 1fr)` gave 4 columns on a laptop.
+
+**Stage 2a cost** about 60,000 tokens (estimate for all of stage 2: 60,000-85,000), helped by reading only the needed
+parts of the tour `Index.html` with grep/sed and writing the page in one pass from the agreed mock-up.
