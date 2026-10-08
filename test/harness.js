@@ -75,7 +75,7 @@ function load(sheets, now, file) {
       computeDigest: (a, s) => crypto.createHash('md5').update(s, 'utf8').digest(), base64Encode: b => Buffer.from(b).toString('base64') },
     HtmlService: (() => {
       const out = html => { const o = { getContent: () => html, setTitle: () => o, addMetaTag: () => o }; return o; };
-      return { createHtmlOutputFromFile: () => out(fs.readFileSync(path.join(__dirname, '..', 'Index.html'), 'utf8')), createHtmlOutput: out };
+      return { createHtmlOutputFromFile: () => out(fs.readFileSync(path.join(__dirname, '..', path.dirname(file || 'Code.gs'), 'Index.html'), 'utf8')), createHtmlOutput: out };
     })(), JSON, Date: fakeDate(now), String, Number, Math, Error, _cache: store
   };
   vm.createContext(ctx);

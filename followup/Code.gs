@@ -7,7 +7,19 @@
  * Design: docs/followup/SPEC.md and docs/followup/STAGE1_PLAN.md.
  */
 
-var VERSION = 'followup-2026-10-07.1';
+var VERSION = 'followup-2026-10-08.1';
+
+/** Serves the page with the first weeks' dates already inside, so it shows without a second trip to the server. */
+function doGet() {
+  var html = HtmlService.createHtmlOutputFromFile('Index').getContent();
+  var initial = 'null';
+  try {
+    initial = JSON.stringify(getSlots('', '', '')).replace(/</g, '\\u003c'); // sheet text can't close the <script>
+  } catch (e) {}
+  return HtmlService.createHtmlOutput(html.replace('/*INITIAL_STATE*/null', function () { return initial; }))
+    .setTitle('Follow-up Program: Sign-up')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
 
 var CONFIG = {
   TIME_ZONE: 'Asia/Kolkata',
