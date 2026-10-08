@@ -38,6 +38,11 @@ every session: replace "Where things stand" and "Next steps", and add to "Learni
    `Index.html`, so merging both should clash only in HANDOFF/ARCHITECTURE/SETUP_GUIDE. Ask the user which tour version is
    live and whether to merge both into main.
 
+5. **2026-10-08 (later):** done: main merged into this branch (tour 2026-10-07.1), Drive links, Week of month 1st-5th
+   only. Waiting: the user forks to csreenath-rgb and connects it; the user's go to resume 4b (paused mid-way, see the
+   HANDOFF entry of the same date); "Custom" frequency question. This branch must NOT be merged into main (user wants it
+   kept as a separate repository).
+
 ## 3. Next steps (in order)
 1. The user follows `followup/SETUP_GUIDE.html` on real Google. Things to watch in their report (all moderate
    confidence, never seen on real Google): the "Program" menu appears; set-up creates the tabs and the Sunday trigger;

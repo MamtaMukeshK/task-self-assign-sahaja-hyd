@@ -336,6 +336,16 @@ _Last updated: 2026-10-08 (tour 2026-10-07.1 merged into main at the user's requ
   if not, the page errors loudly rather than guessing.
 
 ## Next step
+- **2026-10-08 (later): user decisions and state.** Drive links for the three Follow-up videos are in
+  `followup/Index.html`; Week of month is numbers only (1st-5th, "last" refused); Sahaji Contact confirmed; tour
+  v2026-10-07.1 merged into `main` at the user's request (vibrant-planck-gsxjay is NOT merged into main: the user wants
+  it kept as a separate repository; main was only merged *into* it). Fork to the user's account csreenath-rgb failed
+  (this session's GitHub login is MamtaMukeshK; no rights there): the user forks it themselves and connects that account,
+  then continue there. **Stage 4b in progress, paused by the user:** tour recorder has the Ongoing scene (commit 3820830),
+  English voices regenerated; still to do: `python3 make_voice_hi.py`, `<venv>/bin/python make_voice_te.py` (tools/voiceover),
+  record + mix en/te/hi (`node record_demo.js [te|hi]`, `python3 mix.py <ffmpeg> [te|hi]`), check frames, re-pin the tour
+  `DEMO_VIDEO_URLS` GitHub copies, bump the tour VERSION (+ test/code.test.js), user replaces the three tour Drive files.
+  Then 4c (organiser video). Open question: Frequency "Custom" in the user's sample (line P7).
 - **2026-10-08: unmerged parallel work found.** Branch `claude/zealous-johnson-h19h6w` = tour v2026-10-07.1 (still-needed
   counts kept correct automatically, call buttons on phones), not in `main` or this branch. Decide with the user before
   merging; this branch never touched the tour's code files.
