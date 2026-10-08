@@ -311,6 +311,9 @@ _Last updated: 2026-10-07 (Follow-up Program stage 1 built: server + tests in `f
   if not, the page errors loudly rather than guessing.
 
 ## Next step
+- **2026-10-08: sample sheet for the user.** `docs/followup/sample-followup-sheet.xlsx` (made-up data, built by
+  `tools/make_followup_sample.py` from the real `followup/Code.gs`; same data the videos will use). The user will fill a
+  copy with real data and share it: keep any real copy (phone numbers) out of the repository.
 - **2026-10-08: Follow-up stage 4 started.** Demo button and player added to `followup/Index.html` (same as the tour page;
   hidden until `DEMO_VIDEO_URLS` has links). Narration + captions for approval: `docs/followup/demo-script.md` (Follow-up
   video in en/te/hi; one "Ongoing programs" scene for the tour video, replacing the three Drive files via Manage

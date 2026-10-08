@@ -61,6 +61,10 @@ every session: replace "Where things stand" and "Next steps", and add to "Learni
 - `followup/Index.html`: the volunteers' page (no framework; `render()` draws calendar, list, bar from `state`; dates are
   'yyyy-MM-dd' keys and "today"/"now" come from the server, never the browser clock). Logo and font link were copied
   from the tour `Index.html` by a script (the logo is a long data address; do not read it into context).
+- `docs/followup/sample-followup-sheet.xlsx`: the Follow-up sheet with MADE-UP demo data (Read me, Program plan with one
+  line per frequency, Slots made by the real generator, Speakers, Update report; notes and drop-downs as live), sent to
+  the user 2026-10-08 so they can return a sample copy with real data. Rebuild: `python3 tools/make_followup_sample.py`.
+  Use the same demo data for the stage-4 recorder. A real copy from the user must stay out of the repository.
 - `test/followup.test.js`: `setup(planLines)` builds a Program plan + empty Slots; "now" is Wed 7 Oct 2026 05:00.
 - `test/followup.page.test.js`: two browser tests: (1) calendar, repeat, confirmation, release, 12-hour rule, widths
   320/390/1280; (2) register others, ✕, Release all, My registrations, cancellation notice, Telugu/Hindi + a translated
