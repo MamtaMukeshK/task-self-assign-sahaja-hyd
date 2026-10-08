@@ -36,7 +36,7 @@ test('generator: every frequency, from today on only, with permanent line IDs; r
     weekly,
     { Day: 'Saturday', Start: '10am', Frequency: 'Every 2 weeks', From: '2026-10-03', Until: '2026-11-14' },
     { Day: 'Saturday', Start: '9:00 AM', Frequency: 'Monthly, same weekday', 'Week of month': '2nd', From: '2026-10-01', Until: '2026-12-31' },
-    { Day: 'Sunday', Start: '9:00 AM', Frequency: 'Monthly, same weekday', 'Week of month': 'last', From: '2026-10-01', Until: '2026-12-31' },
+    { Day: 'Sunday', Start: '9:00 AM', Frequency: 'Monthly, same weekday', 'Week of month': '4th', From: '2026-10-01', Until: '2026-12-31' },
     { Start: '9:00 AM', Frequency: 'Monthly, same date', 'Day of month': '31', From: '2026-10-01', Until: '2026-12-31' },
     { Start: '5:00 PM', Frequency: 'One-off', From: '2026-10-20' }]);
   const r = t.gs.generateSlots();
@@ -46,7 +46,7 @@ test('generator: every frequency, from today on only, with permanent line IDs; r
   assert.deepEqual(t.dates('P3'), ['2026-10-10', '2026-10-17', '2026-10-24', '2026-10-31']);
   assert.deepEqual(t.dates('P4'), ['2026-10-17', '2026-10-31', '2026-11-14'], 'every 2 weeks counts from 3 Oct');
   assert.deepEqual(t.dates('P5'), ['2026-10-10', '2026-11-14', '2026-12-12']);
-  assert.deepEqual(t.dates('P6'), ['2026-10-25', '2026-11-29', '2026-12-27']);
+  assert.deepEqual(t.dates('P6'), ['2026-10-25', '2026-11-22', '2026-12-27'], '4th Sunday');
   assert.deepEqual(t.dates('P7'), ['2026-10-31', '2026-12-31'], 'November has no 31st');
   assert.deepEqual(t.dates('P8'), ['2026-10-20']);
   const p3 = t.row('P3-20261017');
@@ -195,7 +195,8 @@ test('renamed titles (2026-10-08): Principal Contact on every date; a list in on
     row({ ...base, 'Day of the Week': 'Saturday', Frequency: 'Monthly, same weekday', 'Week of month': '5th' }),
     row({ ...base, 'Day of the Week': 'Mon, Wed', Frequency: 'Weekly' }),
     row({ ...base, 'Day of the Week': 'Saturday', Frequency: 'Monthly, same weekday', 'Week of month': '1st, 3rd' }),
-    row({ ...base, Frequency: 'Monthly, same date', 'Day of month': '1, 15' })]);
+    row({ ...base, Frequency: 'Monthly, same date', 'Day of month': '1, 15' }),
+    row({ ...base, 'Day of the Week': 'Sunday', Frequency: 'Monthly, same weekday', 'Week of month': 'last' })]);
   const slots = makeSheet('Slots', 2, [S2]);
   const gs = load([plan, slots], NOW, 'followup/Code.gs');
   const r = gs.generateSlots();
@@ -210,4 +211,5 @@ test('renamed titles (2026-10-08): Principal Contact on every date; a list in on
   assert.match(msgs, /Day of the Week has more than one value \("Mon, Wed"\)\. Please use one line per day/);
   assert.match(msgs, /Week of month has more than one value \("1st, 3rd"\)\. Please use one line per week/);
   assert.match(msgs, /Day of month has more than one value \("1, 15"\)\. Please use one line per date/);
+  assert.match(msgs, /Week of month must be one of 1st, 2nd, 3rd, 4th or 5th \(numbers only, not "last"\)/, 'user 2026-10-08: numbers only');
 });

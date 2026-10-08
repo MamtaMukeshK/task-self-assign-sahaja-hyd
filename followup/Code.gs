@@ -7,7 +7,7 @@
  * Design: docs/followup/SPEC.md and docs/followup/STAGE1_PLAN.md.
  */
 
-var VERSION = 'followup-2026-10-08.4';
+var VERSION = 'followup-2026-10-08.5';
 
 /** Serves the page with the first weeks' dates already inside, so it shows without a second trip to the server. */
 function doGet() {
@@ -53,7 +53,7 @@ var PLAN_COLS = [
   ['day', 'Day of the Week', 'One day: Monday...Sunday, or Every day (Daily lines). Several days = one line each.'],
   ['start', 'Start Time', 'e.g. 6:30 PM'], ['end', 'End Time', 'e.g. 7:30 PM (blank = 1 hour)'],
   ['freq', 'Frequency', 'Pick from the list.'],
-  ['week', 'Week of month', 'Monthly, same weekday only: one of 1st, 2nd, 3rd, 4th, 5th (months without one are skipped) or last.'],
+  ['week', 'Week of month', 'Monthly, same weekday only: one of 1st, 2nd, 3rd, 4th or 5th (months without a 5th are skipped).'],
   ['dom', 'Day of month', 'Monthly, same date only: one number, 1 to 31. Months without that date are skipped.'],
   ['centre', 'Institution Name', ''], ['address', 'Address', ''], ['map', 'Google map', 'Link to the place on Google Maps.'],
   ['places', 'Volunteers Needed', 'Volunteers needed per date (blank = 1, 0 = closed).'],
@@ -102,7 +102,7 @@ function setUpSheet() {
     start: 'h:mm am/pm', end: 'h:mm am/pm', from: 'd mmm yyyy', until: 'd mmm yyyy', line: '@', centre: '@', address: '@',
     map: '@', principal: '@', contact: '@', notes: '@' }, {
     day: ['Every day'].concat(DAY_NAMES.slice(1), DAY_NAMES.slice(0, 1)), freq: FREQUENCIES,
-    week: ['1st', '2nd', '3rd', '4th', '5th', 'last'] })) made.push(CONFIG.PLAN_TAB);
+    week: ['1st', '2nd', '3rd', '4th', '5th'] })) made.push(CONFIG.PLAN_TAB);
   if (makeTab_(ss, CONFIG.SLOTS_TAB, SLOT_COLS, slotFormats_(), { status: ['Open', 'Cancelled'] })) made.push(CONFIG.SLOTS_TAB);
   if (!speakersTab_(ss)) {
     ss.insertSheet(CONFIG.SPEAKERS_NEW_TAB_NAME).getRange(1, 1, 1, 3).setValues([['Sr. No.', 'Speaker', CONFIG.SPEAKERS_MOBILE_HEADER]]);
@@ -325,8 +325,8 @@ function parsePlanLine_(get, getDate) {
   if (freq === 'monthWeekday') {
     var w = norm_(get('week')), m = /^(\d)/.exec(w) || [];
     if ((w.match(/\d|first|second|third|fourth|fifth|last/g) || []).length > 1) return { error: list_('Week of month', get('week'), 'week') };
-    line.week = /last/.test(w) ? 'last' : /first/.test(w) ? 1 : /second/.test(w) ? 2 : /third/.test(w) ? 3 : /fourth/.test(w) ? 4 : /fifth/.test(w) ? 5 : +m[1] || 0;
-    if (!line.week || line.week > 5) return { error: 'Week of month must be one of 1st, 2nd, 3rd, 4th, 5th or last.' };
+    line.week = /first/.test(w) ? 1 : /second/.test(w) ? 2 : /third/.test(w) ? 3 : /fourth/.test(w) ? 4 : /fifth/.test(w) ? 5 : +m[1] || 0;
+    if (!line.week || line.week > 5) return { error: 'Week of month must be one of 1st, 2nd, 3rd, 4th or 5th (numbers only, not "last").' };
   }
   if (freq === 'monthDate') {
     var dm = String(get('dom'));
@@ -354,7 +354,7 @@ function planDates_(line, today) {
     else if (wd !== line.weekday) ok = false;
     else if (line.freq === 'weekly') ok = true;
     else if (line.freq === 'biweekly') { firstMatch = firstMatch || d; ok = daysBetween_(firstMatch, d) % 14 === 0; }
-    else ok = line.week === 'last' ? addDays_(d, 7).slice(5, 7) !== d.slice(5, 7) : Math.ceil(dom / 7) === line.week;
+    else ok = Math.ceil(dom / 7) === line.week;   // 1st..5th weekday of the month; a month without a 5th is skipped
     if (ok && d >= today) out.push(d);
   }
   return out;

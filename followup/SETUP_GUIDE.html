@@ -110,7 +110,7 @@ Takes about 20 minutes on a laptop or desktop computer (not a phone).</p>
  * Design: docs/followup/SPEC.md and docs/followup/STAGE1_PLAN.md.
  */
 
-var VERSION = 'followup-2026-10-08.4';
+var VERSION = 'followup-2026-10-08.5';
 
 /** Serves the page with the first weeks' dates already inside, so it shows without a second trip to the server. */
 function doGet() {
@@ -156,7 +156,7 @@ var PLAN_COLS = [
   ['day', 'Day of the Week', 'One day: Monday...Sunday, or Every day (Daily lines). Several days = one line each.'],
   ['start', 'Start Time', 'e.g. 6:30 PM'], ['end', 'End Time', 'e.g. 7:30 PM (blank = 1 hour)'],
   ['freq', 'Frequency', 'Pick from the list.'],
-  ['week', 'Week of month', 'Monthly, same weekday only: one of 1st, 2nd, 3rd, 4th, 5th (months without one are skipped) or last.'],
+  ['week', 'Week of month', 'Monthly, same weekday only: one of 1st, 2nd, 3rd, 4th or 5th (months without a 5th are skipped).'],
   ['dom', 'Day of month', 'Monthly, same date only: one number, 1 to 31. Months without that date are skipped.'],
   ['centre', 'Institution Name', ''], ['address', 'Address', ''], ['map', 'Google map', 'Link to the place on Google Maps.'],
   ['places', 'Volunteers Needed', 'Volunteers needed per date (blank = 1, 0 = closed).'],
@@ -205,7 +205,7 @@ function setUpSheet() {
     start: 'h:mm am/pm', end: 'h:mm am/pm', from: 'd mmm yyyy', until: 'd mmm yyyy', line: '@', centre: '@', address: '@',
     map: '@', principal: '@', contact: '@', notes: '@' }, {
     day: ['Every day'].concat(DAY_NAMES.slice(1), DAY_NAMES.slice(0, 1)), freq: FREQUENCIES,
-    week: ['1st', '2nd', '3rd', '4th', '5th', 'last'] })) made.push(CONFIG.PLAN_TAB);
+    week: ['1st', '2nd', '3rd', '4th', '5th'] })) made.push(CONFIG.PLAN_TAB);
   if (makeTab_(ss, CONFIG.SLOTS_TAB, SLOT_COLS, slotFormats_(), { status: ['Open', 'Cancelled'] })) made.push(CONFIG.SLOTS_TAB);
   if (!speakersTab_(ss)) {
     ss.insertSheet(CONFIG.SPEAKERS_NEW_TAB_NAME).getRange(1, 1, 1, 3).setValues([['Sr. No.', 'Speaker', CONFIG.SPEAKERS_MOBILE_HEADER]]);
@@ -428,8 +428,8 @@ function parsePlanLine_(get, getDate) {
   if (freq === 'monthWeekday') {
     var w = norm_(get('week')), m = /^(\d)/.exec(w) || [];
     if ((w.match(/\d|first|second|third|fourth|fifth|last/g) || []).length &gt; 1) return { error: list_('Week of month', get('week'), 'week') };
-    line.week = /last/.test(w) ? 'last' : /first/.test(w) ? 1 : /second/.test(w) ? 2 : /third/.test(w) ? 3 : /fourth/.test(w) ? 4 : /fifth/.test(w) ? 5 : +m[1] || 0;
-    if (!line.week || line.week &gt; 5) return { error: 'Week of month must be one of 1st, 2nd, 3rd, 4th, 5th or last.' };
+    line.week = /first/.test(w) ? 1 : /second/.test(w) ? 2 : /third/.test(w) ? 3 : /fourth/.test(w) ? 4 : /fifth/.test(w) ? 5 : +m[1] || 0;
+    if (!line.week || line.week &gt; 5) return { error: 'Week of month must be one of 1st, 2nd, 3rd, 4th or 5th (numbers only, not "last").' };
   }
   if (freq === 'monthDate') {
     var dm = String(get('dom'));
@@ -457,7 +457,7 @@ function planDates_(line, today) {
     else if (wd !== line.weekday) ok = false;
     else if (line.freq === 'weekly') ok = true;
     else if (line.freq === 'biweekly') { firstMatch = firstMatch || d; ok = daysBetween_(firstMatch, d) % 14 === 0; }
-    else ok = line.week === 'last' ? addDays_(d, 7).slice(5, 7) !== d.slice(5, 7) : Math.ceil(dom / 7) === line.week;
+    else ok = Math.ceil(dom / 7) === line.week;   // 1st..5th weekday of the month; a month without a 5th is skipped
     if (ok &amp;&amp; d &gt;= today) out.push(d);
   }
   return out;
@@ -1593,17 +1593,20 @@ function norm_(s) { return String(s).toLowerCase().replace(/\s+/g, ' ').trim(); 
 
   // Demo video per language. A Google Drive link first opens Drive's own player in a new tab (share it as "Anyone with
   // the link"); otherwise the GitHub copies (pinned to the commit that added the videos) play here in order. No English link = no button.
-  // Put the organiser's Google Drive link first in each list when the videos are on Drive (as on the tour page).
+  // The organiser's Google Drive copies (sent 2026-10-08) first, as on the tour page; the GitHub copies are kept as a fallback.
   var DEMO_VIDEO_URLS = {
     en: [
+      'https://drive.google.com/file/d/1XshvyqAgaCgKGTKlMG_DQt3YVApHH7Gi/view?usp=sharing',
       'https://cdn.jsdelivr.net/gh/MamtaMukeshK/task-self-assign-sahaja-hyd@becaae3e0d6109edb31c12e9a725c1b2f822c676/docs/followup/demo.mp4',
       'https://raw.githubusercontent.com/MamtaMukeshK/task-self-assign-sahaja-hyd/becaae3e0d6109edb31c12e9a725c1b2f822c676/docs/followup/demo.mp4'
     ],
     te: [
+      'https://drive.google.com/file/d/12YBe_afPiP3vGaH2egcwJ3J7hp9M1bxu/view?usp=sharing',
       'https://cdn.jsdelivr.net/gh/MamtaMukeshK/task-self-assign-sahaja-hyd@becaae3e0d6109edb31c12e9a725c1b2f822c676/docs/followup/demo-te.mp4',
       'https://raw.githubusercontent.com/MamtaMukeshK/task-self-assign-sahaja-hyd/becaae3e0d6109edb31c12e9a725c1b2f822c676/docs/followup/demo-te.mp4'
     ],
     hi: [
+      'https://drive.google.com/file/d/1bkxi19Gq8C4MmXqxVxn8To653AQxBoLH/view?usp=sharing',
       'https://cdn.jsdelivr.net/gh/MamtaMukeshK/task-self-assign-sahaja-hyd@becaae3e0d6109edb31c12e9a725c1b2f822c676/docs/followup/demo-hi.mp4',
       'https://raw.githubusercontent.com/MamtaMukeshK/task-self-assign-sahaja-hyd/becaae3e0d6109edb31c12e9a725c1b2f822c676/docs/followup/demo-hi.mp4'
     ]
@@ -1659,7 +1662,7 @@ function norm_(s) { return String(s).toLowerCase().replace(/\s+/g, ' ').trim(); 
   <tr><td>Day of the Week</td><td>Pick <b>one</b> from the list (Monday…Sunday, or Every day)</td><td>Saturday</td></tr>
   <tr><td>Start Time / End Time</td><td>Time with AM or PM (End Time blank = 1 hour)</td><td>6:30 PM / 7:30 PM</td></tr>
   <tr><td>Frequency</td><td>Pick from the list (see below)</td><td>Weekly</td></tr>
-  <tr><td>Week of month</td><td>Only for "Monthly, same weekday": <b>one</b> of 1st, 2nd, 3rd, 4th, 5th or last (5th: months without one are skipped)</td><td>2nd</td></tr>
+  <tr><td>Week of month</td><td>Only for "Monthly, same weekday": <b>one</b> of 1st, 2nd, 3rd, 4th or 5th (months without a 5th are skipped; "last" is not used)</td><td>2nd</td></tr>
   <tr><td>Day of month</td><td>Only for "Monthly, same date": <b>one</b> number, 1 to 31</td><td>15</td></tr>
   <tr><td>Institution Name, Address, Google map</td><td>Where it happens; the map link opens on volunteers' phones</td><td>Ameerpet Centre</td></tr>
   <tr><td>Volunteers Needed</td><td>Volunteers needed per date (blank = 1, 0 = closed)</td><td>4</td></tr>

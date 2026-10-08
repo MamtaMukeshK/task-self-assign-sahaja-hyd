@@ -197,13 +197,14 @@ test('follow-up page: register others, ✕ and Release all, My registrations, ca
     await p.waitForSelector('#note.err');
     assert.equal(await p.textContent('#note'), 'यह 168 पंजीकरण हैं (7 लोग x 24 तारीख़ें)। एक बार में अधिकतम 100। कृपया कम तारीख़ें या कम लोग चुनें।');
     assert.equal(await p.textContent('#register'), 'पंजीकरण करें');
-    // Demo button plays the page's language (Hindi here), trying the copies in order (the first one fails here).
-    await p.route('https://cdn.jsdelivr.net/**', r => r.fulfill({ status: 404, body: '' }));
-    await p.route('https://raw.githubusercontent.com/**', r => r.fulfill({ status: 404, body: '' }));
+    // Demo button opens the page's language (Hindi here): the organiser's Drive copy first.
+    // (Drive opens its own player in a new tab, as on the tour page.)
+    await p.context().route('https://drive.google.com/**', r => r.fulfill({ contentType: 'text/html', body: 'drive player' }));
     assert.equal(await p.textContent('#demoBtn'), '▶ डेमो देखें');
-    await p.click('#demoBtn');
-    await p.waitForFunction(() => /^https:\/\/raw\.githubusercontent\.com\/.*\/docs\/followup\/demo-hi\.mp4$/.test(document.getElementById('demoVideo').src));
-    assert.match(await p.getAttribute('#demoLink', 'href'), /^https:\/\/cdn\.jsdelivr\.net\/gh\/.*@[0-9a-f]{40}\/docs\/followup\/demo-hi\.mp4$/);
+    const [tab] = await Promise.all([p.context().waitForEvent('page'), p.click('#demoBtn')]);
+    await tab.waitForLoadState();
+    assert.equal(tab.url(), 'https://drive.google.com/file/d/1bkxi19Gq8C4MmXqxVxn8To653AQxBoLH/view?usp=sharing', 'Hindi page: the Hindi Drive video');
+    await tab.close();
     assert.deepEqual(p.errs, []);
   } finally { await browser.close(); }
 });

@@ -117,7 +117,7 @@ add_tab(wb, 'Update report', [[r[0] if r else ''] for r in data['report']] if da
 # Drop-down lists as on the live sheet (kept on a hidden tab, because "Daily, weekdays only (Mon-Fri)" contains a comma).
 lists = wb.create_sheet('Lists')
 days = ['Every day'] + data['days'][1:] + data['days'][:1]
-for col, values in enumerate([days, data['freqs'], ['1st', '2nd', '3rd', '4th', '5th', 'last'], ['Open', 'Cancelled']], 1):
+for col, values in enumerate([days, data['freqs'], ['1st', '2nd', '3rd', '4th', '5th'], ['Open', 'Cancelled']], 1):
     for r, v in enumerate(values, 1):
         lists.cell(r, col, v)
 lists.sheet_state = 'hidden'
@@ -127,7 +127,7 @@ def dropdown(ws, title, col_letter, n):
     dv = DataValidation(type='list', formula1='=Lists!$%s$1:$%s$%d' % (col_letter, col_letter, n), allow_blank=True)
     dv.add('%s2:%s1000' % (letter, letter)); ws.add_data_validation(dv)
 dropdown(plan_ws, 'Day of the Week', 'A', len(days)); dropdown(plan_ws, 'Frequency', 'B', len(data['freqs']))
-dropdown(plan_ws, 'Week of month', 'C', 6); dropdown(slots_ws, 'Status', 'D', 2)
+dropdown(plan_ws, 'Week of month', 'C', 5); dropdown(slots_ws, 'Status', 'D', 2)
 
 out = ROOT / 'docs' / 'followup' / 'sample-followup-sheet.xlsx'
 wb.save(out)
