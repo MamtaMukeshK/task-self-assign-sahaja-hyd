@@ -13,35 +13,38 @@ const VO = __dirname + '/voiceover/' + (LANG === 'en' ? '' : LANG + '/'), OUT = 
 
 // ---- Words shown in the video, per language (spoken lines: voiceover/lines.json, voiceover/<lang>/lines.json) ----
 const T = {
-  en: { step: 'Step', register: 'Register', release: 'Release', langs: ['te', 'hi', 'en'], caps: [
+  en: { step: 'Step', register: 'Register', release: 'Release', backup: 'Backup', langs: ['te', 'hi', 'en'], caps: [
     'Open the link: today\'s schools are listed. Type your name and mobile once.',
     'Each school is a card. Tap Details for the contact person and remarks.',
     'Tap Register: your card turns green, moves up to "My Registrations", and the sheet updates.',
     'Changed your mind? Tap Release. Your line is removed from the sheet.',
     'Registering a group? Tick "Register others" and choose speakers from the list.',
     'Tap Register: you and everyone ticked are added together, marked "via" you.',
+    'Programs over several weeks: choose "Ongoing programs" in the date list, tap "Register", then "Primary" or "Backup".',
     'Prefer Telugu or Hindi? Choose a language at the top.'],
     title: ['Hyderabad 2026 · Self Realization Tour', 'How to pick your school in about a minute'],
     end: ['Open the link · pick a date · tap Register', 'Your name goes straight into the sheet for the organisers'],
     sheet: ['Google Sheet · 30-Sep tab', 'Demo copy: made-up names and numbers'] },
-  te: { step: 'దశ', register: 'నమోదు చేయండి', release: 'పేరు తీసేయండి', langs: ['en', 'hi', 'te'], caps: [
+  te: { step: 'దశ', register: 'నమోదు చేయండి', release: 'పేరు తీసేయండి', backup: 'బ్యాకప్', langs: ['en', 'hi', 'te'], caps: [
     'లింక్ తెరవండి: ఈ రోజు పాఠశాలలు కనిపిస్తాయి. మీ పేరు, మొబైల్ ఒక్కసారి టైప్ చేయండి.',
     'ప్రతి పాఠశాల ఒక కార్డు. సంప్రదించాల్సిన వ్యక్తి, గమనికల కోసం "వివరాలు" నొక్కండి.',
     '"నమోదు చేయండి" నొక్కండి: మీ కార్డు ఆకుపచ్చగా మారి, పైన "నా నమోదులు" కిందకు వెళ్తుంది; షీట్ కూడా మారుతుంది.',
     'మనసు మార్చుకున్నారా? "పేరు తీసేయండి" నొక్కండి. షీట్ నుండి మీ పేరు తొలగిపోతుంది.',
     'బృందాన్ని నమోదు చేస్తున్నారా? "ఇతరులను నమోదు చేయండి" టిక్ పెట్టి, జాబితా నుండి వక్తలను ఎంచుకోండి.',
     '"నమోదు చేయండి" నొక్కండి: మీరు, మీరు టిక్ పెట్టిన వారందరూ ఒకేసారి చేరుతారు; వారి పక్కన "(మీ పేరు) ద్వారా" అని కనిపిస్తుంది.',
+    'చాలా వారాల కార్యక్రమాలు: తేదీల జాబితాలో "కొనసాగుతున్న కార్యక్రమాలు" ఎంచుకుని, "నమోదు చేయండి" నొక్కి, "ప్రధాన" లేదా "బ్యాకప్" ఎంచుకోండి.',
     'ఇంగ్లీష్ లేదా హిందీ కావాలా? పైన భాష ఎంచుకోండి.'],
     title: ['హైదరాబాద్ 2026 · ఆత్మసాక్షాత్కార యాత్ర', 'మీ పాఠశాలను సుమారు ఒక నిమిషంలో ఎంచుకోవడం ఎలా'],
     end: ['లింక్ తెరవండి · తేదీ ఎంచుకోండి · "నమోదు చేయండి" నొక్కండి', 'మీ పేరు నేరుగా నిర్వాహకుల షీట్‌లోకి వెళ్తుంది'],
     sheet: ['గూగుల్ షీట్ · 30-Sep ట్యాబ్', 'డెమో కాపీ: పేర్లు, నంబర్లు కల్పితం'] },
-  hi: { step: 'चरण', register: 'पंजीकरण करें', release: 'नाम हटाएँ', langs: ['en', 'te', 'hi'], caps: [
+  hi: { step: 'चरण', register: 'पंजीकरण करें', release: 'नाम हटाएँ', backup: 'बैकअप', langs: ['en', 'te', 'hi'], caps: [
     'लिंक खोलें: आज के स्कूलों की सूची दिखती है। अपना नाम और मोबाइल एक बार लिखें।',
     'हर स्कूल एक कार्ड है। संपर्क व्यक्ति और टिप्पणियों के लिए "विवरण" दबाएँ।',
     '"पंजीकरण करें" दबाएँ: आपका कार्ड हरा होकर ऊपर "मेरे पंजीकरण" में चला जाता है, और शीट भी बदल जाती है।',
     'मन बदल गया? "नाम हटाएँ" दबाएँ। शीट से आपका नाम हट जाता है।',
     'समूह का पंजीकरण कर रहे हैं? "दूसरों का पंजीकरण करें" पर टिक लगाएँ और सूची से वक्ता चुनें।',
     '"पंजीकरण करें" दबाएँ: आप और जिन पर टिक लगाया, सब एक साथ जुड़ते हैं; उनके साथ "(आपका नाम) द्वारा" लिखा आता है।',
+    'कई सप्ताह के कार्यक्रम: तारीख़ों की सूची में "चल रहे कार्यक्रम" चुनें, "पंजीकरण करें" दबाएँ, फिर "मुख्य" या "बैकअप"।',
     'अंग्रेज़ी या तेलुगु चाहिए? ऊपर भाषा चुनें।'],
     title: ['हैदराबाद 2026 · आत्मसाक्षात्कार यात्रा', 'लगभग एक मिनट में अपना स्कूल कैसे चुनें'],
     end: ['लिंक खोलें · तारीख चुनें · "पंजीकरण करें" दबाएँ', 'आपका नाम सीधे आयोजकों की शीट में पहुँचता है'],
@@ -62,7 +65,14 @@ const speakers = makeSheet('Speaker', 3, [['Sr. No.', 'Speaker', 'Mobile', 'Lang
   ['3', 'Kiran Rao', '9000000105', 'Telugu, English'], ['4', 'Lakshmi Devi', '9000000103', 'Telugu'],
   ['5', 'Meera Das', '9000000106', 'Hindi'], ['6', 'Ravi Kumar', '9000000107', 'Telugu, Hindi'],
   ['7', 'Suresh Reddy', '9000000102', 'Telugu']]);
-const gs = load([day30, day01, speakers], new Date(Date.UTC(2026, 8, 30, 10, 0)));   // 30 Sep, 10:00 India time
+// Ongoing tab (added 2026-10-08 for the Ongoing programs scene): the real tab's columns, made-up programs.
+const OH = ['Sl.No', 'Sahaja Yoga ( IND)\n Speaker Name', 'Total volunteers Needed', 'Number of Volunteers still Needed', 'Backup Yogis Name',
+  'Backup yogis needed', 'Num of backup yogis still needed', 'Frequency', 'Start Date', 'End Date', 'Time', 'Days of the Week',
+  'Institution name', 'Branch / Address', 'Google map', 'Remarks'];
+const ongoing = makeSheet('Ongoing', 4, [OH,
+  ['1', '', '1', '1', '', '1', '1', 'Weekly', '01/10/2026', '31/03/2027', '9.30 am', 'Mon, Wed', 'Triveni Talent School', 'Lingampally', '', ''],
+  ['2', '', '2', '2', '', '1', '1', 'Weekly', '05/10/2026', '29/01/2027', '11 am', 'Thu', 'Unacademy', 'Beeramguda', '', '']]);
+const gs = load([day30, day01, ongoing, speakers], new Date(Date.UTC(2026, 8, 30, 10, 0)));   // 30 Sep, 10:00 India time
 
 const SHIM = `window.google = { script: { get run() {
   let ok = () => {}, fail = () => {};
@@ -130,14 +140,16 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
 
   // Sheet panel: shows the 30-Sep tab as stored; cells that just changed flash yellow.
   let before = null;
+  let tab = 'day';   // which tab the panel shows: the 30-Sep tab, or the Ongoing tab in the Ongoing step
   const drawSheet = async () => {
-    const g = day30.grid.map(r => r.map(v => v == null ? '' : String(v)));
-    const cols = [0, 1, 2, 3, 4, 6];
+    const g = (tab === 'day' ? day30 : ongoing).grid.map(r => r.map(v => v == null ? '' : String(v)));
+    const cols = tab === 'day' ? [0, 1, 2, 3, 4, 6] : [0, 1, 4, 12, 11, 10];
     const flash = (i, j) => before && before[i] && before[i][j] !== g[i][j];
-    const head = ['A · Sl.No', 'B · Speaker Name', 'C · Total needed', 'D · Still needed', 'E · Institution', 'G · Time'];
+    const head = tab === 'day' ? ['A · Sl.No', 'B · Speaker Name', 'C · Total needed', 'D · Still needed', 'E · Institution', 'G · Time']
+      : ['A · Sl.No', 'B · Speaker Name', 'E · Backup Name', 'M · Institution', 'L · Days', 'K · Time'];
     const body = g.slice(1).map((r, i) => '<tr>' + cols.map(j => `<td class="${flash(i + 1, j) ? 'flash' : ''}">${r[j].replace(/</g, '&lt;')}</td>`).join('') + '</tr>').join('');
     await p.evaluate(h => { document.getElementById('sheet').innerHTML = h; setTimeout(() => document.querySelectorAll('td.flash').forEach(td => td.classList.remove('flash')), 1600); },
-      `<h3>${T.sheet[0]}<small>${T.sheet[1]}</small></h3><table><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr>${body}</table>`);
+      `<h3>${tab === 'day' ? T.sheet[0] : T.sheet[0].replace('30-Sep', 'Ongoing')}<small>${T.sheet[1]}</small></h3><table><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr>${body}</table>`);
     before = g;
   };
   const caption = n => p.evaluate(([s, t]) => { document.getElementById('step').textContent = s; document.getElementById('text').textContent = t; }, [T.step + ' ' + n, T.caps[n - 1]]);
@@ -195,8 +207,18 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
   await tap(app.locator(`#grid tr[data-row="4"] button:text-is("${T.register}")`));
   await settle(); await wait(3000);
 
-  // ---- 4. Language ----
-  await say('s6'); await caption(7);
+  // ---- 4. Ongoing programs (added 2026-10-08): pick them in the date list, Register, choose Backup ----
+  await say('s7o'); await caption(7);
+  await wait(800);
+  await tap(app.locator('#day')); await app.locator('#day').selectOption('Ongoing');
+  tab = 'ongoing'; before = null; await drawSheet(); await wait(1800);
+  await tap(app.locator(`#grid tr[data-row="2"] button:text-is("${T.register}")`)); await wait(1000);
+  await tap(app.locator(`#grid tr[data-row="2"] button:text-is("${T.backup}")`));
+  await settle(); await wait(2600);
+  await app.locator('#day').selectOption('30-Sep'); tab = 'day'; before = null; await drawSheet(); await wait(600);
+
+  // ---- 5. Language ----
+  await say('s6'); await caption(8);
   await wait(900);
   for (const [i, l] of T.langs.entries()) { await tap(app.locator('#lang')); await app.locator('#lang').selectOption(l); await wait(i < 2 ? 2600 : 1200); }
 

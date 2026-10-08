@@ -6,6 +6,7 @@
  ["s3", "Changed your mind? Tap Release, and your name is removed."],
  ["s4", "Registering a group? Tick Register others, and choose speakers from the list."],
  ["s5", "Now tap Register. You, and everyone you ticked, are added together."],
+ ["s7o", "Some programs run for several weeks. Choose Ongoing programs at the end of the date list, tap Register, and pick Primary or Backup."],
  ["s6", "Prefer Telugu or Hindi? Just choose your language at the top."],
  ["end", "That's it. Open the link, pick a date, and tap Register."]
 ]
