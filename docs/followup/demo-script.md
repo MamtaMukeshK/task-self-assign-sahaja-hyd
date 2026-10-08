@@ -1,6 +1,6 @@
 # Stage 4 demo videos: narration and captions for approval
 
-_**Approved as written by the user on 2026-10-08. Part A recorded 2026-10-08** (`docs/followup/demo*.mp4`). Recording waits until the user has set up the real sheet with
+_**Approved as written by the user on 2026-10-08. Parts A, B and C recorded 2026-10-08** (`docs/followup/demo*.mp4`, `docs/demo*.mp4`, `docs/followup/organiser-demo.mp4`). Recording waits until the user has set up the real sheet with
 `followup/SETUP_GUIDE.html` and any differences are fixed (user's choice, 2026-10-08). Telugu and Hindi are
 **not yet checked by a native speaker**; each line has an English back-translation so a reviewer who reads only one
 language can still check the meaning._

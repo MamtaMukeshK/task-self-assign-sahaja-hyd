@@ -336,6 +336,17 @@ _Last updated: 2026-10-08 (tour 2026-10-07.1 merged into main at the user's requ
   if not, the page errors loudly rather than guessing.
 
 ## Next step
+- **2026-10-08: stages 4b and 4c DONE (all of stage 4 recorded).** 4b: tour videos `docs/demo.mp4`, `demo-te.mp4`,
+  `demo-hi.mp4` re-recorded with the Ongoing programs scene (step 7: pick Ongoing programs, Register, Backup; "Register
+  others" unticked first so only Priya registers) on tour v2026-10-07.1; tour page's GitHub fallback copies re-pinned to
+  the fork csreenath-rgb/program-planner-sahaja-hyd (commit 012cfc6); tour VERSION 2026-10-08.1. **User: replace the three
+  tour Drive files (Manage versions) with the new videos.** 4c: `docs/followup/organiser-demo.mp4` (English, ~2 min,
+  laptop screen drawn from the real tab layout, first caption says it is not live Google Sheets) by
+  `tools/record_organiser_demo.js` (real followup/Code.gs underneath; user's sample, phone numbers replaced, P7 One-off);
+  linked from `followup/SETUP_GUIDE.html` (fork copy). Captions of 4c steps 1-8 were written by Claude (narration approved).
+  Fork: csreenath-rgb/program-planner-sahaja-hyd has every branch, but this session still has no push access there
+  (add_repo: "you need push access"); commits are backed up on origin's claude/vibrant-planck-gsxjay (not in main).
+  Once access exists: `git push <fork> claude/vibrant-planck-gsxjay` (fast-forward from 6ccd54f).
 - **2026-10-08 (later): user decisions and state.** Drive links for the three Follow-up videos are in
   `followup/Index.html`; Week of month is numbers only (1st-5th, "last" refused); Sahaji Contact confirmed; tour
   v2026-10-07.1 merged into `main` at the user's request (vibrant-planck-gsxjay is NOT merged into main: the user wants
