@@ -40,7 +40,7 @@ every session: replace "Where things stand" and "Next steps", and add to "Learni
 
 5. **2026-10-08 (later):** done: main merged into this branch (tour 2026-10-07.1), Drive links, Week of month 1st-5th
    only. Waiting: the user forks to csreenath-rgb and connects it; the user's go to resume 4b (paused mid-way, see the
-   HANDOFF entry of the same date); "Custom" frequency question. This branch must NOT be merged into main (user wants it
+   HANDOFF entry of the same date); "Custom" answered: not needed (one line per day/time; P7 = One-off in demo data). This branch must NOT be merged into main (user wants it
    kept as a separate repository).
 
 ## 3. Next steps (in order)
