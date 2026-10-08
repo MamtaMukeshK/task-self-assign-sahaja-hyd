@@ -314,7 +314,7 @@ _Last updated: 2026-10-07 (Follow-up Program stage 1 built: server + tests in `f
 - **2026-10-08: Follow-up stage 4 started.** Demo button and player added to `followup/Index.html` (same as the tour page;
   hidden until `DEMO_VIDEO_URLS` has links). Narration + captions for approval: `docs/followup/demo-script.md` (Follow-up
   video in en/te/hi; one "Ongoing programs" scene for the tour video, replacing the three Drive files via Manage
-  versions; organiser video in English). **Next: user approves the wording; then voice set-up and recording** (new
+  versions; organiser video in English). **User approved the wording as written (2026-10-08) and chose to record only after their real-Google setup check; then voice set-up and recording** (new
   recorder for the Follow-up page modelled on `tools/record_demo.js`; Telugu voice needs the ~7 GB set-up, see above).
 - **2026-10-08: Follow-up Program stage 3 BUILT (not run on real Google).** Sheet menu Program -> "Cancellation
   WhatsApp list" (dialog: each affected person, own mobile, green Open WhatsApp button with the ready-written message)

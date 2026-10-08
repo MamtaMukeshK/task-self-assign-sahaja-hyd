@@ -1,6 +1,7 @@
 # Stage 4 demo videos: narration and captions for approval
 
-_Draft 2026-10-08. **Nothing is recorded until the user approves this text** (SPEC section 5). Telugu and Hindi are
+_**Approved as written by the user on 2026-10-08.** Recording waits until the user has set up the real sheet with
+`followup/SETUP_GUIDE.html` and any differences are fixed (user's choice, 2026-10-08). Telugu and Hindi are
 **not yet checked by a native speaker**; each line has an English back-translation so a reviewer who reads only one
 language can still check the meaning._
 
