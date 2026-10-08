@@ -23,9 +23,10 @@ open(d + 'fastpitch/config_local.json', 'w', encoding='utf-8').write(cfg)
 syn = Synthesizer(tts_checkpoint=d + 'fastpitch/best_model.pth', tts_config_path=d + 'fastpitch/config_local.json',
                   tts_speakers_file=d + 'fastpitch/speakers.pth', vocoder_checkpoint=d + 'hifigan/best_model.pth',
                   vocoder_config=d + 'hifigan/config.json', use_cuda=False)
+import sys; base = sys.argv[1] if len(sys.argv) > 1 else ''   # e.g. 'followup/' for the Follow-up video
 out = {}
-for name, text in json.load(open('te/lines.json', encoding='utf-8')):
+for name, text in json.load(open(base + 'te/lines.json', encoding='utf-8')):
     wav = tidy(syn.tts(text, speaker_name='female'), syn.output_sample_rate)
-    sf.write('te/' + name + '.wav', wav, syn.output_sample_rate)
+    sf.write(base + 'te/' + name + '.wav', wav, syn.output_sample_rate)
     out[name] = round(len(wav) / syn.output_sample_rate, 2)
-json.dump(out, open('te/durations.json', 'w'))
+json.dump(out, open(base + 'te/durations.json', 'w'))

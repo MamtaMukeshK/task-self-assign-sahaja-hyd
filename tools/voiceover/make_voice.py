@@ -7,9 +7,10 @@ cfg = sherpa_onnx.OfflineTtsConfig(model=sherpa_onnx.OfflineTtsModelConfig(kokor
     model=d + 'model.onnx', voices=d + 'voices.bin', tokens=d + 'tokens.txt', data_dir=d + 'espeak-ng-data',
     lexicon=d + 'lexicon-us-en.txt', dict_dir=d + 'dict'), num_threads=4))
 tts = sherpa_onnx.OfflineTts(cfg)
+import sys; base = sys.argv[1] if len(sys.argv) > 1 else ''   # e.g. 'followup/' for the Follow-up video
 out = {}
-for name, text in json.load(open('lines.json')):
+for name, text in json.load(open(base + 'lines.json')):
     a = tts.generate(text, sid=31, speed=0.95)          # 31 = hf_alpha (Indian female), 32 = hf_beta
-    sf.write(name + '.wav', a.samples, a.sample_rate)
+    sf.write(base + name + '.wav', a.samples, a.sample_rate)
     out[name] = round(len(a.samples) / a.sample_rate, 2)
-json.dump(out, open('durations.json', 'w'))
+json.dump(out, open(base + 'durations.json', 'w'))

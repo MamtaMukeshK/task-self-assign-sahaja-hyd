@@ -6,9 +6,10 @@ d = 'vits-piper-hi_IN-priyamvada-medium/'
 cfg = sherpa_onnx.OfflineTtsConfig(model=sherpa_onnx.OfflineTtsModelConfig(vits=sherpa_onnx.OfflineTtsVitsModelConfig(
     model=d + 'hi_IN-priyamvada-medium.onnx', tokens=d + 'tokens.txt', data_dir=d + 'espeak-ng-data'), num_threads=4))
 tts = sherpa_onnx.OfflineTts(cfg)
+import sys; base = sys.argv[1] if len(sys.argv) > 1 else ''   # e.g. 'followup/' for the Follow-up video
 out = {}
-for name, text in json.load(open('hi/lines.json', encoding='utf-8')):
+for name, text in json.load(open(base + 'hi/lines.json', encoding='utf-8')):
     a = tts.generate(text, sid=0, speed=0.95)
-    sf.write('hi/' + name + '.wav', a.samples, a.sample_rate)
+    sf.write(base + 'hi/' + name + '.wav', a.samples, a.sample_rate)
     out[name] = round(len(a.samples) / a.sample_rate, 2)
-json.dump(out, open('hi/durations.json', 'w'))
+json.dump(out, open(base + 'hi/durations.json', 'w'))
