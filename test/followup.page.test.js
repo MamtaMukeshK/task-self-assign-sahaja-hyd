@@ -44,7 +44,7 @@ test('follow-up page: calendar, select + repeat, confirmation, release, 12-hour 
     assert.match(boxes[5], /^Sat\n10\n2 open$/, 'Saturday: the daily and the weekly session both have places');
     assert.match(boxes[7], /^This week\n6\nopen$/, "5 daily (Wed-Sun) + 1 Saturday");
     assert.equal(await p.locator('#calMonth').textContent(), 'October 2026');
-    assert.equal(await p.isVisible('#demoBtn'), false, 'demo button hidden until a video link is set (stage 4)');
+    assert.equal(await p.textContent('#demoBtn'), '▶ Watch the demo', 'demo button shown now that the videos exist (stage 4a)');
     assert.ok(await p.locator('#prevWeek').isDisabled(), 'no going back before this week');
     assert.equal(await p.locator('.dayhead').count(), 14, 'the next 2 weeks are listed');
     assert.match(await p.locator('article[data-id="P1-20261010"]').innerText(), /6:30 PM – 7:30 PM\n1 of 2 left\nAmeerpet · Road 3\nOpen map\nGita · 9345678901/);
@@ -197,6 +197,13 @@ test('follow-up page: register others, ✕ and Release all, My registrations, ca
     await p.waitForSelector('#note.err');
     assert.equal(await p.textContent('#note'), 'यह 168 पंजीकरण हैं (7 लोग x 24 तारीख़ें)। एक बार में अधिकतम 100। कृपया कम तारीख़ें या कम लोग चुनें।');
     assert.equal(await p.textContent('#register'), 'पंजीकरण करें');
+    // Demo button plays the page's language (Hindi here), trying the copies in order (the first one fails here).
+    await p.route('https://cdn.jsdelivr.net/**', r => r.fulfill({ status: 404, body: '' }));
+    await p.route('https://raw.githubusercontent.com/**', r => r.fulfill({ status: 404, body: '' }));
+    assert.equal(await p.textContent('#demoBtn'), '▶ डेमो देखें');
+    await p.click('#demoBtn');
+    await p.waitForFunction(() => /^https:\/\/raw\.githubusercontent\.com\/.*\/docs\/followup\/demo-hi\.mp4$/.test(document.getElementById('demoVideo').src));
+    assert.match(await p.getAttribute('#demoLink', 'href'), /^https:\/\/cdn\.jsdelivr\.net\/gh\/.*@[0-9a-f]{40}\/docs\/followup\/demo-hi\.mp4$/);
     assert.deepEqual(p.errs, []);
   } finally { await browser.close(); }
 });
