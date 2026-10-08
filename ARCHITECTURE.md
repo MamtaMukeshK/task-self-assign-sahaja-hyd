@@ -157,6 +157,7 @@ A separate sheet, Apps Script project and page link; the tour app above is uncha
 build choices: `docs/followup/STAGE1_PLAN.md`; state and server functions: `resume.md`. Server: `followup/Code.gs`
 (stage 1 built); setup guide: `followup/SETUP_GUIDE.html` (stage 3, with the organiser's WhatsApp-list menu); page: `followup/Index.html` (stages 2a and 2b built 2026-10-08: calendar, list, select, repeat, confirmation, release,
 register others, My Registrations, the cancellation notice, Telugu/Hindi). Data: "Program plan" tab (one line per regular
-session, permanent Line ID) -> generator -> "Slots" tab (one row per date, found by Slot ID, Volunteers cell in the
+session, one value per column, permanent Line ID; titles since 2026-10-08: Day of the Week, Start Time, End Time,
+Institution Name, Volunteers Needed, Principal Contact, Sahaji Contact) -> generator -> "Slots" tab (one row per date, found by Slot ID, Volunteers cell in the
 same format as the tour's speaker cell). Same rules as section 6, plus: release closes 12 hours before the start;
 the generator never changes past dates or dates with volunteers.
