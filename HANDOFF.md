@@ -19,7 +19,7 @@ _Last updated: 2026-10-07 (Follow-up Program stage 1 built: server + tests in `f
   1L1A_FmlOukDZMTnOXa73RlzQfdaHS9Zg, Telugu 1ut0WKW9gVrnG0qRQltc7qC3P2O5GCybq, Hindi 1Hf3clK7tYRimgm3ispbHwCw4RvTKPJIM.
   The user replaces a Drive file via Drive -> Manage versions after every re-record (the link stays the same).
   The GitHub copies after each Drive link are only used if that Drive link is removed.
-- **Tests:** `cd test && npm install && npm test` (86 tests: 77 tour page + 8 Follow-up server + 1 Follow-up page; browser tests need Chromium at
+- **Tests:** `cd test && npm install && npm test` (87 tests: 77 tour page + 8 Follow-up server + 2 Follow-up page; browser tests need Chromium at
   `/opt/pw-browsers/chromium`). Rebuild the guide after any code change: `python3 tools/build_guide.py`.
   Bump `VERSION` in `Code.gs` (and the matching string in `test/code.test.js`) for every page change.
 - **Re-record the demo:** in `tools/`: `npm i playwright-core ffmpeg-static @fontsource/dm-sans
@@ -311,6 +311,13 @@ _Last updated: 2026-10-07 (Follow-up Program stage 1 built: server + tests in `f
   if not, the page errors loudly rather than guessing.
 
 ## Next step
+- **2026-10-08: Follow-up Program stage 2b BUILT (not run on real Google).** `followup/Index.html` (VERSION
+  followup-2026-10-08.2): "Who" button (speaker list with first-time mobile box, typed others, Include me too) -> one
+  Register books the group on every chosen date; confirmation lists each person; ✕ per person you registered and
+  "Release all N for this date"; My registrations (count, next date, Show); red cancellation notice at the top (names
+  the people you registered there); language switch en/te/hi (Telugu/Hindi NOT checked by native speakers; shared
+  phrases copied from the tour page); server messages translated. 87 tests. **Next: the user looks at 2b, then stage 3**
+  (WhatsApp list screen + setup guide; plan in `resume.md` section 3).
 - **2026-10-08: Follow-up Program stage 2a BUILT (the volunteers' page; English only; not run on real Google).**
   `followup/Index.html` + `doGet` in `followup/Code.gs` (VERSION followup-2026-10-08.1): one-week calendar (Mon-Thu /
   Fri-Sun + week total, arrows move a week), list of the next 2 weeks + "Show 2 more weeks", cards (time, centre,

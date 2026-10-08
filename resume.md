@@ -1,6 +1,6 @@
 # Resume here
 
-_Last updated: 2026-10-08, end of the session that built Follow-up Program stage 2a (stage 1 the day before). Read this first, then `HANDOFF.md`
+_Last updated: 2026-10-08, end of the session that built Follow-up Program stages 2a and 2b (stage 1 the day before). Read this first, then `HANDOFF.md`
 (full dated log) and, for design work, `ARCHITECTURE.md` and `docs/followup/SPEC.md`. Update this file at the end of
 every session: replace "Where things stand" and "Next steps", and add to "Learnings" (never delete a learning)._
 
@@ -11,9 +11,10 @@ every session: replace "Where things stand" and "Next steps", and add to "Learni
 | Follow-up Program design | Final: `docs/followup/SPEC.md` + mock-up `docs/followup/mockup.html`. Build plan with the choices the spec left open: `docs/followup/STAGE1_PLAN.md`. |
 | Follow-up stage 1 (server) | **Built and tested**, not run on real Google: `followup/Code.gs` + `test/followup.test.js`. |
 | Follow-up stage 2a (page) | **Built and tested** in a browser against the simulated sheet, not run on real Google: `followup/Index.html` + `doGet` + `test/followup.page.test.js`. One-week calendar, date list (2 weeks, "Show 2 more weeks"), cards, select several dates, repeat, confirmation list, Release, 12-hour rule, phone/tablet/laptop. English only. |
-| Follow-up stages 2b, 3, 4, 4b | Not started (register others + My Registrations + cancellation notice + Telugu/Hindi; cancellations screen + setup guide; demo videos incl. the Ongoing programs videos; organiser video). |
+| Follow-up stage 2b (page) | **Built and tested** (same limits as 2a): "Who" button (speaker list with first-time mobile, typed others, Include me too), group confirmation, ✕ per person you registered, "Release all N for this date", My registrations (count + next date + Show), red cancellation notice (names the people you registered), language switch with Telugu and Hindi (**not checked by native speakers**), server messages translated. Page version followup-2026-10-08.2. |
+| Follow-up stages 3, 4, 4b | Not started (organiser WhatsApp list screen + setup guide for the new sheet; demo videos incl. the Ongoing programs videos; organiser video). |
 | Branch | `claude/vibrant-planck-gsxjay`, pushed, up to date. No pull request (the user has not asked for one). |
-| Tests | `cd test && npm install && npm test`: 86 tests (77 tour page + 8 Follow-up server + 1 Follow-up page), all passing on 2026-10-08. |
+| Tests | `cd test && npm install && npm test`: 87 tests (77 tour page + 8 Follow-up server + 2 Follow-up page), all passing on 2026-10-08. |
 
 ## 2. Waiting on the user (do not build past these without an answer)
 1. ~~Confirm the 5 stage-1 assumptions~~ **All 5 confirmed by the user 2026-10-08** (details in `docs/followup/STAGE1_PLAN.md`):
@@ -22,21 +23,23 @@ every session: replace "Where things stand" and "Next steps", and add to "Learni
    c. Empty "Until" = keep 12 weeks of dates ahead, topped up every Sunday; never more than 1 year ahead.
    d. "Release all N" also releases the registrar if they are on that date.
    e. Times typed without AM/PM are 24-hour; the time columns display AM/PM so mistakes show at once.
-2. Stage 2 was split by the user (2026-10-08) into 2a (built) and 2b, each under 100,000 tokens. **Wait for the user to
-   look at 2a and say go before building 2b.**
+2. Stage 2 (split by the user into 2a and 2b) is built. **Wait for the user to look at 2b and say go before stage 3.**
+   Ideally a native Telugu and a native Hindi speaker check the page's wording (`TEXT.te` / `TEXT.hi` in
+   `followup/Index.html`).
 3. Older open items in `HANDOFF.md` "Next step": deploy tour version 2026-10-06.4; (demo videos for Ongoing programs: moved to stage 4 by the user 2026-10-08);
    native-speaker check of Telugu/Hindi; whether the built-in first-day data reaches the live tour page.
 
 ## 3. Next steps (in order)
-1. The user looks at stage 2a (phone screenshot in the chat; they can also paste `followup/Code.gs` + `Index.html`
-   into a test copy of a new sheet and run Program -> Set up the sheet, though the setup guide only comes in stage 3).
-2. Stage 2b, in `followup/Index.html` (all wording is in its `TEXT.en` table; add `te`/`hi` blocks): "Who: Just me"
-   button in the bottom bar opening the speaker list / name+mobile box / "Include me too" (copy the tour page's
-   picker); pass othersText/includeSelf to `registerSlots` (the confirmation list already shows every person);
-   per-person ✕ (`releaseSlot(id, name, person)`) and "Release all N for this date" (`releaseGroup`); My
-   Registrations summary and the red cancellation notice at the top, both from `getSlots(...).mine`; language switch
-   and translated server messages (the tour page's `SERVER_TEXT` regex approach). Extend `test/followup.page.test.js`.
-   Server functions the page uses (all in `followup/Code.gs`; `doGet` already serves the page with the first 3 weeks):
+1. The user looks at stage 2b (phone screenshot in the chat). They can also try it for real by pasting
+   `followup/Code.gs` + `followup/Index.html` into a new sheet's Apps Script, running Program -> Set up the sheet and
+   deploying as a web app, though the step-by-step setup guide only comes in stage 3.
+2. Stage 3 (estimate 25,000-40,000 tokens, moderate confidence): sheet menu item "Program -> Cancellation WhatsApp
+   list" opening a dialog (HtmlService) built server-side from `cancellationList_()` (one tap per person opens
+   WhatsApp with the message), and a "Notices sent" button that calls a public wrapper of `markNoticeSent_` which
+   first checks it runs from the sheet (decide how: e.g. `SpreadsheetApp.getUi()` throws outside the sheet -
+   moderate confidence, verify on real Google). Then a setup guide for the new sheet (like `tools/build_guide.py` ->
+   `SETUP_GUIDE.html`, carrying both followup files with Copy buttons) - this is also the first real Google check.
+   Server functions the page uses, for reference (all in `followup/Code.gs`; `doGet` serves the first 3 weeks):
    - `getSlots(from, to, name)` -> `{from, to, today, now, slots[], mine[], speakers[], version}`; each slot
      `{id, line, date 'yyyy-MM-dd', day 0-6, start/end 'HH:mm', centre, address, map, contact, places, cancelled, notes,
      people[{name, phone, by}], remaining, over, started, ended, releaseClosed}`. `mine` = every future date where the
@@ -60,8 +63,10 @@ every session: replace "Where things stand" and "Next steps", and add to "Learni
   'yyyy-MM-dd' keys and "today"/"now" come from the server, never the browser clock). Logo and font link were copied
   from the tour `Index.html` by a script (the logo is a long data address; do not read it into context).
 - `test/followup.test.js`: `setup(planLines)` builds a Program plan + empty Slots; "now" is Wed 7 Oct 2026 05:00.
-- `test/followup.page.test.js`: one browser test of the page (calendar, repeat, confirmation, release, 12-hour rule,
-  widths 320/390/1280). `SHOT=<path> npm test` also saves a phone screenshot for a visual check.
+- `test/followup.page.test.js`: two browser tests: (1) calendar, repeat, confirmation, release, 12-hour rule, widths
+  320/390/1280; (2) register others, ✕, Release all, My registrations, cancellation notice, Telugu/Hindi + a translated
+  server message. Helper `openPage(browser, gs, width, name, mobile)` opens the page with a remembered name - use it
+  for new tests. `SHOT=<path>` / `SHOT2=<path>` save phone screenshots for a visual check.
 - `test/harness.js`: `load(sheets, now, 'followup/Code.gs')` loads the new server; stand-ins added this session:
   `PropertiesService`, `ScriptApp` triggers (`ctx._triggers`), `getUi().alert` (`ctx._alerts`), dropdown builder,
   `deleteRow`, `insertRowsAfter`/`getMaxRows`, `Range.sort`, `setFrozenRows`, `setFontWeight`, `setNotes`.
@@ -113,5 +118,12 @@ every session: replace "Where things stand" and "Next steps", and add to "Learni
 - Card grid `minmax(min(340px, 100%), 1fr)` gives 3 columns at 1280 px, 2 on tablets, 1 on phones, and never overflows
   a 320 px phone; plain `minmax(300px, 1fr)` gave 4 columns on a laptop.
 
-**Stage 2a cost** about 60,000 tokens (estimate for all of stage 2: 60,000-85,000), helped by reading only the needed
+- Reuse the tour tests' steps (the user's request 2026-10-08): copying their flow and assertion style for "register
+  others" and "language switch" made the 2b test quick to write. Same for wording: the tour page's Telugu/Hindi for
+  shared phrases was pulled out of its `TEXT` table by a script, so both pages say the same thing.
+- Playwright `check()` re-finds its element after the click: a locator like "the input in Meena's row" breaks once the
+  page adds a mobile box to that row; target `input[type=checkbox]`.
+- Ticked speakers stay chosen after a booking (the group can book more dates); tests that book again must count them.
+
+**Stage 2b cost** about 65,000 tokens. **Stage 2a cost** about 60,000 tokens (estimate for all of stage 2: 60,000-85,000), helped by reading only the needed
 parts of the tour `Index.html` with grep/sed and writing the page in one pass from the agreed mock-up.
