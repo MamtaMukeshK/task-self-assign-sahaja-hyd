@@ -492,14 +492,14 @@ test('demo video button: prominent; opens the Drive video for the page language 
     await p.waitForFunction(() => /^https:\/\/raw\.githubusercontent\.com\/.*\/docs\/demo\.mp4$/.test(document.getElementById('demoVideo').src));
     await Promise.race([rawHit, new Promise(res => setTimeout(res, 8000))]);
     assert.deepEqual([...new Set(hits)], ['jsdelivr', 'raw'], 'tried the first copy, then the second');
-    assert.match(await p.getAttribute('#demoLink', 'href'), /^https:\/\/cdn\.jsdelivr\.net\/gh\/MamtaMukeshK\/task-self-assign-sahaja-hyd@[0-9a-f]{40}\/docs\/demo\.mp4$/);
+    assert.match(await p.getAttribute('#demoLink', 'href'), /^https:\/\/cdn\.jsdelivr\.net\/gh\/csreenath-rgb\/program-planner-sahaja-hyd@[0-9a-f]{40}\/docs\/demo\.mp4$/);
     assert.equal(await p.getAttribute('#demoVideo', 'playsinline'), '', 'plays inline on iPhones');
     await p.keyboard.press('Escape');
     assert.equal(await p.isVisible('#demoBox'), false);
     await p.selectOption('#lang', 'hi');
     await p.click('#demoBtn');
     await p.waitForFunction(() => /^https:\/\/raw\.githubusercontent\.com\/.*\/docs\/demo-hi\.mp4$/.test(document.getElementById('demoVideo').src));
-    assert.match(await p.getAttribute('#demoLink', 'href'), /^https:\/\/cdn\.jsdelivr\.net\/gh\/MamtaMukeshK\/task-self-assign-sahaja-hyd@[0-9a-f]{40}\/docs\/demo-hi\.mp4$/);
+    assert.match(await p.getAttribute('#demoLink', 'href'), /^https:\/\/cdn\.jsdelivr\.net\/gh\/csreenath-rgb\/program-planner-sahaja-hyd@[0-9a-f]{40}\/docs\/demo-hi\.mp4$/);
     await p.click('#demoClose');
     assert.equal(await p.isVisible('#demoBox'), false);
     await p.selectOption('#lang', 'te');
