@@ -81,14 +81,30 @@
   #bar select { font:inherit; padding:6px; border-radius:8px; border:1px solid var(--line); max-width:100%; }
   #bar #register { margin-left:auto; font-weight:700; padding:10px 22px; }
   /* Confirmation list before anything is written. */
-  #confirm { position:fixed; inset:0; z-index:40; background:rgba(10,25,40,.6); display:flex; align-items:center; justify-content:center; padding:12px; }
-  #confirm[hidden] { display:none; }
-  #confirmInner { background:#fff; border-radius:14px; width:min(560px, 100%); max-height:88vh; overflow:auto; padding:16px 18px; }
-  #confirmInner h2 { margin:0 0 8px; font:400 26px/1.2 'Instrument Serif', serif; color:var(--navy); }
+  #confirm, #whoBox { position:fixed; inset:0; z-index:40; background:rgba(10,25,40,.6); display:flex; align-items:center; justify-content:center; padding:12px; }
+  #confirm[hidden], #whoBox[hidden] { display:none; }
+  #confirmInner, #whoInner { background:#fff; border-radius:14px; width:min(560px, 100%); max-height:88vh; overflow:auto; padding:16px 18px; }
+  #confirmInner h2, #whoInner h2 { margin:0 0 8px; font:400 26px/1.2 'Instrument Serif', serif; color:var(--navy); }
   #confirmList > div { padding:8px 0; border-top:1px solid var(--line); }
   #confirmList .who { margin-left:12px; }
   .ok { color:#1e7a3a; font-weight:700; } .warn { color:var(--err); font-weight:700; } .skip { color:var(--amber); font-weight:700; }
   #confirmBtns { display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+  #alerts .alert { margin:0 0 10px; padding:10px 12px; border-radius:10px; background:#fde7e5; color:var(--err); font-weight:700; border:2px solid var(--err); }
+  #mineBox { margin:0 0 14px; padding:10px 12px; border-radius:10px; background:var(--mine); border:1px solid #bfe0c9; font-size:17px; }
+  #mineBox[hidden] { display:none; }
+  #mineBox button { margin-left:8px; padding:4px 12px; }
+  button.x { padding:0 8px; margin-left:8px; background:#fff; color:var(--err); border-color:var(--err); font-size:14px; line-height:1.6; }
+  button.warn { background:#fff; color:var(--err); border-color:var(--err); }
+  header select { font:inherit; padding:5px; border-radius:8px; border:1px solid var(--line); }
+  #whoInner > label { display:block; margin:10px 0; font-size:17px; }
+  #whoInner input[type=checkbox] { width:22px; height:22px; vertical-align:middle; margin:0 6px 0 0; }
+  #picker summary { cursor:pointer; padding:6px 10px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--navy); }
+  #pickSearch { display:block; width:100%; margin:0; padding:6px 8px; font:inherit; border:1px solid var(--line); }
+  #pickList { max-height:240px; overflow:auto; border:1px solid var(--line); border-top:0; padding:4px 0; }
+  #pickList label { display:block; padding:4px 10px; }
+  #pickList label.nomobile { color:var(--muted); }
+  #pickList input.firstmobile { width:150px; margin-left:8px; padding:2px 6px; font:inherit; }
+  #others { display:block; width:100%; min-height:96px; margin-top:6px; padding:6px 8px; font:inherit; border:1px solid var(--line); border-radius:8px; }
   footer { margin-top:28px; color:var(--muted); font-size:13px; }
 </style>
 </head>
@@ -98,11 +114,16 @@
   <div><h1 data-t="title">Follow-up Program</h1><span id="brandSub" data-t="subtitle">Sign up for sessions</span></div>
 </div>
 <header>
+  <label><span data-t="language">Language</span> <select id="lang">
+    <option value="en">English</option><option value="te">తెలుగు</option><option value="hi">हिन्दी</option>
+  </select></label>
   <label><span data-t="yourName">Your name</span> <input id="name" autocomplete="off" list="speakerNames"><datalist id="speakerNames"></datalist></label>
   <label><span data-t="mobile">Mobile</span> <input id="mobile" autocomplete="tel" inputmode="tel" maxlength="16"></label>
   <label><input type="checkbox" id="openOnly"> <span data-t="openOnly">Open only</span></label>
 </header>
 <p id="note" role="status"></p>
+<div id="alerts" role="alert"></div>
+<div id="mineBox" hidden></div>
 <section id="cal" aria-label="Calendar">
   <div id="calHead">
     <button id="prevWeek" class="light" data-ta="prevWeek" aria-label="Previous week">‹</button>
@@ -116,6 +137,7 @@
 <div id="bar" hidden>
   <span id="barCount"></span>
   <button id="clear" class="light" data-t="clear">Clear</button>
+  <button id="who" class="light"></button>
   <select id="repeat" aria-label="Repeat"></select>
   <button id="register" data-t="register">Register</button>
 </div>
@@ -124,6 +146,15 @@
     <h2 id="confirmTitle" data-t="checkTitle">Please check</h2>
     <div id="confirmList"></div>
     <div id="confirmBtns"><button id="confirmBack" class="light" data-t="back">Back</button><button id="confirmGo" data-t="confirm">Confirm</button></div>
+  </div>
+</div>
+<div id="whoBox" hidden role="dialog" aria-modal="true" aria-labelledby="whoTitle">
+  <div id="whoInner">
+    <h2 id="whoTitle" data-t="whoTitle">Who is going?</h2>
+    <label><input type="checkbox" id="includeMe" checked> <span data-t="includeMe">Include me too</span></label>
+    <details id="picker"><summary id="pickSummary"></summary><input id="pickSearch" data-tp="searchNames"><div id="pickList"></div></details>
+    <label><span data-t="othersLabel">Register others</span><textarea id="others" data-tp="othersPh"></textarea></label>
+    <div id="confirmBtns"><button id="whoDone" data-t="whoDone">Done</button></div>
   </div>
 </div>
 <footer id="foot"></footer>
@@ -147,8 +178,54 @@
     stBooked: 'booked', stOver: 'booked, over the limit', stAlready: 'already registered', stSkipped: 'skipped: {0}',
     rsCancelled: 'cancelled', rsStarted: 'already started', rsClosed: 'closed', rsFull: 'full', rsClash: 'time clash with {0}',
     nothing: 'Nothing can be booked on these dates.', done: 'Registered: {0} booking(s).', doneSkip: 'Skipped: {0}.',
-    released: 'Released: {0}.', sheetTime: 'Sheet time: {0}'
-  } };
+    released: 'Released: {0}.', sheetTime: 'Sheet time: {0}',
+    "language": "Language",
+    "includeMe": "Include me too",
+    "chooseSpeakers": "Choose speakers ({0} selected)",
+    "searchNames": "Search names",
+    "othersPh": "One person per line: name, then 10-digit mobile\nRavi Kumar 9123456789\nAsha 9000000002",
+    "noMobileYet": "(no mobile saved yet)",
+    "mobile10Ph": "10-digit mobile",
+    "noMatch": "No match.",
+    "noSpeakers": "No speakers saved yet.",
+    "whoMe": "Who: Just me ▾",
+    "whoN": "Who: {0} people ▾",
+    "whoTitle": "Who is going?",
+    "othersLabel": "Register others",
+    "whoDone": "Done",
+    "groupSel": "{0} people · {1} selected",
+    "removeX": "Remove {0}",
+    "releaseAll": "Release all {0} for this date",
+    "mineTitle": "My registrations",
+    "mineCount": "{0} date(s).",
+    "mineNext": "Next: {0}",
+    "show": "Show",
+    "youOnly": "you",
+    "youPlus": "you + {0} others",
+    "othersOnly": "{0} people you registered",
+    "openWord": "open",
+    "or": "or",
+    "cancelNotice": "⚠ Cancelled: {0}. Please don't go. Your other dates are unchanged.",
+    "cancelOthers": "You registered {0} for it: please tell them.",
+    "lineBad": "Line {0} of \"Register others\" should be a name then a 10-digit mobile, like \"Ravi 9123456789\".",
+    "nobody": "Nobody to register: tick \"Include me too\" or add people under \"Register others\".",
+    "srvBusy": "Lots of people are registering right now. Please try again.",
+    "srvOnlyRemove": "Only {0} can remove {1}.",
+    "srvMax": "Please register at most {0} people at a time.",
+    "srvNameLong": "Name is too long.",
+    "srvNameStart": "Name cannot start with = + - or @.",
+    "srvLineMobile": "Line {0} of \"Register others\" ({1}): please enter a 10-digit mobile number.",
+    "srvPick": "Please pick at least one date.",
+    "srvGone": "That date is no longer in the list. Please refresh the page.",
+    "srvTooMany": "That is {0} bookings ({1} people x {2} dates). The most at one time is {3}. Please choose fewer dates or people.",
+    "srvReleaseClosed": "Release is closed: there are under {0} hours to go. Please call the organiser{1}.",
+    "srvNotOnMe": "Your name is not on this date.",
+    "srvNotOn": "{0} is not on this date.",
+    "srvNobodyRelease": "You have nobody to release on this date."
+  },
+  // Telugu and Hindi: not yet checked by native speakers.
+  te: {"title": "ఫాలో-అప్ ప్రోగ్రామ్", "subtitle": "సెషన్‌లకు పేరు నమోదు చేయండి", "yourName": "మీ పేరు", "mobile": "మొబైల్", "openOnly": "ఖాళీలు ఉన్నవి మాత్రమే", "prevWeek": "గత వారం", "nextWeek": "తర్వాతి వారం", "more": "ఇంకా 2 వారాలు చూపించండి", "clear": "ఎంపిక తీసేయండి", "register": "నమోదు చేయండి", "checkTitle": "దయచేసి సరిచూడండి", "back": "వెనక్కి", "confirm": "నిర్ధారించండి", "loading": "లోడ్ అవుతోంది…", "days": ["ఆది", "సోమ", "మంగళ", "బుధ", "గురు", "శుక్ర", "శని"], "months": ["జన", "ఫిబ్ర", "మార్చి", "ఏప్రి", "మే", "జూన్", "జులై", "ఆగ", "సెప్టెం", "అక్టో", "నవం", "డిసెం"], "monthsLong": ["జనవరి", "ఫిబ్రవరి", "మార్చి", "ఏప్రిల్", "మే", "జూన్", "జులై", "ఆగస్టు", "సెప్టెంబర్", "అక్టోబర్", "నవంబర్", "డిసెంబర్"], "today": "ఈరోజు", "past": "గడిచింది", "open": "{0} ఖాళీ", "openWord": "ఖాళీ", "full": "నిండింది", "you": "● మీరు", "thisWeek": "ఈ వారం", "left": "{1}లో {0} ఖాళీ", "fullBadge": "నిండింది", "overBy": "{0} ఎక్కువ", "closedBadge": "మూసివేశారు", "openMap": "మ్యాప్ తెరవండి", "via": "{0} ద్వారా", "select": "ఎంచుకోండి", "selected": "ఎంచుకున్నారు ✓", "release": "పేరు తీసేయండి", "releaseClosed": "పేరు తీసేయడం మూసివేశారు - 12 గంటల కంటే తక్కువ ఉంది.", "call": "దయచేసి {0}కి ఫోన్ చేయండి", "cancelled": "రద్దు చేశారు", "ended": "ముగిసింది", "started": "మొదలైంది", "closed": "మూసివేశారు", "fullTag": "నిండింది", "noSessions": "ఈ తేదీల్లో సెషన్‌లు లేవు.", "countSel": "{0} ఎంచుకున్నారు", "rep1d": "ఈ తేదీ మాత్రమే", "rep4": "ఇదే సెషన్, తర్వాతి 4 తేదీలు", "rep8": "ఇదే సెషన్, తర్వాతి 8 తేదీలు", "rep1day": "ఈ రోజు మాత్రమే", "rep7": "ఇదే సెషన్, తర్వాతి 7 రోజులు", "rep14": "ఇదే సెషన్, తర్వాతి 14 రోజులు", "repAll": "ఇదే సెషన్, మొత్తం ప్రోగ్రామ్", "needName": "దయచేసి ముందుగా మీ పేరు ఇవ్వండి.", "needMobile": "దయచేసి 10 అంకెల మొబైల్ నంబర్ ఇవ్వండి.", "youWord": "మీరు", "stBooked": "నమోదైంది", "stOver": "నమోదైంది, పరిమితి దాటింది", "stAlready": "ఇప్పటికే నమోదై ఉంది", "stSkipped": "వదిలేశాం: {0}", "rsCancelled": "రద్దు చేశారు", "rsStarted": "ఇప్పటికే మొదలైంది", "rsClosed": "మూసివేశారు", "rsFull": "నిండింది", "rsClash": "{0}తో సమయం కలుస్తోంది", "nothing": "ఈ తేదీల్లో ఏదీ నమోదు చేయలేము.", "done": "నమోదైంది: {0}.", "doneSkip": "వదిలేసినవి: {0}.", "released": "పేరు తీసేశాం: {0}.", "sheetTime": "షీట్ సమయం: {0}", "language": "భాష", "includeMe": "నన్ను కూడా చేర్చండి", "chooseSpeakers": "వక్తలను ఎంచుకోండి ({0} ఎంచుకున్నారు)", "searchNames": "పేర్లు వెతకండి", "othersPh": "ప్రతి లైన్‌లో ఒకరు: పేరు, తర్వాత 10 అంకెల మొబైల్\nRavi Kumar 9123456789\nAsha 9000000002", "noMobileYet": "(మొబైల్ ఇంకా సేవ్ కాలేదు)", "mobile10Ph": "10 అంకెల మొబైల్", "noMatch": "సరిపోలేదు.", "noSpeakers": "ఇంకా వక్తలు సేవ్ కాలేదు.", "whoMe": "ఎవరు: నేను మాత్రమే ▾", "whoN": "ఎవరు: {0} మంది ▾", "whoTitle": "ఎవరు వెళ్తున్నారు?", "othersLabel": "ఇతరులను నమోదు చేయండి", "whoDone": "సరే", "groupSel": "{0} మంది · {1} ఎంచుకున్నారు", "removeX": "{0}ను తీసేయండి", "releaseAll": "ఈ తేదీకి {0} మంది పేర్లూ తీసేయండి", "mineTitle": "నా నమోదులు", "mineCount": "{0} తేదీలు.", "mineNext": "తర్వాతిది: {0}", "show": "చూపించండి", "youOnly": "మీరు", "youPlus": "మీరు + ఇంకా {0} మంది", "othersOnly": "మీరు నమోదు చేసిన {0} మంది", "or": "లేదా", "cancelNotice": "⚠ రద్దు చేశారు: {0}. దయచేసి వెళ్ళకండి. మీ ఇతర తేదీలు మారలేదు.", "cancelOthers": "దీనికి మీరు {0}ను నమోదు చేశారు: దయచేసి వారికి చెప్పండి.", "lineBad": "\"ఇతరులను నమోదు చేయండి\"లో లైన్ {0}: పేరు తర్వాత 10 అంకెల మొబైల్ ఉండాలి, ఉదా. \"Ravi 9123456789\".", "nobody": "నమోదు చేయడానికి ఎవరూ లేరు: \"నన్ను కూడా చేర్చండి\" ఎంచుకోండి లేదా \"ఇతరులను నమోదు చేయండి\"లో పేర్లు చేర్చండి.", "srvBusy": "ఇప్పుడు చాలా మంది ఒకేసారి నమోదు చేస్తున్నారు. దయచేసి మళ్ళీ ప్రయత్నించండి.", "srvOnlyRemove": "{0} మాత్రమే {1}ను తొలగించగలరు.", "srvMax": "ఒకేసారి గరిష్ఠంగా {0} మందిని నమోదు చేయండి.", "srvNameLong": "పేరు చాలా పొడవుగా ఉంది.", "srvNameStart": "పేరు = + - లేదా @ తో మొదలవకూడదు.", "srvLineMobile": "\"ఇతరులను నమోదు చేయండి\"లో లైన్ {0} ({1}): దయచేసి 10 అంకెల మొబైల్ నంబర్ ఇవ్వండి.", "srvPick": "దయచేసి కనీసం ఒక తేదీ ఎంచుకోండి.", "srvGone": "ఆ తేదీ ఇప్పుడు జాబితాలో లేదు. దయచేసి పేజీని రిఫ్రెష్ చేయండి.", "srvTooMany": "ఇవి {0} నమోదులు ({1} మంది x {2} తేదీలు). ఒకేసారి గరిష్ఠంగా {3}. దయచేసి తక్కువ తేదీలు లేదా తక్కువ మందిని ఎంచుకోండి.", "srvReleaseClosed": "పేరు తీసేయడం మూసివేశారు: {0} గంటల కంటే తక్కువ సమయం ఉంది. దయచేసి నిర్వాహకులకు ఫోన్ చేయండి{1}.", "srvNotOnMe": "ఈ తేదీలో మీ పేరు లేదు.", "srvNotOn": "ఈ తేదీలో {0} పేరు లేదు.", "srvNobodyRelease": "ఈ తేదీలో మీరు తీసేయగల పేర్లు లేవు."},
+  hi: {"title": "फ़ॉलो-अप प्रोग्राम", "subtitle": "सत्रों के लिए पंजीकरण करें", "yourName": "आपका नाम", "mobile": "मोबाइल", "openOnly": "केवल खाली स्थान वाले", "prevWeek": "पिछला सप्ताह", "nextWeek": "अगला सप्ताह", "more": "2 सप्ताह और दिखाएँ", "clear": "चयन हटाएँ", "register": "पंजीकरण करें", "checkTitle": "कृपया जाँच लें", "back": "वापस", "confirm": "पक्का करें", "loading": "लोड हो रहा है…", "days": ["रवि", "सोम", "मंगल", "बुध", "गुरु", "शुक्र", "शनि"], "months": ["जन", "फ़र", "मार्च", "अप्रै", "मई", "जून", "जुला", "अग", "सित", "अक्टू", "नव", "दिस"], "monthsLong": ["जनवरी", "फ़रवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"], "today": "आज", "past": "बीता हुआ", "open": "{0} खाली", "openWord": "खाली", "full": "भरा", "you": "● आप", "thisWeek": "इस सप्ताह", "left": "{1} में से {0} खाली", "fullBadge": "भरा", "overBy": "{0} ज़्यादा", "closedBadge": "बंद", "openMap": "नक्शा खोलें", "via": "{0} द्वारा", "select": "चुनें", "selected": "चुना गया ✓", "release": "नाम हटाएँ", "releaseClosed": "नाम हटाना बंद - 12 घंटे से कम बचे हैं।", "call": "कृपया {0} को फ़ोन करें", "cancelled": "रद्द", "ended": "समाप्त", "started": "शुरू हो गया", "closed": "बंद", "fullTag": "भरा", "noSessions": "इन तारीख़ों में कोई सत्र नहीं।", "countSel": "{0} चुने गए", "rep1d": "केवल यह तारीख़", "rep4": "यही सत्र, अगली 4 तारीख़ें", "rep8": "यही सत्र, अगली 8 तारीख़ें", "rep1day": "केवल यह दिन", "rep7": "यही सत्र, अगले 7 दिन", "rep14": "यही सत्र, अगले 14 दिन", "repAll": "यही सत्र, पूरा प्रोग्राम", "needName": "कृपया पहले अपना नाम लिखें।", "needMobile": "कृपया 10 अंकों का मोबाइल नंबर डालें।", "youWord": "आप", "stBooked": "पंजीकृत", "stOver": "पंजीकृत, सीमा से ज़्यादा", "stAlready": "पहले से पंजीकृत", "stSkipped": "छोड़ा गया: {0}", "rsCancelled": "रद्द", "rsStarted": "पहले ही शुरू हो गया", "rsClosed": "बंद", "rsFull": "भरा", "rsClash": "{0} से समय टकराता है", "nothing": "इन तारीख़ों पर कुछ भी पंजीकृत नहीं हो सकता।", "done": "पंजीकृत: {0}।", "doneSkip": "छोड़े गए: {0}।", "released": "नाम हटाया गया: {0}।", "sheetTime": "शीट का समय: {0}", "language": "भाषा", "includeMe": "मुझे भी शामिल करें", "chooseSpeakers": "वक्ता चुनें ({0} चुने गए)", "searchNames": "नाम खोजें", "othersPh": "हर पंक्ति में एक व्यक्ति: नाम, फिर 10 अंकों का मोबाइल\nRavi Kumar 9123456789\nAsha 9000000002", "noMobileYet": "(मोबाइल अभी सहेजा नहीं गया)", "mobile10Ph": "10 अंकों का मोबाइल", "noMatch": "कोई मेल नहीं मिला।", "noSpeakers": "अभी कोई वक्ता सहेजा नहीं गया।", "whoMe": "कौन: केवल मैं ▾", "whoN": "कौन: {0} लोग ▾", "whoTitle": "कौन जा रहा है?", "othersLabel": "दूसरों का पंजीकरण करें", "whoDone": "ठीक है", "groupSel": "{0} लोग · {1} चुने गए", "removeX": "{0} को हटाएँ", "releaseAll": "इस तारीख़ के सभी {0} नाम हटाएँ", "mineTitle": "मेरे पंजीकरण", "mineCount": "{0} तारीख़ें।", "mineNext": "अगला: {0}", "show": "दिखाएँ", "youOnly": "आप", "youPlus": "आप + {0} और", "othersOnly": "आपके पंजीकृत {0} लोग", "or": "या", "cancelNotice": "⚠ रद्द: {0}। कृपया न जाएँ। आपकी बाकी तारीख़ें नहीं बदलीं।", "cancelOthers": "इसके लिए आपने {0} का पंजीकरण किया था: कृपया उन्हें बता दें।", "lineBad": "\"दूसरों का पंजीकरण करें\" की पंक्ति {0} में पहले नाम और फिर 10 अंकों का मोबाइल होना चाहिए, जैसे \"Ravi 9123456789\"।", "nobody": "पंजीकरण के लिए कोई नहीं है: \"मुझे भी शामिल करें\" चुनें या \"दूसरों का पंजीकरण करें\" में लोग जोड़ें।", "srvBusy": "अभी बहुत से लोग एक साथ पंजीकरण कर रहे हैं। कृपया फिर से कोशिश करें।", "srvOnlyRemove": "केवल {0} ही {1} को हटा सकते हैं।", "srvMax": "एक बार में अधिकतम {0} लोगों का पंजीकरण करें।", "srvNameLong": "नाम बहुत लंबा है।", "srvNameStart": "नाम = + - या @ से शुरू नहीं हो सकता।", "srvLineMobile": "\"दूसरों का पंजीकरण करें\" की पंक्ति {0} ({1}): कृपया 10 अंकों का मोबाइल नंबर डालें।", "srvPick": "कृपया कम से कम एक तारीख़ चुनें।", "srvGone": "वह तारीख़ अब सूची में नहीं है। कृपया पेज रिफ़्रेश करें।", "srvTooMany": "यह {0} पंजीकरण हैं ({1} लोग x {2} तारीख़ें)। एक बार में अधिकतम {3}। कृपया कम तारीख़ें या कम लोग चुनें।", "srvReleaseClosed": "नाम हटाना बंद: {0} घंटे से कम बचे हैं। कृपया आयोजक को फ़ोन करें{1}।", "srvNotOnMe": "इस तारीख़ पर आपका नाम नहीं है।", "srvNotOn": "इस तारीख़ पर {0} का नाम नहीं है।", "srvNobodyRelease": "इस तारीख़ पर हटाने के लिए आपका कोई नाम नहीं है।"} };
   var lang = 'en';
   function t(key) {
     var s = (TEXT[lang] && TEXT[lang][key] != null ? TEXT[lang][key] : TEXT.en[key]);
@@ -174,19 +251,123 @@
     p[0].addEventListener('input', function () { try { localStorage.setItem(p[1], p[0].value); } catch (e) {} render(); });
   });
   nameInput.addEventListener('change', function () {
+    if (state) refresh();
     var sp = (state && state.speakers || []).filter(function (s) { return norm(s.name) === norm(nameInput.value); })[0];
     if (sp && sp.mobile && !mobileInput.value) { mobileInput.value = sp.mobile; try { localStorage.setItem('followupMobile', sp.mobile); } catch (e) {} }
   });
   openOnly.addEventListener('change', render);
+  $('lang').addEventListener('change', function () { lang = this.value; document.documentElement.lang = lang; drawPicker(true); render(); });
 
   function note(msg, isErr) { var n = $('note'); n.textContent = msg || ''; n.className = isErr ? 'err' : ''; }
   function run(fn, args, ok) {
     busy = true;
     var r = google.script.run
       .withSuccessHandler(function (x) { busy = false; ok(x); })
-      .withFailureHandler(function (e) { busy = false; note((e && e.message) || String(e), true); render(); });
+      .withFailureHandler(function (e) { busy = false; note(translateServer((e && e.message) || String(e)), true); render(); });
     r[fn].apply(r, args);
   }
+  var SERVER_TEXT = [
+    [/^Lots of people are registering right now/, 'srvBusy'],
+    [/^Please enter your name first/, 'needName'],
+    [/^Please enter a 10-digit mobile number/, 'needMobile'],
+    [/^Name is too long/, 'srvNameLong'],
+    [/^Name cannot start/, 'srvNameStart'],
+    [/^Line (\d+) of "Register others" should be/, 'lineBad'],
+    [/^Line (\d+) of "Register others" \(([\s\S]*)\): /, 'srvLineMobile'],
+    [/^Nobody to register/, 'nobody'],
+    [/^Please register at most (\d+)/, 'srvMax'],
+    [/^Please pick at least one date/, 'srvPick'],
+    [/^(?:Those dates are|That date is) no longer in the list/, 'srvGone', function () { return []; }],
+    [/^That is (\d+) bookings \((\d+) people x (\d+) dates\)\. The most at one time is (\d+)/, 'srvTooMany'],
+    [/^Release is closed: there are under (\d+) hours to go\. Please call the organiser(?: \(([\s\S]*)\))?\.$/, 'srvReleaseClosed',
+      function (m) { return [m[1], m[2] ? ' (' + m[2] + ')' : '']; }],
+    [/^Your name is not on this date\.$/, 'srvNotOnMe'],
+    [/^([\s\S]+) is not on this date\.$/, 'srvNotOn'],
+    [/^You have nobody to release on this date/, 'srvNobodyRelease'],
+    [/^Only ([\s\S]+?)(?: or ([\s\S]+?))? can remove ([\s\S]+)\.$/, 'srvOnlyRemove', function (m) { return [m[1] + (m[2] ? ' ' + t('or') + ' ' + m[2] : ''), m[3]]; }]
+  ];
+  function translateServer(msg) {
+    for (var i = 0; i < SERVER_TEXT.length; i++) {
+      var m = SERVER_TEXT[i][0].exec(msg);
+      if (m) return t.apply(null, [SERVER_TEXT[i][1]].concat(SERVER_TEXT[i][2] ? SERVER_TEXT[i][2](m) : m.slice(1)));
+    }
+    return msg; // unknown (e.g. set-up problems): shown as sent
+  }
+
+  // "Who": the person using the page and/or others (ticked speakers + typed lines), as on the tour page.
+  var picked = {}, includeMe = $('includeMe'), othersInput = $('others'), pickList = $('pickList'), pickSearch = $('pickSearch');
+  try { othersInput.value = localStorage.getItem('followupOthers') || ''; } catch (e) {}
+  othersInput.addEventListener('input', function () { try { localStorage.setItem('followupOthers', othersInput.value); } catch (e) {} render(); });
+  includeMe.addEventListener('change', render);
+  pickSearch.addEventListener('input', function () { drawPicker(true); });
+  function digitsOf(v) { var d = String(v).replace(/\D/g, ''); return d.length > 10 ? d.slice(-10) : d; }
+  function othersText() {
+    var lines = [othersInput.value].concat(Object.keys(picked).map(function (k) { return picked[k].name + ' ' + picked[k].mobile; }));
+    return lines.join('\n').trim() ? lines.join('\n') : '';
+  }
+  function checkOthers(text) { // same line rule as the server: a name, then a 10-digit mobile; returns the count or a message
+    var lines = text.split('\n'), n = 0;
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line) continue;
+      var m = /^(.*?)[\s,:\-]*((?:\+?91|0)?[\d\s\-().]{10,})$/.exec(line);
+      if (!m || !m[1].trim() || !cleanMobile(m[2])) return t('lineBad', i + 1);
+      n++;
+    }
+    return n;
+  }
+  function groupSize() { var n = checkOthers(othersText()); return (includeMe.checked ? 1 : 0) + (typeof n === 'number' ? n : 0); }
+  function drawPicker(force) {
+    var speakers = (state && state.speakers) || [], sig = JSON.stringify(speakers) + '|' + pickSearch.value + '|' + lang;
+    if (!force && pickList.dataset.sig === sig) return;
+    pickList.dataset.sig = sig;
+    var q = pickSearch.value.trim().toLowerCase();
+    pickList.textContent = '';
+    speakers.forEach(function (sp) {
+      if (q && sp.name.toLowerCase().indexOf(q) < 0 && sp.mobile.indexOf(q) < 0) return;
+      var key = sp.name.toLowerCase() + '|' + sp.mobile, label = document.createElement('label'), box = document.createElement('input');
+      box.type = 'checkbox';
+      box.checked = !!picked[key];
+      box.onchange = function () { if (box.checked) picked[key] = { name: sp.name, mobile: sp.mobile }; else delete picked[key]; drawPicker(true); render(); };
+      label.appendChild(box);
+      label.appendChild(document.createTextNode(' ' + sp.name + (sp.mobile ? ' · ' + sp.mobile : ' ' + t('noMobileYet'))));
+      if (!sp.mobile) {
+        label.className = 'nomobile';
+        if (picked[key]) { // first time only: their number is saved to the Speakers tab when they are registered
+          var num = document.createElement('input');
+          num.className = 'firstmobile'; num.placeholder = t('mobile10Ph'); num.inputMode = 'tel'; num.value = picked[key].mobile;
+          num.oninput = function () { picked[key].mobile = num.value; render(); };
+          label.appendChild(num);
+        }
+      }
+      pickList.appendChild(label);
+    });
+    if (!pickList.childNodes.length) pickList.textContent = speakers.length ? t('noMatch') : t('noSpeakers');
+  }
+  function updatePickCount() { $('pickSummary').textContent = t('chooseSpeakers', Object.keys(picked).length); }
+
+  // My registrations (count + next date) and a red notice for each cancelled date, from state.mine (every future date).
+  function renderMine() {
+    var list = (state.mine || []).filter(function (s) { return !s.ended; });
+    $('alerts').innerHTML = list.filter(function (s) { return s.cancelled; }).map(function (s) {
+      var others = s.people.filter(function (p) { return norm(p.by) === me() && norm(p.name) !== me(); }).map(function (p) { return p.name; });
+      return '<div class="alert">' + esc(t('cancelNotice', dayLabel(s.date) + ', ' + clock(s.start) + (s.centre ? ', ' + s.centre : ''))) +
+        (others.length ? ' ' + esc(t('cancelOthers', others.join(', '))) : '') + '</div>';
+    }).join('');
+    var dates = {}; list.forEach(function (s) { dates[s.date] = true; });
+    var next = list.filter(function (s) { return !s.cancelled; })[0], box = $('mineBox');
+    box.hidden = !list.length;
+    if (!list.length) return;
+    var who = '';
+    if (next) {
+      var selfOn = meOn(next), n = next.people.filter(function (p) { return norm(p.by) === me() && norm(p.name) !== me(); }).length;
+      who = selfOn && n ? t('youPlus', n) : selfOn ? t('youOnly') : t('othersOnly', n);
+    }
+    box.innerHTML = '<b>' + t('mineTitle') + ':</b> ' + esc(t('mineCount', Object.keys(dates).length)) +
+      (next ? ' ' + esc(t('mineNext', dayLabel(next.date) + ', ' + clock(next.start) + (next.centre ? ', ' + next.centre : '') + ' · ' + who)) +
+        '<button class="light" data-date="' + next.date + '">' + t('show') + '</button>' : '');
+  }
+
   function refresh() { run('getSlots', [state ? state.today : '', rangeEnd, nameInput.value], show); }
   function needUntil(k) { if (k > rangeEnd) { rangeEnd = k; refresh(); return true; } return false; }
 
@@ -198,6 +379,7 @@
     Object.keys(sel).forEach(function (id) { var s = byId(id); if (!s || !selectable(s)) delete sel[id]; });
     var dl = $('speakerNames');
     dl.innerHTML = (st.speakers || []).map(function (s) { return '<option value="' + esc(s.name) + '">'; }).join('');
+    drawPicker();
     render();
     if (scrollTo) { var k = scrollTo; scrollTo = ''; goTo(k); }
   }
@@ -215,10 +397,13 @@
   function render() {
     document.querySelectorAll('[data-t]').forEach(function (el) { el.textContent = t(el.getAttribute('data-t')); });
     document.querySelectorAll('[data-ta]').forEach(function (el) { el.setAttribute('aria-label', t(el.getAttribute('data-ta'))); });
+    document.querySelectorAll('[data-tp]').forEach(function (el) { el.placeholder = t(el.getAttribute('data-tp')); });
+    updatePickCount();
     if (!state) { $('list').textContent = t('loading'); return; }
     renderCalendar();
     renderList();
     renderBar();
+    renderMine();
     $('foot').textContent = t('sheetTime', state.now) + ' · v' + state.version;
   }
 
@@ -243,7 +428,7 @@
         '<span class="st">' + esc(st) + '</span>' + (day.some(mine) ? '<span class="you">' + t('you') + '</span>' : '') + '</button>';
     }
     html += '<div class="dbox week"><span class="wd">' + t('thisWeek') + '</span><span class="dn">' + weekOpen + '</span><span class="st">' +
-      t('open', '').trim() + '</span></div>';
+      t('openWord') + '</span></div>';
     $('calGrid').innerHTML = html;
   }
 
@@ -266,22 +451,28 @@
     var badge = s.cancelled ? '' : s.places <= 0 ? '<span class="badge full">' + t('closedBadge') + '</span>' :
       s.over ? '<span class="badge over">' + t('overBy', s.over) + '</span>' :
       !s.remaining ? '<span class="badge full">' + t('fullBadge') + '</span>' : '<span class="badge">' + t('left', s.remaining, s.places) + '</span>';
+    var canRelease = !s.cancelled && !s.ended && !s.releaseClosed;
     var people = s.people.map(function (p, i) {
+      var x = canRelease && norm(p.by) === me() && norm(p.name) !== me() ? '<button class="x" data-x="' + esc(s.id) + '" data-person="' + esc(p.name) +
+        '" aria-label="' + esc(t('removeX', p.name)) + '">✕</button>' : '';
       return '<li' + (i >= s.places ? ' class="over"' : '') + '>' + esc(p.name) + (p.phone ? ' · ' + esc(p.phone) : '') +
-        (p.by ? ' (' + esc(t('via', p.by)) + ')' : '') + '</li>';
+        (p.by ? ' (' + esc(t('via', p.by)) + ')' : '') + x + '</li>';
     }).join('');
+    var myPeople = s.people.filter(function (p) { return norm(p.name) === me() || norm(p.by) === me(); });
     var act;
     if (s.cancelled) act = '<span class="tag">' + t('cancelled') + '</span>';
     else if (s.ended) act = '<span class="tag">' + t('ended') + '</span>';
-    else if (meOn(s)) {
+    else if (myPeople.length && (meOn(s) || s.releaseClosed || s.started || !s.remaining)) {
       act = s.releaseClosed ? '<span class="closed">' + t('releaseClosed') + '</span>' + (s.contact ? ' <span>' + contact(s.contact) + '</span>' : '')
-        : '<button class="light" data-release="' + esc(s.id) + '">' + t('release') + '</button>';
+        : (meOn(s) ? '<button class="light" data-release="' + esc(s.id) + '">' + t('release') + '</button>' : '') +
+          (myPeople.length > 1 ? '<button class="warn" data-group="' + esc(s.id) + '">' + t('releaseAll', myPeople.length) + '</button>' : '');
     }
     else if (s.started) act = '<span class="tag">' + t('started') + '</span>';
     else if (s.places <= 0) act = '<span class="tag">' + t('closed') + '</span>';
     else if (!s.remaining) act = '<span class="tag">' + t('fullTag') + '</span>';
     else act = '<button ' + (sel[s.id] ? '' : 'class="light" ') + 'data-sel="' + esc(s.id) + '" aria-pressed="' + !!sel[s.id] + '">' +
-      (sel[s.id] ? t('selected') : t('select')) + '</button>';
+      (sel[s.id] ? t('selected') : t('select')) + '</button>' +
+      (myPeople.length > 1 ? '<button class="warn" data-group="' + esc(s.id) + '">' + t('releaseAll', myPeople.length) + '</button>' : '');
     return '<article class="' + cls + '" data-id="' + esc(s.id) + '"><div class="r1"><span class="time">' + clock(s.start) + ' – ' + clock(s.end) +
       '</span>' + badge + '</div><div class="where"><b>' + esc(s.centre) + '</b>' + (s.address ? ' · ' + esc(s.address) : '') + '</div>' +
       (/^https?:\/\//i.test(s.map) ? '<div><a href="' + esc(s.map) + '" target="_blank" rel="noopener noreferrer">' + t('openMap') + '</a></div>' : '') +
@@ -290,14 +481,17 @@
   }
   function contact(text) {
     var m = /\+?\d[\d\s\-]{8,}\d/.exec(text);
-    return esc(t('call', '')) + (m ? '<a href="tel:' + m[0].replace(/[^\d+]/g, '') + '">' + esc(text) + '</a>' : esc(text));
+    var parts = t('call', '\u0000').split('\u0000');
+    return esc(parts[0]) + (m ? '<a href="tel:' + m[0].replace(/[^\d+]/g, '') + '">' + esc(text) + '</a>' : esc(text)) + esc(parts[1] || '');
   }
 
   function renderBar() {
     var ids = Object.keys(sel), bar = $('bar');
     bar.hidden = !ids.length;
     if (!ids.length) return;
-    $('barCount').textContent = t('countSel', ids.length);
+    var g = groupSize(), solo = includeMe.checked && g === 1;
+    $('barCount').textContent = solo ? t('countSel', ids.length) : t('groupSel', g, ids.length);
+    $('who').textContent = solo ? t('whoMe') : t('whoN', g);
     var daily = ids.every(function (id) { var s = byId(id); return s && isDaily(s.line); });
     var opts = daily ? [['1', 'rep1day'], ['7', 'rep7'], ['14', 'rep14'], ['all', 'repAll']] : [['1', 'rep1d'], ['4', 'rep4'], ['8', 'rep8'], ['all', 'repAll']];
     var rep = $('repeat'), cur = rep.value;
@@ -321,9 +515,12 @@
   var pendingArgs = null;
   function startRegister() {
     if (!nameInput.value.trim()) { note(t('needName'), true); nameInput.focus(); return; }
-    if (!cleanMobile(mobileInput.value)) { note(t('needMobile'), true); mobileInput.focus(); return; }
+    if (includeMe.checked && !cleanMobile(mobileInput.value)) { note(t('needMobile'), true); mobileInput.focus(); return; }
+    var others = othersText(), n = checkOthers(others);
+    if (typeof n !== 'number') { note(n, true); return; }
+    if (!n && !includeMe.checked) { note(t('nobody'), true); return; }
     var rep = $('repeat').value;
-    pendingArgs = [Object.keys(sel), rep === 'all' ? 'all' : Number(rep), nameInput.value, mobileInput.value, '', true];
+    pendingArgs = [Object.keys(sel), rep === 'all' ? 'all' : Number(rep), nameInput.value, mobileInput.value, others, includeMe.checked];
     note('');
     run('registerSlots', pendingArgs.concat([true]), showConfirm);
   }
@@ -363,7 +560,15 @@
       if (!nameInput.value.trim()) { note(t('needName'), true); return; }
       run('releaseSlot', [b.getAttribute('data-release'), nameInput.value], function (r) { note(t('released', r.removed.join(', '))); refresh(); });
     }
+    else if (b.hasAttribute('data-x')) {
+      run('releaseSlot', [b.getAttribute('data-x'), nameInput.value, b.getAttribute('data-person')], function (r) { note(t('released', r.removed.join(', '))); refresh(); });
+    }
+    else if (b.hasAttribute('data-group')) {
+      run('releaseGroup', [b.getAttribute('data-group'), nameInput.value], function (r) { note(t('released', r.removed.join(', '))); refresh(); });
+    }
     else if (b.hasAttribute('data-date')) goTo(b.getAttribute('data-date'));
+    else if (b.id === 'who') { drawPicker(true); $('whoBox').hidden = false; includeMe.focus(); }
+    else if (b.id === 'whoDone') { $('whoBox').hidden = true; render(); }
     else if (b.id === 'prevWeek') { weekStart = addDays(weekStart, -7); render(); }
     else if (b.id === 'nextWeek') { weekStart = addDays(weekStart, 7); if (!needUntil(addDays(weekStart, 6))) render(); }
     else if (b.id === 'more') { listEnd = addDays(listEnd, 14); if (!needUntil(listEnd)) render(); }
@@ -372,12 +577,12 @@
     else if (b.id === 'confirmBack') $('confirm').hidden = true;
     else if (b.id === 'confirmGo') confirmRegister();
   });
-  setInterval(function () { if (!document.hidden && !busy && $('confirm').hidden) refresh(); }, 15000);
+  setInterval(function () { if (!document.hidden && !busy && $('confirm').hidden && $('whoBox').hidden) refresh(); }, 15000);
   document.addEventListener('visibilitychange', function () { if (!document.hidden && !busy && state) refresh(); });
 
   var INITIAL_STATE = /*INITIAL_STATE*/null;
   render();
-  if (INITIAL_STATE) show(INITIAL_STATE); else refresh();
+  if (INITIAL_STATE) { show(INITIAL_STATE); if (nameInput.value.trim()) refresh(); } else refresh();
 })();
 </script>
 </body>
