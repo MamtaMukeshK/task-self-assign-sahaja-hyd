@@ -19,8 +19,8 @@ _Last updated: 2026-10-07 (Follow-up Program stage 1 built: server + tests in `f
   1L1A_FmlOukDZMTnOXa73RlzQfdaHS9Zg, Telugu 1ut0WKW9gVrnG0qRQltc7qC3P2O5GCybq, Hindi 1Hf3clK7tYRimgm3ispbHwCw4RvTKPJIM.
   The user replaces a Drive file via Drive -> Manage versions after every re-record (the link stays the same).
   The GitHub copies after each Drive link are only used if that Drive link is removed.
-- **Tests:** `cd test && npm install && npm test` (87 tests: 77 tour page + 8 Follow-up server + 2 Follow-up page; browser tests need Chromium at
-  `/opt/pw-browsers/chromium`). Rebuild the guide after any code change: `python3 tools/build_guide.py`.
+- **Tests:** `cd test && npm install && npm test` (89 tests: 77 tour page + 9 Follow-up server + 3 Follow-up page/guide; browser tests need Chromium at
+  `/opt/pw-browsers/chromium`). Rebuild the guides after any code change: `python3 tools/build_guide.py` (builds `SETUP_GUIDE.html` and `followup/SETUP_GUIDE.html`).
   Bump `VERSION` in `Code.gs` (and the matching string in `test/code.test.js`) for every page change.
 - **Re-record the demo:** in `tools/`: `npm i playwright-core ffmpeg-static @fontsource/dm-sans
   @fontsource/instrument-serif @fontsource/noto-sans-telugu @fontsource/noto-sans-devanagari`; voice lines
@@ -311,6 +311,13 @@ _Last updated: 2026-10-07 (Follow-up Program stage 1 built: server + tests in `f
   if not, the page errors loudly rather than guessing.
 
 ## Next step
+- **2026-10-08: Follow-up Program stage 3 BUILT (not run on real Google).** Sheet menu Program -> "Cancellation
+  WhatsApp list" (dialog: each affected person, own mobile, green Open WhatsApp button with the ready-written message)
+  and "Mark cancellation notices as sent" (Yes/No naming the dates). Setup guide for the new sheet:
+  `followup/SETUP_GUIDE.html` (13 parts; template `tools/followup_guide_template.html`). At the user's request the
+  "Who: Just me" button moved from the bottom bar to the top, under Mobile (as "Register others" on the tour page).
+  VERSION followup-2026-10-08.3. 89 tests. **Next: the user sets up the new sheet with the guide and reports; then
+  stage 4 (videos).**
 - **2026-10-08: Follow-up Program stage 2b BUILT (not run on real Google).** `followup/Index.html` (VERSION
   followup-2026-10-08.2): "Who" button (speaker list with first-time mobile box, typed others, Include me too) -> one
   Register books the group on every chosen date; confirmation lists each person; ✕ per person you registered and
