@@ -15,7 +15,7 @@ every session: replace "Where things stand" and "Next steps", and add to "Learni
 | Tests | `cd test && npm install && npm test`: 85 tests (77 tour page + 8 Follow-up server), all passing on 2026-10-07. |
 
 ## 2. Waiting on the user (do not build past these without an answer)
-1. Confirm or change the 5 stage-1 assumptions (details in `docs/followup/STAGE1_PLAN.md`):
+1. ~~Confirm the 5 stage-1 assumptions~~ **All 5 confirmed by the user 2026-10-08** (details in `docs/followup/STAGE1_PLAN.md`):
    a. "Line ID" column added to Program plan (P1, P2..., filled by the script; needed because row numbers change).
    b. "Contact" column added to Slots (copied from the plan; can differ per date).
    c. Empty "Until" = keep 12 weeks of dates ahead, topped up every Sunday; never more than 1 year ahead.

@@ -319,7 +319,7 @@ _Last updated: 2026-10-07 (Follow-up Program stage 1 built: server + tests in `f
   Choices the spec left open, and 5 assumptions to confirm with the user: `docs/followup/STAGE1_PLAN.md`.
   Tests: `test/followup.test.js` (8); `test/harness.js` gained stand-ins (script properties, delete/sort rows,
   dropdowns, triggers, `load(..., file)`). Stage 1 used about 120,000 tokens (user approved up to 125,000).
-  **Next: user confirms the assumptions, then stage 2 (the page, `followup/Index.html` + `doGet`).** Stage 2 must also
+  **2026-10-08: the user confirmed all 5 assumptions and asked for stage 2 (the page, `followup/Index.html` + `doGet`).** Stage 2 must also
   decide how `doGet` passes the first data (as the tour page does) and the page's own VERSION/test strings.
 - **2026-10-07: Follow-up Program sign-up (per-date slots) - designed, not built.** Spec with every decision:
   `docs/followup/SPEC.md`; clickable mock-up: `docs/followup/mockup.html`. New sheet + new page link (tour page

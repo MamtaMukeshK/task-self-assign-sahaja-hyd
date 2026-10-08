@@ -1,7 +1,7 @@
 # Follow-up Program, stage 1: how it will be built
 
 _Written 2026-10-07 before coding; **built the same day** (`followup/Code.gs`, `test/followup.test.js`, 8 tests passing). Follows `SPEC.md` (all decisions there are final); this file records the smaller
-choices the spec leaves open. Items marked **(assumption)** should be confirmed with the user when stage 1 is shown._
+choices the spec leaves open. The five items marked "confirmed by the user 2026-10-08" were assumptions until then._
 
 ## Files
 - `followup/Code.gs`: the server for the new sheet (a separate Apps Script project bound to the new workbook; the tour
@@ -16,10 +16,10 @@ choices the spec leaves open. Items marked **(assumption)** should be confirmed 
   header row in bold and frozen, a note on each header saying who fills it, dropdowns (Day, Frequency, Week of month,
   Status = Open/Cancelled), date and time formats, sets the workbook's time zone to India, and turns on the weekly
   update. An existing tab is never changed.
-- **"Line ID" column added as the first column of "Program plan" (assumption).** The spec's Slot ID is "plan line 3 +
+- **"Line ID" column added as the first column of "Program plan" (confirmed by the user 2026-10-08).** The spec's Slot ID is "plan line 3 +
   date"; row numbers change when organisers insert or sort rows, so each plan line gets a permanent ID (P1, P2...) that
   the generator fills in once. It is the only cell the script writes in "Program plan".
-- **"Contact" column added to "Slots" (assumption)**, copied from the plan line, so the page reads one tab and an
+- **"Contact" column added to "Slots" (confirmed by the user 2026-10-08)**, copied from the plan line, so the page reads one tab and an
   organiser can set a different contact for one date.
 - Start/End cells are formatted as times ("6:30 PM"), so typing "6:30" visibly becomes "6:30 AM" and the organiser can
   correct it at once. Text without AM/PM is read as 24-hour time.
@@ -27,7 +27,7 @@ choices the spec leaves open. Items marked **(assumption)** should be confirmed 
 ## Generator (`generateSlots`, weekly trigger Sunday 22:00 India time + menu "Program → Update slots now")
 - Frequencies as decision 8. Every 2 weeks counts from the first matching day on or after From; monthly same date skips
   months without that date; One-off uses From. Past dates are never created or touched.
-- **Until left empty = keep 12 weeks of dates ahead, extended every Sunday (assumption).** Any line stops 1 year ahead
+- **Until left empty = keep 12 weeks of dates ahead, extended every Sunday (confirmed by the user 2026-10-08).** Any line stops 1 year ahead
   at most (guards against a mistyped year).
 - Places blank = 1 (as on the tour page); 0 = closed. End blank = Start + 1 hour.
 - **Plan changes (decision 9)**: the generator remembers each line's settings (script properties). Only when a line's
@@ -53,7 +53,7 @@ choices the spec leaves open. Items marked **(assumption)** should be confirmed 
   beyond the places marked "over". `previewOnly` returns the same list without writing, for the confirmation screen.
 - `releaseSlot(slotId, name, personName)` and `releaseGroup(slotId, name)`: the person or their registrar only; refused
   from 12 hours before the start (India time), the message gives the date's contact. **"Release all N" also releases
-  the registrar themselves if they are on that date (assumption).**
+  the registrar themselves if they are on that date (confirmed by the user 2026-10-08).**
 - Cancellations (data side only; the organiser's WhatsApp list screen is stage 3): cancelled dates refuse registrations
   and are flagged for the page; `cancellationList_()` returns every affected person with a ready-written English
   WhatsApp link; `markNoticeSent_(ids)` fills "Cancellation notice sent". Both are private (name ends in `_`) so the
