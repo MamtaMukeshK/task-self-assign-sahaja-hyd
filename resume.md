@@ -32,6 +32,12 @@ every session: replace "Where things stand" and "Next steps", and add to "Learni
 3. Older open items in `HANDOFF.md` "Next step": deploy tour version 2026-10-06.4; (demo videos for Ongoing programs: moved to stage 4 by the user 2026-10-08);
    native-speaker check of Telugu/Hindi; whether the built-in first-day data reaches the live tour page.
 
+4. **Found 2026-10-08:** branch `claude/zealous-johnson-h19h6w` holds tour version 2026-10-07.1 (still-needed counts kept
+   correct automatically; call buttons for numbers on phones; 79 tests) from a parallel session. It is in neither `main`
+   nor this branch. This branch (27 commits ahead of main, no pull request yet) never changed the tour's `Code.gs` /
+   `Index.html`, so merging both should clash only in HANDOFF/ARCHITECTURE/SETUP_GUIDE. Ask the user which tour version is
+   live and whether to merge both into main.
+
 ## 3. Next steps (in order)
 1. The user follows `followup/SETUP_GUIDE.html` on real Google. Things to watch in their report (all moderate
    confidence, never seen on real Google): the "Program" menu appears; set-up creates the tabs and the Sunday trigger;

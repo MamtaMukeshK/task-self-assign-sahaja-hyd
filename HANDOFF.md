@@ -317,6 +317,9 @@ _Last updated: 2026-10-07 (Follow-up Program stage 1 built: server + tests in `f
   if not, the page errors loudly rather than guessing.
 
 ## Next step
+- **2026-10-08: unmerged parallel work found.** Branch `claude/zealous-johnson-h19h6w` = tour v2026-10-07.1 (still-needed
+  counts kept correct automatically, call buttons on phones), not in `main` or this branch. Decide with the user before
+  merging; this branch never touched the tour's code files.
 - **2026-10-08: Follow-up stage 4a DONE: demo videos in English, Telugu, Hindi** (`docs/followup/demo.mp4` 87 s,
   `demo-te.mp4`, `demo-hi.mp4`), recorded with `tools/record_followup_demo.js` on the user's latest sample (their names
   and sessions; every phone number replaced with a made-up one) at "Mon 12 Oct 2026, 6 AM". Steps: name and mobile,
