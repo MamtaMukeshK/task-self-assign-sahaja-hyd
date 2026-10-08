@@ -88,7 +88,7 @@
   #confirmList > div { padding:8px 0; border-top:1px solid var(--line); }
   #confirmList .who { margin-left:12px; }
   .ok { color:#1e7a3a; font-weight:700; } .warn { color:var(--err); font-weight:700; } .skip { color:var(--amber); font-weight:700; }
-  #confirmBtns { display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+  #confirmBtns, #whoBtns { display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
   #alerts .alert { margin:0 0 10px; padding:10px 12px; border-radius:10px; background:#fde7e5; color:var(--err); font-weight:700; border:2px solid var(--err); }
   #mineBox { margin:0 0 14px; padding:10px 12px; border-radius:10px; background:var(--mine); border:1px solid #bfe0c9; font-size:17px; }
   #mineBox[hidden] { display:none; }
@@ -154,7 +154,7 @@
     <label><input type="checkbox" id="includeMe" checked> <span data-t="includeMe">Include me too</span></label>
     <details id="picker"><summary id="pickSummary"></summary><input id="pickSearch" data-tp="searchNames"><div id="pickList"></div></details>
     <label><span data-t="othersLabel">Register others</span><textarea id="others" data-tp="othersPh"></textarea></label>
-    <div id="confirmBtns"><button id="whoDone" data-t="whoDone">Done</button></div>
+    <div id="whoBtns"><button id="whoDone" data-t="whoDone">Done</button></div>
   </div>
 </div>
 <footer id="foot"></footer>

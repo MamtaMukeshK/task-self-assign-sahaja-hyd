@@ -7,7 +7,7 @@
  * Design: docs/followup/SPEC.md and docs/followup/STAGE1_PLAN.md.
  */
 
-var VERSION = 'followup-2026-10-08.1';
+var VERSION = 'followup-2026-10-08.2';
 
 /** Serves the page with the first weeks' dates already inside, so it shows without a second trip to the server. */
 function doGet() {
