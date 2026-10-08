@@ -35,6 +35,12 @@ _Last updated: 2026-10-07 (Follow-up Program stage 1 built: server + tests in `f
   is blocked, so it pulls the full PyTorch from PyPI, ~7 GB installed). The model files are loaded in PyTorch's
   safe mode only (the auto-mode safety check refuses the unsafe mode, and safe mode works).
   After committing a video, re-pin that language's two GitHub URLs in `DEMO_VIDEO_URLS` (Index.html) to that commit.
+  **Follow-up videos** (2026-10-08): `cd tools && npm i` (package.json pins playwright-core 1.63.0, which matches the
+  installed video encoder /opt/pw-browsers/ffmpeg-1011; newer versions fail with "ffmpeg-1013 doesn't exist"); voices:
+  `cd voiceover && python3 make_voice.py followup/ && python3 make_voice_hi.py followup/ && <venv>/bin/python make_voice_te.py followup/`;
+  then per language `node record_followup_demo.js en|te|hi` and `python3 mix.py ../node_modules/ffmpeg-static/ffmpeg en|te|hi followup`
+  -> `docs/followup/demo[-te|-hi].mp4`. Captions come from `docs/followup/demo-script.md`; demo data (the user's sample,
+  phone numbers replaced) is inside `tools/record_followup_demo.js`. Re-pin `DEMO_VIDEO_URLS` in `followup/Index.html`.
 - **Not in the repository on purpose:** the real sheet data (volunteers' phone numbers). Ask the user for
   an .xlsx export or screenshots when a question depends on the real layout.
 - **User preferences:** plain language, no unexplained abbreviations, state confidence, keep changes small,
@@ -311,6 +317,17 @@ _Last updated: 2026-10-07 (Follow-up Program stage 1 built: server + tests in `f
   if not, the page errors loudly rather than guessing.
 
 ## Next step
+- **2026-10-08: Follow-up stage 4a DONE: demo videos in English, Telugu, Hindi** (`docs/followup/demo.mp4` 87 s,
+  `demo-te.mp4`, `demo-hi.mp4`), recorded with `tools/record_followup_demo.js` on the user's latest sample (their names
+  and sessions; every phone number replaced with a made-up one) at "Mon 12 Oct 2026, 6 AM". Steps: name and mobile,
+  one-week calendar, select two sessions + "next 4 dates", Who -> Ravi Kumar, Register -> confirmation -> My
+  registrations, Release one date + "Release closed" under 12 h, a cancelled date's red notice, languages. Voices set
+  up again from the same sources (Telugu venv 7.1 GB in the scratchpad; not kept after the container goes). Page fix
+  found while checking frames: serif headings had no Telugu/Hindi fallback (Telugu month name looked unjoined).
+  Demo button now plays the GitHub copies pinned to commit becaae3. **Waiting on the user:** upload the three videos to
+  Drive ("Anyone with the link") and send the links (then put them first in `DEMO_VIDEO_URLS`); say what Frequency
+  "Custom" (sample line P7) should mean (today such a line is skipped and reported). **Next: 4b** (Ongoing programs
+  scene in the three tour videos), then **4c** (organiser video).
 - **2026-10-08: tour "demo video button" browser test made reliable (test only; no page change).** Failure caught in a
   full run: "tried the first copy, then the second" saw only the first copy's request. Cause: the test checked the
   request log right after the video's address changed, before Chromium had sent the second request (a race under the
