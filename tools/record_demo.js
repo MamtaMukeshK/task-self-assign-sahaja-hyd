@@ -210,6 +210,7 @@ const wrapper = `<!doctype html><html><head><meta charset="utf-8"><style>${fontC
   // ---- 4. Ongoing programs (added 2026-10-08): pick them in the date list, Register, choose Backup ----
   await say('s7o'); await caption(7);
   await wait(800);
+  await tap(app.locator('#showOthers'));   // just Priya this time (the group was for the step before)
   await tap(app.locator('#day')); await app.locator('#day').selectOption('Ongoing');
   tab = 'ongoing'; before = null; await drawSheet(); await wait(1800);
   await tap(app.locator(`#grid tr[data-row="2"] button:text-is("${T.register}")`)); await wait(1000);
