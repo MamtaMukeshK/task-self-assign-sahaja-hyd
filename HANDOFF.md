@@ -343,7 +343,8 @@ _Last updated: 2026-10-08 (tour 2026-10-07.1 merged into main at the user's requ
   tour Drive files (Manage versions) with the new videos.** 4c: `docs/followup/organiser-demo.mp4` (English, ~2 min,
   laptop screen drawn from the real tab layout, first caption says it is not live Google Sheets) by
   `tools/record_organiser_demo.js` (real followup/Code.gs underneath; user's sample, phone numbers replaced, P7 One-off);
-  linked from `followup/SETUP_GUIDE.html` (fork copy). Captions of 4c steps 1-8 were written by Claude (narration approved).
+  linked from `followup/SETUP_GUIDE.html`: the organiser's Drive copy (1Lv6ZFWNxIDeFo9KWArfxrzqFhxbEWhmx, sent 2026-10-08)
+  first, the fork's GitHub copy second. Captions of 4c steps 1-8 were written by Claude (narration approved).
   Fork: csreenath-rgb/program-planner-sahaja-hyd has every branch, but this session still has no push access there
   (add_repo: "you need push access"); commits are backed up on origin's claude/vibrant-planck-gsxjay (not in main).
   Once access exists: `git push <fork> claude/vibrant-planck-gsxjay` (fast-forward from 6ccd54f).
