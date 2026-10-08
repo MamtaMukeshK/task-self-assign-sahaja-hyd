@@ -638,7 +638,7 @@ test('29-Sep pattern: opens on the next day once the last slot (4:30-6:30 PM) is
   assert.equal(at(18, 29).tab, '29-Sep');
   assert.equal(at(18, 30).tab, '30-Sep');
   const late = at(23, 19);
-  assert.deepEqual([late.tab, late.clock, late.version], ['30-Sep', 'Tue 29 Sep 23:19', '2026-10-06.4']);
+  assert.deepEqual([late.tab, late.clock, late.version], ['30-Sep', 'Tue 29 Sep 23:19', '2026-10-07.1']);
 });
 test('time zone: India by default, the sheet\'s own setting only if TIME_ZONE is emptied', () => {
   const gs = load([makeSheet('28-Sep', 3, [['S No']])], NOW);
@@ -790,3 +790,36 @@ test('ongoing: weekday and date text forms; only an Ongoing tab opens on it; dat
   assert.throws(() => load([makeSheet('06-Oct', 1, grid)], ONGOING_NOW).claimRow(day.rows[2].row, day.rows[2].fp, 'Priya', '9876543210', '06-Oct', '', true, 'backup'), /no backup column/);
 });
 function gs0() { return load([makeSheet('Ongoing', 1, ongoingGrid())], ONGOING_NOW); }
+
+test('still needed: every row is corrected when the page reads a tab (both roles); formulas and past days are left alone', () => {
+  const g = ongoingGrid();
+  g[2][3] = '9';                                              // hand-typed and wrong: 4 places, 1 person -> 3
+  g[3][6] = '=F4';                                            // a formula: left alone
+  const past = makeSheet('05-Oct', 4, slotsGrid()), today = makeSheet('06-Oct', 1, slotsGrid()), ongoing = makeSheet('Ongoing', 2, g);
+  const gs = load([past, today, ongoing], ONGOING_NOW);
+  gs.getState();                                              // opens on today
+  assert.deepEqual(today.grid.slice(1).map(r => r[3]), [3, 1, 2, 1, 0], 'places minus people; blank total = 1; total 0 = 0');
+  gs.getState('Ongoing');
+  assert.deepEqual(ongoing.grid.slice(1).map(r => [r[3], r[6]]), [[1, 1], [3, 2], ['2', '=F4']], 'both roles; formula kept');
+  gs.getState('05-Oct');
+  assert.deepEqual([past.writes, past.grid.slice(1).map(r => r[3]).join('')], [0, ''], 'past day untouched');
+  const before = today.writes;
+  gs.onEdit({ range: { getSheet: () => today } });
+  assert.equal(today.writes, before, 'nothing wrong: nothing written');
+});
+
+test('still needed: a typed edit recalculates the tab at once (names, totals, or a number typed over it)', () => {
+  const { gs, ongoing, sheets } = setupOngoing();
+  gs.getState('Ongoing');
+  ongoing.grid[2][1] = 'Asha Rao 9000000001\nRavi 9123456789';  // organiser adds a primary by hand
+  ongoing.grid[2][5] = '3';                                       // and raises the backups needed
+  gs.onEdit({ range: { getSheet: () => ongoing } });
+  assert.deepEqual([ongoing.grid[2][3], ongoing.grid[2][6]], [2, 3]);
+  ongoing.grid[2][3] = '7';                                       // a number typed into "still needed" is replaced
+  gs.onEdit({ range: { getSheet: () => ongoing } });
+  assert.equal(ongoing.grid[2][3], 2);
+  assert.doesNotThrow(() => gs.onEdit({ range: { getSheet: () => sheets[2] } }), 'Speaker tab: nothing to count');
+  const past = makeSheet('05-Oct', 4, slotsGrid());
+  load([past, makeSheet('06-Oct', 1, slotsGrid())], ONGOING_NOW).onEdit({ range: { getSheet: () => past } });
+  assert.equal(past.writes, 0, 'edits on a past day are left as typed');
+});

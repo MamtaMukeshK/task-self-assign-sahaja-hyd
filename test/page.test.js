@@ -700,6 +700,15 @@ test('ongoing programs in real browser: drop-down entry, one card per program wi
     assert.equal(await mine.locator('.person').textContent(), 'Priya · 9876543210Backup');
     assert.deepEqual(await mine.locator('.roletag').evaluate(e => [getComputedStyle(e).backgroundColor, getComputedStyle(e).color, getComputedStyle(e).fontWeight]),
       ['rgb(201, 168, 76)', 'rgb(26, 58, 92)', '700'], 'Backup tag: solid gold, bold navy');
+    const call = mine.locator('a.call'), num = mine.locator('.person .num');
+    assert.deepEqual([await call.isVisible(), await num.isVisible()], [true, false], 'phones: a call button instead of the number');
+    assert.deepEqual(await call.evaluate(a => [a.getAttribute('href'), a.target, a.getAttribute('aria-label')]), ['tel:+919876543210', '_top', 'Call Priya']);
+    assert.ok((await call.boundingBox()).width >= 34, 'big enough to tap');
+    for (const width of [820, 1280]) {
+      await p.setViewportSize({ width, height: 800 });
+      assert.deepEqual([await call.isVisible(), await num.isVisible()], [false, true], `${width} pixels wide: the number, no button`);
+    }
+    await p.setViewportSize({ width: 390, height: 800 });
     assert.deepEqual(await mine.locator('td.c-slots .roleline').allTextContents(), ['Primary 1 of 1', 'Backup 0 of 1']);
 
     assert.match(await p.locator('#grid tr[data-row="3"] .clash').textContent(), /Clashes with Sl.No 1/, 'Wed 9.30 clashes');

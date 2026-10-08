@@ -1,6 +1,6 @@
 # Handoff / status
 
-_Last updated: 2026-10-07 (Follow-up Program stage 1 built: server + tests in `followup/`; tour page unchanged at 2026-10-06.4, not yet live)_
+_Last updated: 2026-10-08 (tour 2026-10-07.1 merged into main at the user's request; the user reports the older tour items done; Follow-up stages 1-3 and 4a built on branch claude/vibrant-planck-gsxjay)_
 
 ## Start here (for a new session)
 - **Read `resume.md` first**: current state, what waits on the user, next steps and lessons learned (2026-10-07).
@@ -9,8 +9,8 @@ _Last updated: 2026-10-07 (Follow-up Program stage 1 built: server + tests in `f
   Release places; the speaker cell of the day tab is updated. Details of every feature: the dated log below.
 - **Live:** the organiser's own Apps Script deployment of `Code.gs` + `Index.html` (paste from
   `SETUP_GUIDE.html`, then Deploy -> Manage deployments -> New version). The page footer shows the version.
-  Latest pushed: 2026-10-06.4 (Ongoing Programs), merged into main through a pull request on 2026-10-06 at the
-  user's request, before the live check; not deployed yet.
+  Latest pushed: 2026-10-07.1 on branch claude/zealous-johnson-h19h6w (restarted from main after pull request 3 was
+  merged). 2026-10-06.4 (Ongoing Programs) is in main; neither is deployed yet.
   Live (confirmed by the user 2026-10-01 16:47): 2026-10-01.4. Ask the user which version is
   live before assuming.
 - **Demo videos:** `docs/demo.mp4` (English, 75 s, phone screen, Indian English female voice), `docs/demo-te.mp4`
@@ -300,6 +300,25 @@ _Last updated: 2026-10-07 (Follow-up Program stage 1 built: server + tests in `f
   still grey it out (their existing !important grey rule). Gold was chosen because red and amber already mean
   "over limit" / "full". Also moved a CSS comment that an earlier edit had separated from its rule. VERSION
   2026-10-06.4. 77 tests (the Ongoing browser test checks the tag's colours and boldness).
+- 2026-10-06: pull request 3 (Ongoing programs, 2026-10-06.4) created and merged into main at the user's request (merge
+  commit). Deleting the two merged branches (claude/optimistic-ritchie-os2avr, claude/zealous-johnson-h19h6w) failed
+  from the session (GitHub 403: the session may only push to its own branch); the user was given the "Delete branch"
+  buttons on pull requests 2 and 3 and the "Automatically delete head branches" setting.
+- 2026-10-07: "still needed" counts kept correct automatically (user chose option 1 of 3: app keeps them / sheet
+  formulas / a recalculate menu). Code.gs syncRemaining_: every "still needed" cell (primary on all tabs; backups on
+  Ongoing) is made equal to places left, i.e. what the page shows. Runs (a) on every fresh read of today's, a later
+  day's or the Ongoing tab (cachedState_ with keepCounts; past days are left as a record), (b) from onEdit whenever
+  someone types in such a tab (names, totals, or a number typed over the count, which the user accepted is replaced),
+  (c) on registrations as before. Only differing cells are written, formula cells are skipped, and writes happen inside
+  the script lock after a re-read (skipped if the lock is busy; the next read catches up). 2 new server tests (checked
+  to fail with the read or the edit path switched off).
+  Phones only (700 pixels wide or less): each volunteer's number is replaced by a round call button (34 pixels, tel:
+  link with +91, target _top because the page runs in Google's frame, label "Call <name>" in en/te/hi). Tablets and
+  laptops still show the number. The page text is unchanged for tests (number kept in a hidden span on phones).
+  VERSION 2026-10-07.1. 79 tests. Phone screenshot checked.
+  NOT VERIFIED on real Google: that the simple onEdit trigger may write to the sheet and use LockService (Google
+  documents simple triggers can edit the bound sheet; if not, the counts still update on the next page read);
+  that a tel: link opens the dial pad from inside Google's frame on Android and iPhone (moderate confidence).
 
 ## Not yet done / not verified
 - Never run on real Google Apps Script or against the live sheet (build machine had no access
@@ -392,10 +411,11 @@ _Last updated: 2026-10-07 (Follow-up Program stage 1 built: server + tests in `f
   Register others: decision 13 (groups booked even if over the limit; already-full dates skipped). Spec is final.
   Stage 4 added: demo videos in en/te/hi + language-aware demo button on the new page (SPEC section 5).
   Stage 4b added: an organiser demo video for the Program plan and Slots tabs (SPEC section 5). Build in 3 stages (SPEC section 5), confirming each.
-- **User: deploy 2026-10-06.4.** Paste both files from SETUP_GUIDE.html, Deploy -> Manage deployments -> edit the
+- **User: deploy 2026-10-07.1.** Paste both files from SETUP_GUIDE.html, Deploy -> Manage deployments -> edit the
   existing deployment -> New version (keeps the same link). Then check on a phone: the date list ends with "Ongoing
   programs"; a card shows "8 Oct 2026 to 29 Oct 2026 · Weekly · Wed"; Register -> Backup writes column E and sets G;
-  Release clears it; the footer reads v2026-10-06.4. If the dates line shows the sheet's text instead of "8 Oct 2026",
+  Release clears it; the footer reads v2026-10-07.1. Also check: typing a name into a names cell updates its "still
+  needed" cell within a second or two; on a phone, the call button next to a name opens the dial pad with the number. If the dates line shows the sheet's text instead of "8 Oct 2026",
   the date cells are text, not real dates (still works, but say so).
 - **Moved to Follow-up stage 4 by the user 2026-10-08: demo videos for Ongoing programs** in English, Telugu and Hindi. The recorder
   (tools/record_demo.js, see "Re-record the demo" above) uses a demo copy of the 30-Sep layout; it needs an Ongoing tab

@@ -33,7 +33,7 @@ and Hindi.
   |---|---|---|
   | Who is on the school (one cell lists everyone) | "speaker" + "name" | **Yes** - the only cell a registration writes |
   | Places per school | "total" + "volunteer" | No (blank = 1, 0 = closed) |
-  | Places still needed | "still" + "volunteer" | Yes, kept up to date (skipped if it holds a formula) |
+  | Places still needed | "still" + "volunteer" | Yes, kept equal to places left on every write, typed edit and fresh read (today, later days, Ongoing; skipped if it holds a formula) |
   | Start/end time (free text, e.g. "2pm to 3pm") | "time" | No |
   | Serial number | "S No" / "Sl No" / "Sr. No." | No (shown first as "Sl.No") |
   | Everything else (school, address, map link, contacts, remarks...) | anything | No - shown as-is |
@@ -61,6 +61,7 @@ and Hindi.
 | `listDays_ / resolveDay_ / dayIsOver_ / markPast_` | Which tabs are days; default day = today, or the next day once all of today's timed slots are over; past/ended flags |
 | `readTab_ / parseAssignees_ / startTime_ / endTime_` | Turn a tab into rows; parse the speaker cell and free-text times |
 | `cachedState_ / onEdit` | Shared 30-second cache per tab; cleared on every write, on typed edits (simple `onEdit` trigger) and when the sheet's size changes |
+| `syncRemaining_` | Makes every "still needed" (and Ongoing "backups still needed") cell equal to places left; only differing, non-formula cells; inside the lock after a re-read, skipped if the lock is busy. Called on a fresh read of a non-past tab (`cachedState_`) and by `onEdit` |
 | `CONFIG` (top of file) | Header words, time zone (Asia/Kolkata), cache/lock settings, Speaker tab names |
 
 **State shape** returned by `getState`:

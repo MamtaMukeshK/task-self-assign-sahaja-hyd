@@ -113,7 +113,9 @@ Takes about 15 minutes on a laptop or desktop computer (not a phone).</p>
     <b>Total volunteers needed</b> (any title containing "total" and "volunteer" works) and put the number in each row.
     A blank cell, or no such column, means <b>1 person</b>. <code>0</code> closes a school.</li>
   <li><b>Still needed (optional):</b> a column titled like <b>count of Volunteers still needed</b> (containing "still" and
-    "volunteer") is updated by the page on every claim and release. If you put your own formula in it, the page leaves it alone.</li>
+    "volunteer") is kept up to date by the page: on every registration, whenever someone types in a names or "needed" cell,
+    and whenever the page reads the tab (the Ongoing tab's "Num of backup yogis still needed" too). A number typed into it is
+    replaced by the calculated one, so change the total instead. Past days, and a cell holding your own formula, are left alone.</li>
 </ol>
 
 <h2 id="p3"><span class="step-num">3</span>Open the script editor</h2>
@@ -147,7 +149,7 @@ Takes about 15 minutes on a laptop or desktop computer (not a phone).</p>
  */
 
 // Shown on the page so it's easy to confirm which version is deployed.
-var VERSION = '2026-10-06.4';
+var VERSION = '2026-10-07.1';
 
 var CONFIG = {
   // Time zone for "today" and "now" (which day opens, which slots have ended).
@@ -212,15 +214,18 @@ function doGet() {
 function getState(tabName) {
   var ss = openSpreadsheet_();
   var day = resolveDay_(ss, tabName);
-  var state = cachedState_(day.sheet);
+  var state = cachedState_(day.sheet, !day.past); // past days are a record: their "still needed" cells are left as they are
   state.days = day.days;
   state.defaultDay = day.defaultDay;
   state.speakers = speakerList_(ss);
   return markPast_(state, day);
 }
 
-/** A day's rows, from the shared cache when fresh (a copy, safe to annotate). */
-function cachedState_(sheet) {
+/**
+ * A day's rows, from the shared cache when fresh (a copy, safe to annotate). With keepCounts, a fresh read also
+ * corrects any "still needed" cell that doesn't match the people on its row (see syncRemaining_).
+ */
+function cachedState_(sheet, keepCounts) {
   var cache = CacheService.getScriptCache();
   var key = cacheKey_(sheet);
   // Inserting or deleting rows/columns doesn't count as an edit, so a size change also means "read again".
@@ -230,7 +235,9 @@ function cachedState_(sheet) {
     var cached = JSON.parse(hit);
     if (cached.size === size) return cached;
   }
-  var state = buildState_(sheet);
+  var tab = readTab_(sheet);
+  if (keepCounts &amp;&amp; syncRemaining_(sheet, tab)) tab = readTab_(sheet);
+  var state = buildState_(sheet, tab);
   state.size = size;
   try {
     cache.put(key, JSON.stringify(state), CONFIG.CACHE_SECONDS);
@@ -526,13 +533,54 @@ function dayIsOver_(sheet, now) {
 }
 
 /** Marks a past day, and today's slots whose end time has passed, as view-only. */
-// Runs by itself whenever someone types in the sheet: forget the cached copy so the page shows it at once.
+// Runs by itself whenever someone types in the sheet: bring that tab's "still needed" cells up to date (today, later
+// days and the Ongoing tab), and forget the cached copy so the page shows the change at once.
 function onEdit(e) {
   try {
     var keys = ['speakers'];
-    if (e &amp;&amp; e.range) keys.push(cacheKey_(e.range.getSheet()));
+    if (e &amp;&amp; e.range) {
+      var sheet = e.range.getSheet();
+      keys.push(cacheKey_(sheet));
+      try {
+        var day = listDays_(openSpreadsheet_()).filter(function (d) { return d.name === sheet.getName(); })[0];
+        if (day &amp;&amp; !day.past) syncRemaining_(sheet, readTab_(sheet));
+      } catch (err) {}
+    }
     CacheService.getScriptCache().removeAll(keys);
   } catch (err) {}
+}
+
+/**
+ * Makes every "still needed" cell (and, on the Ongoing tab, every "backups still needed" cell) equal to the places
+ * left on its row - what the page shows - so hand edits and rows nobody has registered on are counted too. Only cells
+ * that differ are written; a cell holding a formula is left alone. Writes happen inside the script lock, after reading
+ * the tab again (a registration may have just written); if someone is registering right now it is skipped and the next
+ * read catches up. Returns true when it changed something.
+ */
+function syncRemaining_(sheet, tab) {
+  var stale = function (t) {
+    var out = [];
+    t.rows.forEach(function (r) {
+      [[t.remainingCol, r.remaining], [t.backupRemainingCol, r.backup ? r.backup.remaining : null]].forEach(function (c) {
+        if (c[0] &amp;&amp; c[1] != null &amp;&amp; String(r.cells[c[0] - 1]).trim() !== String(c[1])) out.push([r.row, c[0], c[1]]);
+      });
+    });
+    return out;
+  };
+  if (!stale(tab).length) return false;
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(2000)) return false;
+  var changed = false;
+  try {
+    stale(readTab_(sheet)).forEach(function (c) {
+      var cell = sheet.getRange(c[0], c[1]);
+      if (!cell.getFormula()) { cell.setValue(c[2]); changed = true; }
+    });
+    if (changed) SpreadsheetApp.flush();
+  } finally {
+    lock.releaseLock();
+  }
+  return changed;
 }
 
 function markPast_(state, day) {
@@ -671,8 +719,8 @@ function readTab_(sheet) {
     ongoing: ongoing, slotsHeader: sIdx &gt;= 0 ? headers[sIdx] : '', rows: rows };
 }
 
-function buildState_(sheet) {
-  var tab = readTab_(sheet);
+function buildState_(sheet, tab) {
+  tab = tab || readTab_(sheet);
   var state = { tab: sheet.getName(), headers: tab.headers, nameIdx: tab.nameCol - 1, slotsHeader: tab.slotsHeader, rows: tab.rows };
   if (tab.ongoing) { state.ongoing = true; state.backupIdx = tab.backupCol - 1; }
   return state;
@@ -930,6 +978,14 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   .roleline { display:block; white-space:nowrap; }   /* Ongoing tab: Primary count, then Backup count below it */
   /* "Backup" next to a name: solid gold with navy text (contrast 5.1:1), so backups stand out; grey on ended programs */
   .roletag { margin-left:6px; padding:1px 8px; border-radius:10px; background:var(--gold); color:var(--navy); font-size:12px; font-weight:700; }
+  /* Phones: a round call button next to each volunteer's name instead of the number (tapping opens the dial pad). */
+  a.call { display:none; }
+  @media (max-width: 700px) {
+    .person .num { display:none; }
+    a.call { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; margin-left:8px; vertical-align:middle;
+             border-radius:50%; background:var(--band); color:var(--navy); }
+    a.call svg { width:18px; height:18px; }
+  }
   /* Sl.No, the button and "Slots left" stay put while the table scrolls sideways (left set by pinColumns). */
   th.stick, td.stick { position:sticky; z-index:1; }
   th.stick { z-index:3; }
@@ -1038,7 +1094,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
   var LANG = 'en'; // the page always opens in English
   var TEXT = {
     en: {
-      ongoingLabel: 'Ongoing programs', primary: 'Primary', backup: 'Backup', volunteersCol: 'Volunteers', whenCol: 'Dates &amp; days',
+      callX: 'Call {0}', ongoingLabel: 'Ongoing programs', primary: 'Primary', backup: 'Backup', volunteersCol: 'Volunteers', whenCol: 'Dates &amp; days',
       registerAs: 'Register as:', registerNAs: 'Register {0} people as:', cancel: 'Cancel', full: '(full)',
       registeredAs: 'Registered as {0}.', registeredNAs: 'Registered {0} people as {1}.',
       dateRange: '{0} to {1}', fromDate: 'From {0}', untilDate: 'Until {0}',
@@ -1087,7 +1143,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
       srvNameStart: 'Name cannot start with = + - or @.'
     },
     te: {
-      ongoingLabel: 'కొనసాగుతున్న కార్యక్రమాలు', primary: 'ప్రధాన', backup: 'బ్యాకప్', volunteersCol: 'వాలంటీర్లు', whenCol: 'తేదీలు &amp; రోజులు',
+      callX: '{0}కి కాల్ చేయండి', ongoingLabel: 'కొనసాగుతున్న కార్యక్రమాలు', primary: 'ప్రధాన', backup: 'బ్యాకప్', volunteersCol: 'వాలంటీర్లు', whenCol: 'తేదీలు &amp; రోజులు',
       registerAs: 'ఇలా నమోదు చేయండి:', registerNAs: '{0} మందిని ఇలా నమోదు చేయండి:', cancel: 'రద్దు', full: '(నిండింది)',
       registeredAs: '{0}గా నమోదు అయింది.', registeredNAs: '{0} మంది {1}గా నమోదు అయ్యారు.',
       dateRange: '{0} నుండి {1} వరకు', fromDate: '{0} నుండి', untilDate: '{0} వరకు',
@@ -1136,7 +1192,7 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
       srvNameStart: 'పేరు = + - లేదా @ తో మొదలవకూడదు.'
     },
     hi: {
-      ongoingLabel: 'चल रहे कार्यक्रम', primary: 'मुख्य', backup: 'बैकअप', volunteersCol: 'स्वयंसेवक', whenCol: 'तिथियाँ और दिन',
+      callX: '{0} को कॉल करें', ongoingLabel: 'चल रहे कार्यक्रम', primary: 'मुख्य', backup: 'बैकअप', volunteersCol: 'स्वयंसेवक', whenCol: 'तिथियाँ और दिन',
       registerAs: 'इस रूप में पंजीकरण करें:', registerNAs: '{0} लोगों का इस रूप में पंजीकरण करें:', cancel: 'रद्द करें', full: '(भरा हुआ)',
       registeredAs: '{0} के रूप में पंजीकरण हो गया।', registeredNAs: '{0} लोगों का {1} के रूप में पंजीकरण हो गया।',
       dateRange: '{0} से {1} तक', fromDate: '{0} से', untilDate: '{0} तक',
@@ -1505,6 +1561,16 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
 
   // Web addresses in a cell become links (map links read "Open map"); the rest stays plain text.
   var URL_RE = /https?:\/\/[^\s"'&lt;&gt;]+/g;
+
+  // Call button: an Indian mobile number in international form, so it dials from any phone.
+  var PHONE_ICON = '&lt;svg viewBox="0 0 24 24" aria-hidden="true"&gt;&lt;path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.1.37 2.3.57 3.6.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/&gt;&lt;/svg&gt;';
+  function telOf(phone) {
+    var d = String(phone).replace(/\D/g, '');
+    if (d.length === 10) return '+91' + d;
+    if (d.length === 12 &amp;&amp; d.slice(0, 2) === '91') return '+' + d;
+    if (d.length === 11 &amp;&amp; d.charAt(0) === '0') return '+91' + d.slice(1);
+    return d;
+  }
   function addText(el, text) {
     var last = 0, m;
     URL_RE.lastIndex = 0;
@@ -1674,8 +1740,22 @@ function cacheKey_(sheet) { return 'state:' + sheet.getSheetId(); }
         var line = document.createElement('div');
         line.className = 'person';
         if (p.extra) line.className += ' extra';
-        line.textContent = (everyone.length &gt; 1 ? (i + 1) + '. ' : '') + (a.phone ? a.name + ' · ' + a.phone : a.name) +
-          (p.extra ? t('overLimit') : '');
+        line.textContent = (everyone.length &gt; 1 ? (i + 1) + '. ' : '') + a.name;
+        if (a.phone) {                                     // the number on wider screens; a call button on phones
+          var num = document.createElement('span');
+          num.className = 'num';
+          num.textContent = ' · ' + a.phone;
+          line.appendChild(num);
+          var call = document.createElement('a');
+          call.className = 'call';
+          call.href = 'tel:' + telOf(a.phone);
+          call.target = '_top';                            // the page runs inside Google's frame
+          call.setAttribute('aria-label', t('callX', a.name));
+          call.title = t('callX', a.name);
+          call.innerHTML = PHONE_ICON;
+          line.appendChild(call);
+        }
+        if (p.extra) line.appendChild(document.createTextNode(t('overLimit')));
         if (p.role) {
           var tag = document.createElement('span');
           tag.className = 'roletag';
