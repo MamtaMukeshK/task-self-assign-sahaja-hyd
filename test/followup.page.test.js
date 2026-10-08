@@ -43,6 +43,7 @@ test('follow-up page: calendar, select + repeat, confirmation, release, 12-hour 
     assert.match(boxes[5], /^Sat\n10\n2 open$/, 'Saturday: the daily and the weekly session both have places');
     assert.match(boxes[7], /^This week\n6\nopen$/, "5 daily (Wed-Sun) + 1 Saturday");
     assert.equal(await p.locator('#calMonth').textContent(), 'October 2026');
+    assert.equal(await p.isVisible('#demoBtn'), false, 'demo button hidden until a video link is set (stage 4)');
     assert.ok(await p.locator('#prevWeek').isDisabled(), 'no going back before this week');
     assert.equal(await p.locator('.dayhead').count(), 14, 'the next 2 weeks are listed');
     assert.match(await p.locator('article[data-id="P1-20261010"]').innerText(), /6:30 PM – 7:30 PM\n1 of 2 left\nAmeerpet · Road 3\nOpen map\nGita · 9345678901/);
