@@ -8,15 +8,16 @@ const SHIM = `window.google = { script: { get run() {
     : (...a) => window.gsCall(k, a).then(x => x.err ? fail(new Error(x.err)) : ok(x.ok)) });
   return r; } } };`;
 const PH = ['Line ID', 'Day', 'Start', 'End', 'Frequency', 'Week of month', 'Day of month', 'Centre', 'Address', 'Google map',
-  'Places', 'From', 'Until', 'Contact', 'Notes'];
+  'Places', 'From', 'Until', 'Contact', 'Notes', 'Principal Contact'];
 const SH = ['Slot ID', 'Date', 'Day', 'Start', 'End', 'Centre', 'Address', 'Map', 'Contact', 'Places', 'Status', 'Volunteers',
-  'Still needed', 'Cancellation notice sent', 'Notes'];
+  'Still needed', 'Cancellation notice sent', 'Notes', 'Principal Contact'];
 const line = o => PH.map(h => o[h] == null ? '' : o[h]);
 
 test('follow-up page: calendar, select + repeat, confirmation, release, 12-hour rule, layouts', { timeout: 60000 }, async () => {
   const plan = makeSheet('Program plan', 1, [PH,
     line({ Day: 'Saturday', Start: '6:30 PM', End: '7:30 PM', Frequency: 'Weekly', Centre: 'Ameerpet', Address: 'Road 3',
-      'Google map': 'https://maps.app.goo.gl/x', Places: '2', From: '2026-10-01', Until: '2026-12-31', Contact: 'Lakshmi 9000000009' }),
+      'Google map': 'https://maps.app.goo.gl/x', Places: '2', From: '2026-10-01', Until: '2026-12-31', Contact: 'Lakshmi 9000000009',
+      'Principal Contact': 'Mr Rao 9000000007' }),
     line({ Day: 'Every day', Start: '4:00 PM', End: '5:00 PM', Frequency: 'Daily', Centre: 'Kukatpally', Places: '3', From: '2026-10-07',
       Until: '2026-10-31', Contact: 'Lakshmi 9000000009' })]);
   const slots = makeSheet('Slots', 2, [SH]);
@@ -47,6 +48,14 @@ test('follow-up page: calendar, select + repeat, confirmation, release, 12-hour 
     assert.ok(await p.locator('#prevWeek').isDisabled(), 'no going back before this week');
     assert.equal(await p.locator('.dayhead').count(), 14, 'the next 2 weeks are listed');
     assert.match(await p.locator('article[data-id="P1-20261010"]').innerText(), /6:30 PM – 7:30 PM\n1 of 2 left\nAmeerpet · Road 3\nOpen map\nGita · 9345678901/);
+
+    // Principal contact behind "Details" on a phone (as on the tour page); tap to open, tap the number to call.
+    const card10 = p.locator('article[data-id="P1-20261010"]');
+    assert.equal(await card10.locator('.more').isVisible(), false);
+    await card10.locator('button[data-dtl]').click();
+    assert.equal(await card10.locator('.more').innerText(), 'Principal: Mr Rao 9000000007');
+    assert.equal(await card10.locator('.more a[href="tel:9000000007"]').count(), 1);
+    assert.equal(await card10.locator('button[data-dtl]').textContent(), 'Hide details ▴');
 
     await p.fill('#name', 'Asha'); await p.fill('#mobile', '98765 43210');
     // Weekly session: repeat is counted in dates; the confirmation lists every date before anything is written.
@@ -92,6 +101,8 @@ test('follow-up page: calendar, select + repeat, confirmation, release, 12-hour 
       assert.ok(await p.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), 'no sideways scroll at ' + width);
     }
     assert.equal(await p.evaluate(() => getComputedStyle(document.querySelector('.cards')).gridTemplateColumns.split(' ').length), 3, 'three columns on a laptop');
+    assert.ok(await p.locator('article[data-id="P1-20261031"] .more').isVisible(), 'laptop: contacts shown without Details');
+    assert.equal(await p.locator('article[data-id="P1-20261031"] button[data-dtl]').isVisible(), false);
     await p.setViewportSize({ width: 390, height: 1400 }); await p.evaluate(() => window.scrollTo(0, 0));
     if (process.env.SHOT) await p.screenshot({ path: process.env.SHOT });
     assert.deepEqual(errs, []);

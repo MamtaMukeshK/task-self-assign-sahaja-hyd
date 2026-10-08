@@ -125,16 +125,18 @@ replaced (Drive -> Manage versions, links unchanged). About 8 seconds longer.
 
 ## C. Organiser video (stage 4b; English only; laptop screen; about 2 minutes)
 
+_o1 and o4 updated 2026-10-08 for the renamed columns (Institution Name, Volunteers Needed, Principal/Sahaji Contact) and one value per line._
+
 Recording limit: Google's own sites are blocked from the build machine, so this video shows a **faithful sheet-like
 screen built from the real tab layout, not real Google Sheets**. The first caption says so. (Alternative: the user
 records their own screen and the voice is added afterwards.)
 
 1. **o-intro**: This short video shows organisers how to run the Follow-up Program sheet: the Program plan and the Slots tab.
    _Caption: Organisers' guide · This screen is a copy of the sheet's layout, not live Google Sheets._
-2. **o1**: In Program plan, type one line per regular session: the day, start and end time with AM or PM, the frequency, the centre, places, the first and last date, and a contact. Leave Line ID empty.
+2. **o1**: In Program plan, type one line per regular session: the day of the week, start and end time with AM or PM, the frequency, the institution, volunteers needed, the first and last date, the principal's contact and the Sahaji contact. Leave Line ID empty. For two days a week, type two lines.
 3. **o2**: Frequency can be daily, weekdays only, weekly, every two weeks, monthly on a weekday like the second Saturday, monthly on a date, or one-off.
 4. **o3**: Then choose Program, Update slots now. The Slots tab fills with one row per date. This also runs by itself every Sunday night.
-5. **o4**: In Slots you may change Status, Places, Contact and Notes for one date. The page writes Volunteers and Still needed. Never delete a row.
+5. **o4**: In Slots you may change Status, Volunteers Needed, the contacts and Notes for one date. The page writes Volunteers and Still needed. Never delete a row.
 6. **o5**: Changed a plan line? Run Update slots now again. Dates nobody has booked are updated. Dates with volunteers are kept, and listed in the Update report for you to decide.
 7. **o6**: To cancel one date, set its Status to Cancelled. Volunteers see a red notice on the page.
 8. **o7**: Then choose Program, Cancellation WhatsApp list. Tap Open WhatsApp for each person and send. Finally choose Mark cancellation notices as sent.

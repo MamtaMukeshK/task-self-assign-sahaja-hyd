@@ -7,7 +7,7 @@
  * Design: docs/followup/SPEC.md and docs/followup/STAGE1_PLAN.md.
  */
 
-var VERSION = 'followup-2026-10-08.3';
+var VERSION = 'followup-2026-10-08.4';
 
 /** Serves the page with the first weeks' dates already inside, so it shows without a second trip to the server. */
 function doGet() {
@@ -50,27 +50,31 @@ var DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday
 // Column titles the script creates. Columns are found by title (any order, any case), so organisers may move them.
 var PLAN_COLS = [
   ['line', 'Line ID', 'Filled in by the script (P1, P2...). Do not change or copy it.'],
-  ['day', 'Day', 'Monday...Sunday, or Every day (Daily lines).'],
-  ['start', 'Start', 'e.g. 6:30 PM'], ['end', 'End', 'e.g. 7:30 PM (blank = 1 hour)'],
+  ['day', 'Day of the Week', 'One day: Monday...Sunday, or Every day (Daily lines). Several days = one line each.'],
+  ['start', 'Start Time', 'e.g. 6:30 PM'], ['end', 'End Time', 'e.g. 7:30 PM (blank = 1 hour)'],
   ['freq', 'Frequency', 'Pick from the list.'],
-  ['week', 'Week of month', 'Monthly, same weekday only: 1st, 2nd, 3rd, 4th or last.'],
-  ['dom', 'Day of month', 'Monthly, same date only: 1 to 31. Months without that date are skipped.'],
-  ['centre', 'Centre', ''], ['address', 'Address', ''], ['map', 'Google map', 'Link to the place on Google Maps.'],
-  ['places', 'Places', 'Volunteers needed per date (blank = 1, 0 = closed).'],
+  ['week', 'Week of month', 'Monthly, same weekday only: one of 1st, 2nd, 3rd, 4th, 5th (months without one are skipped) or last.'],
+  ['dom', 'Day of month', 'Monthly, same date only: one number, 1 to 31. Months without that date are skipped.'],
+  ['centre', 'Institution Name', ''], ['address', 'Address', ''], ['map', 'Google map', 'Link to the place on Google Maps.'],
+  ['places', 'Volunteers Needed', 'Volunteers needed per date (blank = 1, 0 = closed).'],
   ['from', 'From', 'First date (the date itself for One-off).'],
   ['until', 'Until', 'Last date. Blank = keep 12 weeks of dates ahead.'],
-  ['contact', 'Contact', 'Organiser name + phone, shown when release is closed.'], ['notes', 'Notes', '']
+  ['principal', 'Principal Contact', 'Principal name + phone, shown on each date under Details.'],
+  ['contact', 'Sahaji Contact', 'Organiser name + phone, shown when release is closed.'], ['notes', 'Notes', '']
 ];
 var SLOT_COLS = [
   ['id', 'Slot ID', 'Filled in by the script. Never change it.'], ['date', 'Date', ''], ['day', 'Day', ''],
-  ['start', 'Start', ''], ['end', 'End', ''], ['centre', 'Centre', ''], ['address', 'Address', ''], ['map', 'Map', ''],
-  ['contact', 'Contact', 'Organisers may change.'], ['places', 'Places', 'Organisers may change.'],
+  ['start', 'Start Time', ''], ['end', 'End Time', ''], ['centre', 'Institution Name', ''], ['address', 'Address', ''], ['map', 'Map', ''],
+  ['principal', 'Principal Contact', 'Organisers may change.'], ['contact', 'Sahaji Contact', 'Organisers may change.'],
+  ['places', 'Volunteers Needed', 'Organisers may change.'],
   ['status', 'Status', 'Open or Cancelled. To drop a date, set Cancelled (do not delete the row).'],
   ['volunteers', 'Volunteers', 'Written by the page. Fix by hand only when needed.'],
   ['remaining', 'Still needed', 'Written by the page.'],
   ['notice', 'Cancellation notice sent', 'Written by the WhatsApp-list tool.'], ['notes', 'Notes', 'Organisers may change.']
 ];
-var COL_ALIASES = { centre: ['center'], map: ['google map'], dom: ['date of month'] };
+// Earlier titles still work, so a sheet set up before the 2026-10-08 renames keeps working.
+var COL_ALIASES = { day: ['day'], start: ['start'], end: ['end'], centre: ['centre', 'center'], map: ['google map', 'map'], dom: ['date of month'],
+  places: ['places'], contact: ['contact'] };
 
 // ---------------------------------------------------------------- sheet menu, setup, triggers
 
@@ -96,9 +100,9 @@ function setUpSheet() {
   var made = [];
   if (makeTab_(ss, CONFIG.PLAN_TAB, PLAN_COLS, {
     start: 'h:mm am/pm', end: 'h:mm am/pm', from: 'd mmm yyyy', until: 'd mmm yyyy', line: '@', centre: '@', address: '@',
-    map: '@', contact: '@', notes: '@' }, {
+    map: '@', principal: '@', contact: '@', notes: '@' }, {
     day: ['Every day'].concat(DAY_NAMES.slice(1), DAY_NAMES.slice(0, 1)), freq: FREQUENCIES,
-    week: ['1st', '2nd', '3rd', '4th', 'last'] })) made.push(CONFIG.PLAN_TAB);
+    week: ['1st', '2nd', '3rd', '4th', '5th', 'last'] })) made.push(CONFIG.PLAN_TAB);
   if (makeTab_(ss, CONFIG.SLOTS_TAB, SLOT_COLS, slotFormats_(), { status: ['Open', 'Cancelled'] })) made.push(CONFIG.SLOTS_TAB);
   if (!speakersTab_(ss)) {
     ss.insertSheet(CONFIG.SPEAKERS_NEW_TAB_NAME).getRange(1, 1, 1, 3).setValues([['Sr. No.', 'Speaker', CONFIG.SPEAKERS_MOBILE_HEADER]]);
@@ -117,7 +121,7 @@ function setUpSheet() {
 
 function slotFormats_() {
   return { id: '@', date: 'ddd d mmm yyyy', day: '@', start: 'h:mm am/pm', end: 'h:mm am/pm', centre: '@', address: '@',
-    map: '@', contact: '@', volunteers: '@', notice: '@', notes: '@' };
+    map: '@', principal: '@', contact: '@', volunteers: '@', notice: '@', notes: '@' };
 }
 
 function makeTab_(ss, name, cols, formats, lists) {
@@ -211,7 +215,7 @@ function generateSlots() {
       var r = u.row.row, l = u.line;
       sheet.getRange(r, c.start).setValue(l.start);
       sheet.getRange(r, c.end).setValue(l.end);
-      ['centre', 'address', 'map', 'contact'].forEach(function (k) { if (c[k]) writeText_(sheet, r, c[k], l[k]); });
+      ['centre', 'address', 'map', 'principal', 'contact'].forEach(function (k) { if (c[k]) writeText_(sheet, r, c[k], l[k]); });
       sheet.getRange(r, c.places).setValue(l.places);
       setRemaining_(sheet, r, c, l.places);
       updated++;
@@ -305,26 +309,30 @@ function parsePlanLine_(get, getDate) {
   else if (/2 weeks|two weeks|fortnight|alternate/.test(f)) freq = 'biweekly';
   else if (/week/.test(f)) freq = 'weekly';
   if (!freq) return { error: 'Frequency "' + get('freq') + '" is not one of: ' + FREQUENCIES.join(' / ') + '.' };
-  var d = norm_(get('day')), weekday = -1;
+  var d = norm_(get('day')), weekday = -1, usesDay = /weekly|biweekly|monthWeekday/.test(freq);
+  if (usesDay && (d.match(/sun|mon|tue|wed|thu|fri|sat/g) || []).length > 1) return { error: list_('Day of the Week', get('day'), 'day') };
   DAY_NAMES.forEach(function (n, i) { if (d && (d === n.toLowerCase() || d === n.slice(0, 3).toLowerCase())) weekday = i; });
-  if (/weekly|biweekly|monthWeekday/.test(freq) && weekday < 0) return { error: 'Day must be a weekday (Monday...Sunday) for ' + get('freq') + '.' };
+  if (usesDay && weekday < 0) return { error: 'Day of the Week must be one weekday (Monday...Sunday) for ' + get('freq') + '.' };
   var start = clock_(get('start')), end = get('end') ? clock_(get('end')) : start && plusHour_(start);
-  if (!start) return { error: 'Start "' + get('start') + '" is not a time like 6:30 PM.' };
-  if (!end || end <= start) return { error: 'End "' + get('end') + '" must be a time after the start.' };
+  if (!start) return { error: 'Start Time "' + get('start') + '" is not a time like 6:30 PM.' };
+  if (!end || end <= start) return { error: 'End Time "' + get('end') + '" must be a time after the start.' };
   var from = getDate('from'), until = getDate('until');
   if (!from) return { error: 'From must be a date.' };
   if (get('until') && !until) return { error: 'Until must be a date (or blank).' };
   if (until && until < from) return { error: 'Until is before From.' };
   var line = { freq: freq, weekday: weekday, start: start, end: end, from: from, until: until, centre: get('centre'),
-    address: get('address'), map: get('map'), contact: get('contact'), places: slotsFrom_(get('places')) };
+    address: get('address'), map: get('map'), principal: get('principal'), contact: get('contact'), places: slotsFrom_(get('places')) };
   if (freq === 'monthWeekday') {
     var w = norm_(get('week')), m = /^(\d)/.exec(w) || [];
-    line.week = /last/.test(w) ? 'last' : /first/.test(w) ? 1 : /second/.test(w) ? 2 : /third/.test(w) ? 3 : /fourth/.test(w) ? 4 : +m[1] || 0;
-    if (!line.week || line.week > 4) return { error: 'Week of month must be 1st, 2nd, 3rd, 4th or last.' };
+    if ((w.match(/\d|first|second|third|fourth|fifth|last/g) || []).length > 1) return { error: list_('Week of month', get('week'), 'week') };
+    line.week = /last/.test(w) ? 'last' : /first/.test(w) ? 1 : /second/.test(w) ? 2 : /third/.test(w) ? 3 : /fourth/.test(w) ? 4 : /fifth/.test(w) ? 5 : +m[1] || 0;
+    if (!line.week || line.week > 5) return { error: 'Week of month must be one of 1st, 2nd, 3rd, 4th, 5th or last.' };
   }
   if (freq === 'monthDate') {
-    line.dom = parseInt(get('dom'), 10);
-    if (!(line.dom >= 1 && line.dom <= 31)) return { error: 'Day of month must be a number from 1 to 31.' };
+    var dm = String(get('dom'));
+    if ((dm.match(/\d+/g) || []).length > 1) return { error: list_('Day of month', dm, 'date') };
+    line.dom = /^\s*\d{1,2}(?:st|nd|rd|th)?\s*$/i.test(dm) ? parseInt(dm, 10) : 0;
+    if (!(line.dom >= 1 && line.dom <= 31)) return { error: 'Day of month must be one number from 1 to 31.' };
   }
   line.label = (freq === 'daily' ? 'Every day' : freq === 'weekdays' ? 'Mon-Fri' : freq === 'once' ? 'One-off' : freq === 'monthDate' ? 'Day ' + line.dom :
     DAY_NAMES[weekday]) + ' ' + start + (line.centre ? ', ' + line.centre : '');
@@ -352,21 +360,27 @@ function planDates_(line, today) {
   return out;
 }
 
+/** The Update report message for a list where one value is expected. */
+function list_(title, text, what) {
+  return title + ' has more than one value ("' + text + '"). Please use one line per ' + what + ' (copy the line, clear its Line ID, change the ' + what + ').';
+}
+
 function lineHash_(l) {
-  return [l.freq, l.weekday, l.week || '', l.dom || '', l.start, l.end, l.from, l.until, l.centre, l.address, l.map, l.contact, l.places].join('|');
+  return [l.freq, l.weekday, l.week || '', l.dom || '', l.start, l.end, l.from, l.until, l.centre, l.address, l.map, l.principal, l.contact, l.places].join('|');
 }
 
 function newSlot_(line, date) {
   return { id: line.id + '-' + date.replace(/-/g, ''), date: date, day: DAY_NAMES[weekday_(date)].slice(0, 3), start: line.start,
-    end: line.end, centre: line.centre, address: line.address, map: line.map, contact: line.contact, places: line.places,
+    end: line.end, centre: line.centre, address: line.address, map: line.map, principal: line.principal, contact: line.contact, places: line.places,
     status: 'Open', remaining: line.places };
 }
 
 /** What differs between a Slots row and its plan line, in words. */
 function differences_(r, l) {
   var out = [];
-  ['start', 'end', 'centre', 'address', 'map', 'contact', 'places'].forEach(function (k) {
-    if (String(r[k]) !== String(l[k])) out.push(k + ' is "' + r[k] + '", plan says "' + l[k] + '"');
+  ['start', 'end', 'centre', 'address', 'map', 'principal', 'contact', 'places'].forEach(function (k) {
+    var title = SLOT_COLS.filter(function (c) { return c[0] === k; })[0][1];
+    if (String(r[k]) !== String(l[k])) out.push(title + ' is "' + r[k] + '", plan says "' + l[k] + '"');
   });
   return out;
 }
@@ -401,7 +415,7 @@ function readSlots_(ss) {
     var id = get('id'), start = clock_(get('start')), end = clock_(get('end'));
     return { row: x.row, raw: x.display, id: id, line: (/^(P\d+)-/i.exec(id) || [])[1] || '',
       date: dateKey_(x.values[c.date - 1], tz), start: start, end: end || (start && plusHour_(start)),
-      centre: get('centre'), address: get('address'), map: get('map'), contact: get('contact'), places: slotsFrom_(get('places')),
+      centre: get('centre'), address: get('address'), map: get('map'), principal: get('principal'), contact: get('contact'), places: slotsFrom_(get('places')),
       cancelled: /cancel/i.test(get('status')), people: parseAssignees_(get('volunteers')), notice: get('notice'), notes: get('notes') };
   });
   return { sheet: sheet, cols: c, rows: rows, width: t.width };
@@ -411,7 +425,7 @@ function readSlots_(ss) {
 function pageSlot_(r, now) {
   var start = minutes_(r.date, r.start), end = minutes_(r.date, r.end);
   return { id: r.id, line: r.line, date: r.date, day: weekday_(r.date), start: r.start, end: r.end, centre: r.centre,
-    address: r.address, map: r.map, contact: r.contact, places: r.places, cancelled: r.cancelled, notes: r.notes,
+    address: r.address, map: r.map, principal: r.principal, contact: r.contact, places: r.places, cancelled: r.cancelled, notes: r.notes,
     people: r.people.map(function (p) { return { name: p.name, phone: p.phone, by: p.by }; }),
     remaining: Math.max(0, r.places - r.people.length), over: Math.max(0, r.people.length - r.places),
     started: now >= start, ended: now >= end, releaseClosed: start - now < CONFIG.RELEASE_CLOSES_HOURS * 60 };

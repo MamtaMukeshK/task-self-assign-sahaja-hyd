@@ -7,6 +7,9 @@ const PH = ['Line ID', 'Day', 'Start', 'End', 'Frequency', 'Week of month', 'Day
 const SH = ['Slot ID', 'Date', 'Day', 'Start', 'End', 'Centre', 'Address', 'Map', 'Contact', 'Places', 'Status', 'Volunteers',
   'Still needed', 'Cancellation notice sent', 'Notes'];
 const S = h => SH.indexOf(h);
+// The titles the template creates since 2026-10-08 (the older ones above still work; most tests use them).
+const P2 = ['Line ID', 'Day of the Week', 'Start Time', 'End Time', 'Frequency', 'Week of month', 'Day of month', 'Institution Name', 'Address', 'Google map', 'Volunteers Needed', 'From', 'Until', 'Principal Contact', 'Sahaji Contact', 'Notes'];
+const S2 = ['Slot ID', 'Date', 'Day', 'Start Time', 'End Time', 'Institution Name', 'Address', 'Map', 'Principal Contact', 'Sahaji Contact', 'Volunteers Needed', 'Status', 'Volunteers', 'Still needed', 'Cancellation notice sent', 'Notes'];
 function setup(lines, now) {
   const plan = makeSheet('Program plan', 1, [PH, ...lines.map(o => PH.map(h => o[h] == null ? '' : o[h]))]);
   const slots = makeSheet('Slots', 2, [SH]);
@@ -19,8 +22,8 @@ const weekly = { Day: 'Saturday', Start: '6:30 PM', End: '7:30 PM', Frequency: '
 test('setUpSheet creates the three tabs with dropdowns and one weekly trigger; a second run changes nothing', () => {
   const gs = load([], NOW, 'followup/Code.gs'), ss = gs.SpreadsheetApp.getActiveSpreadsheet();
   assert.match(gs.setUpSheet(), /Created: Program plan, Slots, Speakers\. The weekly update/);
-  assert.deepEqual(ss.getSheetByName('Program plan').grid[0].slice(0, 15), PH);
-  assert.deepEqual(ss.getSheetByName('Slots').grid[0].slice(0, 15), SH);
+  assert.deepEqual(ss.getSheetByName('Program plan').grid[0].slice(0, 16), P2, 'titles as renamed by the user 2026-10-08');
+  assert.deepEqual(ss.getSheetByName('Slots').grid[0].slice(0, 16), S2);
   assert.deepEqual(gs._triggers, [{ handler: 'generateSlots', day: 'SUNDAY', hour: 22, tz: 'Asia/Kolkata' }]);
   assert.match(gs.setUpSheet(), /^All tabs were already there/);
   assert.equal(gs._triggers.length, 1);
@@ -66,7 +69,7 @@ test('generator: a changed line updates only empty future dates; booked dates ar
   const r = t.gs.generateSlots();
   assert.deepEqual(t.dates('P1'), ['2026-10-10', '2026-10-17', '2026-10-24'], '31 Oct removed (nobody on it)');
   assert.equal(t.row('P1-20261010')[S('Start')], '19:00');
-  assert.equal(r.notes.filter(n => /Funday|Day must be a weekday/.test(n)).length, 1, 'bad line reported');
+  assert.equal(r.notes.filter(n => /Day of the Week must be one weekday/.test(n)).length, 1, 'bad line reported');
   assert.equal(t.plan.grid[2][0], '', 'bad line gets no ID');
 });
 
@@ -181,4 +184,30 @@ test('organiser menu: WhatsApp list in a dialog (everyone affected, own mobile);
   assert.equal(t.gs._alerts.pop(), 'Done: 1 date(s) marked as sent.');
   t.gs.menuCancellationList();
   assert.match(t.gs._dialogs[1].html, /No cancelled dates are waiting for a notice\./);
+});
+
+test('renamed titles (2026-10-08): Principal Contact on every date; a list in one column is refused loudly; 5th week', () => {
+  const row = o => P2.map(h => o[h] == null ? '' : o[h]);
+  const base = { 'Start Time': '4:00 PM', From: '2026-10-01', Until: '2026-12-31', 'Institution Name': 'ZP School',
+    'Principal Contact': 'Mr Rao 9000000007', 'Sahaji Contact': 'Lakshmi 9000000009' };
+  const plan = makeSheet('Program plan', 1, [P2,
+    row({ ...base, 'Day of the Week': 'Saturday', Frequency: 'Weekly' }),
+    row({ ...base, 'Day of the Week': 'Saturday', Frequency: 'Monthly, same weekday', 'Week of month': '5th' }),
+    row({ ...base, 'Day of the Week': 'Mon, Wed', Frequency: 'Weekly' }),
+    row({ ...base, 'Day of the Week': 'Saturday', Frequency: 'Monthly, same weekday', 'Week of month': '1st, 3rd' }),
+    row({ ...base, Frequency: 'Monthly, same date', 'Day of month': '1, 15' })]);
+  const slots = makeSheet('Slots', 2, [S2]);
+  const gs = load([plan, slots], NOW, 'followup/Code.gs');
+  const r = gs.generateSlots();
+  const dates = p => slots.grid.filter(x => String(x[0]).startsWith(p + '-')).map(x => x[1]);
+  assert.deepEqual(dates('P2'), ['2026-10-31'], '5th Saturday: November and December have none');
+  assert.equal(slots.grid.length - 1, 13, '12 Saturdays + one 5th Saturday; the three lines with lists make no dates');
+  const p1 = slots.grid.find(x => x[0] === 'P1-20261010');
+  assert.deepEqual([p1[S2.indexOf('Principal Contact')], p1[S2.indexOf('Sahaji Contact')], p1[S2.indexOf('Volunteers Needed')]],
+    ['Mr Rao 9000000007', 'Lakshmi 9000000009', 1]);
+  assert.equal(gs.getSlots('2026-10-10', '2026-10-10').slots[0].principal, 'Mr Rao 9000000007');
+  const msgs = r.notes.join('\n');
+  assert.match(msgs, /Day of the Week has more than one value \("Mon, Wed"\)\. Please use one line per day/);
+  assert.match(msgs, /Week of month has more than one value \("1st, 3rd"\)\. Please use one line per week/);
+  assert.match(msgs, /Day of month has more than one value \("1, 15"\)\. Please use one line per date/);
 });

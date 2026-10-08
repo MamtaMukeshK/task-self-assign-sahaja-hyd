@@ -19,20 +19,20 @@ const line = o => PH.map(h => o[h] == null ? '' : o[h]);
 const map = q => 'https://maps.google.com/?q=' + encodeURIComponent(q + ', Hyderabad');
 // One line per frequency, so every kind of line has an example. Places, people and phone numbers are made up.
 const plan = makeSheet('Program plan', 1, [PH,
-  line({ Day: 'Saturday', Start: '6:30 PM', End: '7:30 PM', Frequency: 'Weekly', Centre: 'Ameerpet Centre', Address: 'Road 3, Ameerpet',
-    'Google map': map('Ameerpet'), Places: '4', From: '2026-10-01', Until: '2026-12-31', Contact: 'Lakshmi 9000000009' }),
-  line({ Day: 'Every day', Start: '7:00 AM', End: '7:45 AM', Frequency: 'Daily', Centre: 'Kukatpally Centre', Address: 'KPHB Colony',
-    'Google map': map('KPHB Colony'), Places: '2', From: '2026-10-12', Until: '2026-10-25', Contact: 'Lakshmi 9000000009' }),
-  line({ Start: '6:30 PM', End: '7:30 PM', Frequency: 'Daily, weekdays only (Mon-Fri)', Centre: 'Dilsukhnagar Centre', Address: 'Near the bus stand',
-    'Google map': map('Dilsukhnagar'), Places: '2', From: '2026-10-12', Until: '2026-11-30', Contact: 'Suresh 9000000008' }),
-  line({ Day: 'Sunday', Start: '10:00 AM', End: '11:00 AM', Frequency: 'Every 2 weeks', Centre: 'Secunderabad Centre', Address: 'SP Road',
-    'Google map': map('Secunderabad'), Places: '3', From: '2026-10-04', Contact: 'Suresh 9000000008', Notes: 'No Until date: keeps 12 weeks ahead' }),
-  line({ Day: 'Saturday', Start: '4:00 PM', End: '5:30 PM', Frequency: 'Monthly, same weekday', 'Week of month': '2nd', Centre: 'Gachibowli Centre',
-    'Google map': map('Gachibowli'), Places: '5', From: '2026-10-01', Until: '2027-03-31', Contact: 'Lakshmi 9000000009' }),
-  line({ Start: '5:00 PM', End: '6:00 PM', Frequency: 'Monthly, same date', 'Day of month': '15', Centre: 'Madhapur Centre',
-    'Google map': map('Madhapur'), Places: '2', From: '2026-10-01', Until: '2027-03-31', Contact: 'Suresh 9000000008' }),
-  line({ Start: '11:00 AM', End: '12:30 PM', Frequency: 'One-off', Centre: 'Begumpet Centre', 'Google map': map('Begumpet'), Places: '6',
-    From: '2026-11-14', Contact: 'Lakshmi 9000000009', Notes: "Children's Day programme" })]);
+  line({ 'Day of the Week': 'Saturday', 'Start Time': '6:30 PM', 'End Time': '7:30 PM', Frequency: 'Weekly', 'Institution Name': 'Ameerpet Centre', Address: 'Road 3, Ameerpet',
+    'Google map': map('Ameerpet'), 'Volunteers Needed': '4', From: '2026-10-01', Until: '2026-12-31', 'Sahaji Contact': 'Lakshmi 9000000009', 'Principal Contact': 'Principal A 9000000011' }),
+  line({ 'Day of the Week': 'Every day', 'Start Time': '7:00 AM', 'End Time': '7:45 AM', Frequency: 'Daily', 'Institution Name': 'Kukatpally Centre', Address: 'KPHB Colony',
+    'Google map': map('KPHB Colony'), 'Volunteers Needed': '2', From: '2026-10-12', Until: '2026-10-25', 'Sahaji Contact': 'Lakshmi 9000000009', 'Principal Contact': 'Principal B 9000000012' }),
+  line({ 'Start Time': '6:30 PM', 'End Time': '7:30 PM', Frequency: 'Daily, weekdays only (Mon-Fri)', 'Institution Name': 'Dilsukhnagar Centre', Address: 'Near the bus stand',
+    'Google map': map('Dilsukhnagar'), 'Volunteers Needed': '2', From: '2026-10-12', Until: '2026-11-30', 'Sahaji Contact': 'Suresh 9000000008', 'Principal Contact': 'Principal C 9000000013' }),
+  line({ 'Day of the Week': 'Sunday', 'Start Time': '10:00 AM', 'End Time': '11:00 AM', Frequency: 'Every 2 weeks', 'Institution Name': 'Secunderabad Centre', Address: 'SP Road',
+    'Google map': map('Secunderabad'), 'Volunteers Needed': '3', From: '2026-10-04', 'Sahaji Contact': 'Suresh 9000000008', 'Principal Contact': 'Principal D 9000000014', Notes: 'No Until date: keeps 12 weeks ahead' }),
+  line({ 'Day of the Week': 'Saturday', 'Start Time': '4:00 PM', 'End Time': '5:30 PM', Frequency: 'Monthly, same weekday', 'Week of month': '2nd', 'Institution Name': 'Gachibowli Centre',
+    'Google map': map('Gachibowli'), 'Volunteers Needed': '5', From: '2026-10-01', Until: '2027-03-31', 'Sahaji Contact': 'Lakshmi 9000000009', 'Principal Contact': 'Principal E 9000000015' }),
+  line({ 'Start Time': '5:00 PM', 'End Time': '6:00 PM', Frequency: 'Monthly, same date', 'Day of month': '15', 'Institution Name': 'Madhapur Centre',
+    'Google map': map('Madhapur'), 'Volunteers Needed': '2', From: '2026-10-01', Until: '2027-03-31', 'Sahaji Contact': 'Suresh 9000000008', 'Principal Contact': 'Principal F 9000000016' }),
+  line({ 'Start Time': '11:00 AM', 'End Time': '12:30 PM', Frequency: 'One-off', 'Institution Name': 'Begumpet Centre', 'Google map': map('Begumpet'), 'Volunteers Needed': '6',
+    From: '2026-11-14', 'Sahaji Contact': 'Lakshmi 9000000009', 'Principal Contact': 'Principal G 9000000017', Notes: "Children's Day programme" })]);
 const slots = makeSheet('Slots', 2, [SH]);
 const speakers = makeSheet('Speakers', 3, [['Sr. No.', 'Speaker', 'Mobile'], ['1', 'Asha Rao', '9000000001'], ['2', 'Ravi Kumar', '9000000002'],
   ['3', 'Meena Iyer', ''], ['4', 'Gita Sharma', '9000000004'], ['5', 'Hari Prasad', '9000000005']]);
@@ -55,12 +55,12 @@ def cell_value(title, v):
     s = str(v)
     if title in ('Date', 'From', 'Until') and len(s) == 10 and s[4] == '-':
         return datetime.date.fromisoformat(s), 'ddd d mmm yyyy' if title == 'Date' else 'd mmm yyyy'
-    if title in ('Start', 'End') and s:
+    if title in ('Start', 'End', 'Start Time', 'End Time') and s:
         if ':' in s and len(s) == 5:
             return datetime.time(int(s[:2]), int(s[3:])), 'h:mm AM/PM'
         t = datetime.datetime.strptime(s.replace(' ', ''), '%I:%M%p').time()
         return t, 'h:mm AM/PM'
-    if title in ('Places', 'Still needed', 'Sr. No.') and s.isdigit():
+    if title in ('Places', 'Volunteers Needed', 'Still needed', 'Sr. No.') and s.isdigit():
         return int(s), None
     return v, None
 
@@ -93,9 +93,10 @@ for i, text in enumerate([
     'Follow-up Program sheet: SAMPLE with made-up demo data (same data as the demo videos)',
     '',
     'Program plan: one line per regular session. This is what you fill in with your real sessions (one example per frequency here).',
-    '   Leave "Line ID" empty for new lines: the script fills it in. Type times with AM/PM. Pick Day, Frequency and Week of month from the lists.',
+    '   Leave "Line ID" empty for new lines: the script fills it in. Type times with AM/PM. Pick Day of the Week, Frequency and Week of month from the lists.'
+    ,'   One value per line: for Monday and Thursday, or the 1st and 3rd Saturday, type two lines (a list is refused and listed in Update report).',
     'Slots: made by the script from Program plan (Program -> Update slots now), one row per date. Do not type dates here.',
-    '   Organisers may change Status (Open/Cancelled), Places, Contact and Notes. Volunteers and Still needed are written by the page.',
+    '   Organisers may change Status (Open/Cancelled), Volunteers Needed, Principal Contact, Sahaji Contact and Notes. Volunteers and Still needed are written by the page.',
     '   Here: Asha Rao booked herself and Ravi Kumar (via Asha Rao) for 4 Saturdays; 24 Oct is Cancelled to show the notice.',
     'Speakers: the names volunteers can pick from (Sr. No., Speaker, Mobile). Meena Iyer has no mobile yet, to show the first-time mobile box.',
     'Update report: what the last "Update slots now" did and anything that needs you.',
@@ -108,15 +109,15 @@ for i, text in enumerate([
     readme.cell(i + 1, 1, text).font = BOLD if i == 0 else Font()
 readme.column_dimensions['A'].width = 140
 
-plan_ws = add_tab(wb, 'Program plan', data['plan'], data['planNotes'], [8, 11, 10, 10, 30, 13, 12, 20, 22, 28, 8, 13, 13, 20, 34])
-slots_ws = add_tab(wb, 'Slots', data['slots'], data['slotNotes'], [14, 16, 6, 10, 10, 20, 22, 28, 20, 8, 11, 36, 8, 14, 16])
+plan_ws = add_tab(wb, 'Program plan', data['plan'], data['planNotes'], [8, 15, 10, 10, 30, 13, 12, 20, 22, 28, 10, 13, 13, 24, 20, 34])
+slots_ws = add_tab(wb, 'Slots', data['slots'], data['slotNotes'], [14, 16, 6, 10, 10, 20, 22, 28, 24, 20, 10, 11, 36, 8, 14, 16])
 add_tab(wb, 'Speakers', data['speakers'], None, [8, 18, 14])
 add_tab(wb, 'Update report', [[r[0] if r else ''] for r in data['report']] if data['report'] else [['']], None, [120])
 
 # Drop-down lists as on the live sheet (kept on a hidden tab, because "Daily, weekdays only (Mon-Fri)" contains a comma).
 lists = wb.create_sheet('Lists')
 days = ['Every day'] + data['days'][1:] + data['days'][:1]
-for col, values in enumerate([days, data['freqs'], ['1st', '2nd', '3rd', '4th', 'last'], ['Open', 'Cancelled']], 1):
+for col, values in enumerate([days, data['freqs'], ['1st', '2nd', '3rd', '4th', '5th', 'last'], ['Open', 'Cancelled']], 1):
     for r, v in enumerate(values, 1):
         lists.cell(r, col, v)
 lists.sheet_state = 'hidden'
@@ -125,8 +126,8 @@ def dropdown(ws, title, col_letter, n):
     letter = ws.cell(1, heads.index(title) + 1).column_letter
     dv = DataValidation(type='list', formula1='=Lists!$%s$1:$%s$%d' % (col_letter, col_letter, n), allow_blank=True)
     dv.add('%s2:%s1000' % (letter, letter)); ws.add_data_validation(dv)
-dropdown(plan_ws, 'Day', 'A', len(days)); dropdown(plan_ws, 'Frequency', 'B', len(data['freqs']))
-dropdown(plan_ws, 'Week of month', 'C', 5); dropdown(slots_ws, 'Status', 'D', 2)
+dropdown(plan_ws, 'Day of the Week', 'A', len(days)); dropdown(plan_ws, 'Frequency', 'B', len(data['freqs']))
+dropdown(plan_ws, 'Week of month', 'C', 6); dropdown(slots_ws, 'Status', 'D', 2)
 
 out = ROOT / 'docs' / 'followup' / 'sample-followup-sheet.xlsx'
 wb.save(out)

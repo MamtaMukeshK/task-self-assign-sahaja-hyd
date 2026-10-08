@@ -110,7 +110,7 @@ Takes about 20 minutes on a laptop or desktop computer (not a phone).</p>
  * Design: docs/followup/SPEC.md and docs/followup/STAGE1_PLAN.md.
  */
 
-var VERSION = 'followup-2026-10-08.3';
+var VERSION = 'followup-2026-10-08.4';
 
 /** Serves the page with the first weeks' dates already inside, so it shows without a second trip to the server. */
 function doGet() {
@@ -153,27 +153,31 @@ var DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday
 // Column titles the script creates. Columns are found by title (any order, any case), so organisers may move them.
 var PLAN_COLS = [
   ['line', 'Line ID', 'Filled in by the script (P1, P2...). Do not change or copy it.'],
-  ['day', 'Day', 'Monday...Sunday, or Every day (Daily lines).'],
-  ['start', 'Start', 'e.g. 6:30 PM'], ['end', 'End', 'e.g. 7:30 PM (blank = 1 hour)'],
+  ['day', 'Day of the Week', 'One day: Monday...Sunday, or Every day (Daily lines). Several days = one line each.'],
+  ['start', 'Start Time', 'e.g. 6:30 PM'], ['end', 'End Time', 'e.g. 7:30 PM (blank = 1 hour)'],
   ['freq', 'Frequency', 'Pick from the list.'],
-  ['week', 'Week of month', 'Monthly, same weekday only: 1st, 2nd, 3rd, 4th or last.'],
-  ['dom', 'Day of month', 'Monthly, same date only: 1 to 31. Months without that date are skipped.'],
-  ['centre', 'Centre', ''], ['address', 'Address', ''], ['map', 'Google map', 'Link to the place on Google Maps.'],
-  ['places', 'Places', 'Volunteers needed per date (blank = 1, 0 = closed).'],
+  ['week', 'Week of month', 'Monthly, same weekday only: one of 1st, 2nd, 3rd, 4th, 5th (months without one are skipped) or last.'],
+  ['dom', 'Day of month', 'Monthly, same date only: one number, 1 to 31. Months without that date are skipped.'],
+  ['centre', 'Institution Name', ''], ['address', 'Address', ''], ['map', 'Google map', 'Link to the place on Google Maps.'],
+  ['places', 'Volunteers Needed', 'Volunteers needed per date (blank = 1, 0 = closed).'],
   ['from', 'From', 'First date (the date itself for One-off).'],
   ['until', 'Until', 'Last date. Blank = keep 12 weeks of dates ahead.'],
-  ['contact', 'Contact', 'Organiser name + phone, shown when release is closed.'], ['notes', 'Notes', '']
+  ['principal', 'Principal Contact', 'Principal name + phone, shown on each date under Details.'],
+  ['contact', 'Sahaji Contact', 'Organiser name + phone, shown when release is closed.'], ['notes', 'Notes', '']
 ];
 var SLOT_COLS = [
   ['id', 'Slot ID', 'Filled in by the script. Never change it.'], ['date', 'Date', ''], ['day', 'Day', ''],
-  ['start', 'Start', ''], ['end', 'End', ''], ['centre', 'Centre', ''], ['address', 'Address', ''], ['map', 'Map', ''],
-  ['contact', 'Contact', 'Organisers may change.'], ['places', 'Places', 'Organisers may change.'],
+  ['start', 'Start Time', ''], ['end', 'End Time', ''], ['centre', 'Institution Name', ''], ['address', 'Address', ''], ['map', 'Map', ''],
+  ['principal', 'Principal Contact', 'Organisers may change.'], ['contact', 'Sahaji Contact', 'Organisers may change.'],
+  ['places', 'Volunteers Needed', 'Organisers may change.'],
   ['status', 'Status', 'Open or Cancelled. To drop a date, set Cancelled (do not delete the row).'],
   ['volunteers', 'Volunteers', 'Written by the page. Fix by hand only when needed.'],
   ['remaining', 'Still needed', 'Written by the page.'],
   ['notice', 'Cancellation notice sent', 'Written by the WhatsApp-list tool.'], ['notes', 'Notes', 'Organisers may change.']
 ];
-var COL_ALIASES = { centre: ['center'], map: ['google map'], dom: ['date of month'] };
+// Earlier titles still work, so a sheet set up before the 2026-10-08 renames keeps working.
+var COL_ALIASES = { day: ['day'], start: ['start'], end: ['end'], centre: ['centre', 'center'], map: ['google map', 'map'], dom: ['date of month'],
+  places: ['places'], contact: ['contact'] };
 
 // ---------------------------------------------------------------- sheet menu, setup, triggers
 
@@ -199,9 +203,9 @@ function setUpSheet() {
   var made = [];
   if (makeTab_(ss, CONFIG.PLAN_TAB, PLAN_COLS, {
     start: 'h:mm am/pm', end: 'h:mm am/pm', from: 'd mmm yyyy', until: 'd mmm yyyy', line: '@', centre: '@', address: '@',
-    map: '@', contact: '@', notes: '@' }, {
+    map: '@', principal: '@', contact: '@', notes: '@' }, {
     day: ['Every day'].concat(DAY_NAMES.slice(1), DAY_NAMES.slice(0, 1)), freq: FREQUENCIES,
-    week: ['1st', '2nd', '3rd', '4th', 'last'] })) made.push(CONFIG.PLAN_TAB);
+    week: ['1st', '2nd', '3rd', '4th', '5th', 'last'] })) made.push(CONFIG.PLAN_TAB);
   if (makeTab_(ss, CONFIG.SLOTS_TAB, SLOT_COLS, slotFormats_(), { status: ['Open', 'Cancelled'] })) made.push(CONFIG.SLOTS_TAB);
   if (!speakersTab_(ss)) {
     ss.insertSheet(CONFIG.SPEAKERS_NEW_TAB_NAME).getRange(1, 1, 1, 3).setValues([['Sr. No.', 'Speaker', CONFIG.SPEAKERS_MOBILE_HEADER]]);
@@ -220,7 +224,7 @@ function setUpSheet() {
 
 function slotFormats_() {
   return { id: '@', date: 'ddd d mmm yyyy', day: '@', start: 'h:mm am/pm', end: 'h:mm am/pm', centre: '@', address: '@',
-    map: '@', contact: '@', volunteers: '@', notice: '@', notes: '@' };
+    map: '@', principal: '@', contact: '@', volunteers: '@', notice: '@', notes: '@' };
 }
 
 function makeTab_(ss, name, cols, formats, lists) {
@@ -314,7 +318,7 @@ function generateSlots() {
       var r = u.row.row, l = u.line;
       sheet.getRange(r, c.start).setValue(l.start);
       sheet.getRange(r, c.end).setValue(l.end);
-      ['centre', 'address', 'map', 'contact'].forEach(function (k) { if (c[k]) writeText_(sheet, r, c[k], l[k]); });
+      ['centre', 'address', 'map', 'principal', 'contact'].forEach(function (k) { if (c[k]) writeText_(sheet, r, c[k], l[k]); });
       sheet.getRange(r, c.places).setValue(l.places);
       setRemaining_(sheet, r, c, l.places);
       updated++;
@@ -408,26 +412,30 @@ function parsePlanLine_(get, getDate) {
   else if (/2 weeks|two weeks|fortnight|alternate/.test(f)) freq = 'biweekly';
   else if (/week/.test(f)) freq = 'weekly';
   if (!freq) return { error: 'Frequency "' + get('freq') + '" is not one of: ' + FREQUENCIES.join(' / ') + '.' };
-  var d = norm_(get('day')), weekday = -1;
+  var d = norm_(get('day')), weekday = -1, usesDay = /weekly|biweekly|monthWeekday/.test(freq);
+  if (usesDay &amp;&amp; (d.match(/sun|mon|tue|wed|thu|fri|sat/g) || []).length &gt; 1) return { error: list_('Day of the Week', get('day'), 'day') };
   DAY_NAMES.forEach(function (n, i) { if (d &amp;&amp; (d === n.toLowerCase() || d === n.slice(0, 3).toLowerCase())) weekday = i; });
-  if (/weekly|biweekly|monthWeekday/.test(freq) &amp;&amp; weekday &lt; 0) return { error: 'Day must be a weekday (Monday...Sunday) for ' + get('freq') + '.' };
+  if (usesDay &amp;&amp; weekday &lt; 0) return { error: 'Day of the Week must be one weekday (Monday...Sunday) for ' + get('freq') + '.' };
   var start = clock_(get('start')), end = get('end') ? clock_(get('end')) : start &amp;&amp; plusHour_(start);
-  if (!start) return { error: 'Start "' + get('start') + '" is not a time like 6:30 PM.' };
-  if (!end || end &lt;= start) return { error: 'End "' + get('end') + '" must be a time after the start.' };
+  if (!start) return { error: 'Start Time "' + get('start') + '" is not a time like 6:30 PM.' };
+  if (!end || end &lt;= start) return { error: 'End Time "' + get('end') + '" must be a time after the start.' };
   var from = getDate('from'), until = getDate('until');
   if (!from) return { error: 'From must be a date.' };
   if (get('until') &amp;&amp; !until) return { error: 'Until must be a date (or blank).' };
   if (until &amp;&amp; until &lt; from) return { error: 'Until is before From.' };
   var line = { freq: freq, weekday: weekday, start: start, end: end, from: from, until: until, centre: get('centre'),
-    address: get('address'), map: get('map'), contact: get('contact'), places: slotsFrom_(get('places')) };
+    address: get('address'), map: get('map'), principal: get('principal'), contact: get('contact'), places: slotsFrom_(get('places')) };
   if (freq === 'monthWeekday') {
     var w = norm_(get('week')), m = /^(\d)/.exec(w) || [];
-    line.week = /last/.test(w) ? 'last' : /first/.test(w) ? 1 : /second/.test(w) ? 2 : /third/.test(w) ? 3 : /fourth/.test(w) ? 4 : +m[1] || 0;
-    if (!line.week || line.week &gt; 4) return { error: 'Week of month must be 1st, 2nd, 3rd, 4th or last.' };
+    if ((w.match(/\d|first|second|third|fourth|fifth|last/g) || []).length &gt; 1) return { error: list_('Week of month', get('week'), 'week') };
+    line.week = /last/.test(w) ? 'last' : /first/.test(w) ? 1 : /second/.test(w) ? 2 : /third/.test(w) ? 3 : /fourth/.test(w) ? 4 : /fifth/.test(w) ? 5 : +m[1] || 0;
+    if (!line.week || line.week &gt; 5) return { error: 'Week of month must be one of 1st, 2nd, 3rd, 4th, 5th or last.' };
   }
   if (freq === 'monthDate') {
-    line.dom = parseInt(get('dom'), 10);
-    if (!(line.dom &gt;= 1 &amp;&amp; line.dom &lt;= 31)) return { error: 'Day of month must be a number from 1 to 31.' };
+    var dm = String(get('dom'));
+    if ((dm.match(/\d+/g) || []).length &gt; 1) return { error: list_('Day of month', dm, 'date') };
+    line.dom = /^\s*\d{1,2}(?:st|nd|rd|th)?\s*$/i.test(dm) ? parseInt(dm, 10) : 0;
+    if (!(line.dom &gt;= 1 &amp;&amp; line.dom &lt;= 31)) return { error: 'Day of month must be one number from 1 to 31.' };
   }
   line.label = (freq === 'daily' ? 'Every day' : freq === 'weekdays' ? 'Mon-Fri' : freq === 'once' ? 'One-off' : freq === 'monthDate' ? 'Day ' + line.dom :
     DAY_NAMES[weekday]) + ' ' + start + (line.centre ? ', ' + line.centre : '');
@@ -455,21 +463,27 @@ function planDates_(line, today) {
   return out;
 }
 
+/** The Update report message for a list where one value is expected. */
+function list_(title, text, what) {
+  return title + ' has more than one value ("' + text + '"). Please use one line per ' + what + ' (copy the line, clear its Line ID, change the ' + what + ').';
+}
+
 function lineHash_(l) {
-  return [l.freq, l.weekday, l.week || '', l.dom || '', l.start, l.end, l.from, l.until, l.centre, l.address, l.map, l.contact, l.places].join('|');
+  return [l.freq, l.weekday, l.week || '', l.dom || '', l.start, l.end, l.from, l.until, l.centre, l.address, l.map, l.principal, l.contact, l.places].join('|');
 }
 
 function newSlot_(line, date) {
   return { id: line.id + '-' + date.replace(/-/g, ''), date: date, day: DAY_NAMES[weekday_(date)].slice(0, 3), start: line.start,
-    end: line.end, centre: line.centre, address: line.address, map: line.map, contact: line.contact, places: line.places,
+    end: line.end, centre: line.centre, address: line.address, map: line.map, principal: line.principal, contact: line.contact, places: line.places,
     status: 'Open', remaining: line.places };
 }
 
 /** What differs between a Slots row and its plan line, in words. */
 function differences_(r, l) {
   var out = [];
-  ['start', 'end', 'centre', 'address', 'map', 'contact', 'places'].forEach(function (k) {
-    if (String(r[k]) !== String(l[k])) out.push(k + ' is "' + r[k] + '", plan says "' + l[k] + '"');
+  ['start', 'end', 'centre', 'address', 'map', 'principal', 'contact', 'places'].forEach(function (k) {
+    var title = SLOT_COLS.filter(function (c) { return c[0] === k; })[0][1];
+    if (String(r[k]) !== String(l[k])) out.push(title + ' is "' + r[k] + '", plan says "' + l[k] + '"');
   });
   return out;
 }
@@ -504,7 +518,7 @@ function readSlots_(ss) {
     var id = get('id'), start = clock_(get('start')), end = clock_(get('end'));
     return { row: x.row, raw: x.display, id: id, line: (/^(P\d+)-/i.exec(id) || [])[1] || '',
       date: dateKey_(x.values[c.date - 1], tz), start: start, end: end || (start &amp;&amp; plusHour_(start)),
-      centre: get('centre'), address: get('address'), map: get('map'), contact: get('contact'), places: slotsFrom_(get('places')),
+      centre: get('centre'), address: get('address'), map: get('map'), principal: get('principal'), contact: get('contact'), places: slotsFrom_(get('places')),
       cancelled: /cancel/i.test(get('status')), people: parseAssignees_(get('volunteers')), notice: get('notice'), notes: get('notes') };
   });
   return { sheet: sheet, cols: c, rows: rows, width: t.width };
@@ -514,7 +528,7 @@ function readSlots_(ss) {
 function pageSlot_(r, now) {
   var start = minutes_(r.date, r.start), end = minutes_(r.date, r.end);
   return { id: r.id, line: r.line, date: r.date, day: weekday_(r.date), start: r.start, end: r.end, centre: r.centre,
-    address: r.address, map: r.map, contact: r.contact, places: r.places, cancelled: r.cancelled, notes: r.notes,
+    address: r.address, map: r.map, principal: r.principal, contact: r.contact, places: r.places, cancelled: r.cancelled, notes: r.notes,
     people: r.people.map(function (p) { return { name: p.name, phone: p.phone, by: p.by }; }),
     remaining: Math.max(0, r.places - r.people.length), over: Math.max(0, r.people.length - r.places),
     started: now &gt;= start, ended: now &gt;= end, releaseClosed: start - now &lt; CONFIG.RELEASE_CLOSES_HOURS * 60 };
@@ -1040,6 +1054,10 @@ function norm_(s) { return String(s).toLowerCase().replace(/\s+/g, ' ').trim(); 
   .badge.over { background:#fde7e5; color:var(--err); }
   .card .where { margin-top:2px; }
   .card .notes { margin-top:4px; color:var(--muted); }
+  /* Contacts sit behind "Details" on phones and show without it on tablets and laptops, as on the tour page. */
+  .card .more { display:none; margin-top:4px; }
+  .card.open .more { display:block; }
+  @media (min-width: 701px) { .card .more { display:block; } button.dtl { display:none; } }
   .card a { color:var(--blue); }
   .people { margin:8px 0 0; padding-left:24px; }
   .people li.over { color:var(--err); }
@@ -1164,7 +1182,7 @@ function norm_(s) { return String(s).toLowerCase().replace(/\s+/g, ' ').trim(); 
     stBooked: 'booked', stOver: 'booked, over the limit', stAlready: 'already registered', stSkipped: 'skipped: {0}',
     rsCancelled: 'cancelled', rsStarted: 'already started', rsClosed: 'closed', rsFull: 'full', rsClash: 'time clash with {0}',
     nothing: 'Nothing can be booked on these dates.', done: 'Registered: {0} booking(s).', doneSkip: 'Skipped: {0}.',
-    released: 'Released: {0}.', sheetTime: 'Sheet time: {0}', demoBtn: 'Watch the demo', demoOpen: 'Open the video',
+    released: 'Released: {0}.', sheetTime: 'Sheet time: {0}', details: 'Details ▾', hideDetails: 'Hide details ▴', principal: 'Principal:', demoBtn: 'Watch the demo', demoOpen: 'Open the video',
     "language": "Language",
     "includeMe": "Include me too",
     "chooseSpeakers": "Choose speakers ({0} selected)",
@@ -1210,8 +1228,8 @@ function norm_(s) { return String(s).toLowerCase().replace(/\s+/g, ' ').trim(); 
     "srvNobodyRelease": "You have nobody to release on this date."
   },
   // Telugu and Hindi: not yet checked by native speakers.
-  te: {"demoBtn": "డెమో చూడండి", "demoOpen": "వీడియో తెరవండి", "title": "ఫాలో-అప్ ప్రోగ్రామ్", "subtitle": "సెషన్‌లకు పేరు నమోదు చేయండి", "yourName": "మీ పేరు", "mobile": "మొబైల్", "openOnly": "ఖాళీలు ఉన్నవి మాత్రమే", "prevWeek": "గత వారం", "nextWeek": "తర్వాతి వారం", "more": "ఇంకా 2 వారాలు చూపించండి", "clear": "ఎంపిక తీసేయండి", "register": "నమోదు చేయండి", "checkTitle": "దయచేసి సరిచూడండి", "back": "వెనక్కి", "confirm": "నిర్ధారించండి", "loading": "లోడ్ అవుతోంది…", "days": ["ఆది", "సోమ", "మంగళ", "బుధ", "గురు", "శుక్ర", "శని"], "months": ["జన", "ఫిబ్ర", "మార్చి", "ఏప్రి", "మే", "జూన్", "జులై", "ఆగ", "సెప్టెం", "అక్టో", "నవం", "డిసెం"], "monthsLong": ["జనవరి", "ఫిబ్రవరి", "మార్చి", "ఏప్రిల్", "మే", "జూన్", "జులై", "ఆగస్టు", "సెప్టెంబర్", "అక్టోబర్", "నవంబర్", "డిసెంబర్"], "today": "ఈరోజు", "past": "గడిచింది", "open": "{0} ఖాళీ", "openWord": "ఖాళీ", "full": "నిండింది", "you": "● మీరు", "thisWeek": "ఈ వారం", "left": "{1}లో {0} ఖాళీ", "fullBadge": "నిండింది", "overBy": "{0} ఎక్కువ", "closedBadge": "మూసివేశారు", "openMap": "మ్యాప్ తెరవండి", "via": "{0} ద్వారా", "select": "ఎంచుకోండి", "selected": "ఎంచుకున్నారు ✓", "release": "పేరు తీసేయండి", "releaseClosed": "పేరు తీసేయడం మూసివేశారు - 12 గంటల కంటే తక్కువ ఉంది.", "call": "దయచేసి {0}కి ఫోన్ చేయండి", "cancelled": "రద్దు చేశారు", "ended": "ముగిసింది", "started": "మొదలైంది", "closed": "మూసివేశారు", "fullTag": "నిండింది", "noSessions": "ఈ తేదీల్లో సెషన్‌లు లేవు.", "countSel": "{0} ఎంచుకున్నారు", "rep1d": "ఈ తేదీ మాత్రమే", "rep4": "ఇదే సెషన్, తర్వాతి 4 తేదీలు", "rep8": "ఇదే సెషన్, తర్వాతి 8 తేదీలు", "rep1day": "ఈ రోజు మాత్రమే", "rep7": "ఇదే సెషన్, తర్వాతి 7 రోజులు", "rep14": "ఇదే సెషన్, తర్వాతి 14 రోజులు", "repAll": "ఇదే సెషన్, మొత్తం ప్రోగ్రామ్", "needName": "దయచేసి ముందుగా మీ పేరు ఇవ్వండి.", "needMobile": "దయచేసి 10 అంకెల మొబైల్ నంబర్ ఇవ్వండి.", "youWord": "మీరు", "stBooked": "నమోదైంది", "stOver": "నమోదైంది, పరిమితి దాటింది", "stAlready": "ఇప్పటికే నమోదై ఉంది", "stSkipped": "వదిలేశాం: {0}", "rsCancelled": "రద్దు చేశారు", "rsStarted": "ఇప్పటికే మొదలైంది", "rsClosed": "మూసివేశారు", "rsFull": "నిండింది", "rsClash": "{0}తో సమయం కలుస్తోంది", "nothing": "ఈ తేదీల్లో ఏదీ నమోదు చేయలేము.", "done": "నమోదైంది: {0}.", "doneSkip": "వదిలేసినవి: {0}.", "released": "పేరు తీసేశాం: {0}.", "sheetTime": "షీట్ సమయం: {0}", "language": "భాష", "includeMe": "నన్ను కూడా చేర్చండి", "chooseSpeakers": "వక్తలను ఎంచుకోండి ({0} ఎంచుకున్నారు)", "searchNames": "పేర్లు వెతకండి", "othersPh": "ప్రతి లైన్‌లో ఒకరు: పేరు, తర్వాత 10 అంకెల మొబైల్\nRavi Kumar 9123456789\nAsha 9000000002", "noMobileYet": "(మొబైల్ ఇంకా సేవ్ కాలేదు)", "mobile10Ph": "10 అంకెల మొబైల్", "noMatch": "సరిపోలేదు.", "noSpeakers": "ఇంకా వక్తలు సేవ్ కాలేదు.", "whoMe": "ఎవరు: నేను మాత్రమే ▾", "whoN": "ఎవరు: {0} మంది ▾", "whoTitle": "ఎవరు వెళ్తున్నారు?", "othersLabel": "ఇతరులను నమోదు చేయండి", "whoDone": "సరే", "groupSel": "{0} మంది · {1} ఎంచుకున్నారు", "removeX": "{0}ను తీసేయండి", "releaseAll": "ఈ తేదీకి {0} మంది పేర్లూ తీసేయండి", "mineTitle": "నా నమోదులు", "mineCount": "{0} తేదీలు.", "mineNext": "తర్వాతిది: {0}", "show": "చూపించండి", "youOnly": "మీరు", "youPlus": "మీరు + ఇంకా {0} మంది", "othersOnly": "మీరు నమోదు చేసిన {0} మంది", "or": "లేదా", "cancelNotice": "⚠ రద్దు చేశారు: {0}. దయచేసి వెళ్ళకండి. మీ ఇతర తేదీలు మారలేదు.", "cancelOthers": "దీనికి మీరు {0}ను నమోదు చేశారు: దయచేసి వారికి చెప్పండి.", "lineBad": "\"ఇతరులను నమోదు చేయండి\"లో లైన్ {0}: పేరు తర్వాత 10 అంకెల మొబైల్ ఉండాలి, ఉదా. \"Ravi 9123456789\".", "nobody": "నమోదు చేయడానికి ఎవరూ లేరు: \"నన్ను కూడా చేర్చండి\" ఎంచుకోండి లేదా \"ఇతరులను నమోదు చేయండి\"లో పేర్లు చేర్చండి.", "srvBusy": "ఇప్పుడు చాలా మంది ఒకేసారి నమోదు చేస్తున్నారు. దయచేసి మళ్ళీ ప్రయత్నించండి.", "srvOnlyRemove": "{0} మాత్రమే {1}ను తొలగించగలరు.", "srvMax": "ఒకేసారి గరిష్ఠంగా {0} మందిని నమోదు చేయండి.", "srvNameLong": "పేరు చాలా పొడవుగా ఉంది.", "srvNameStart": "పేరు = + - లేదా @ తో మొదలవకూడదు.", "srvLineMobile": "\"ఇతరులను నమోదు చేయండి\"లో లైన్ {0} ({1}): దయచేసి 10 అంకెల మొబైల్ నంబర్ ఇవ్వండి.", "srvPick": "దయచేసి కనీసం ఒక తేదీ ఎంచుకోండి.", "srvGone": "ఆ తేదీ ఇప్పుడు జాబితాలో లేదు. దయచేసి పేజీని రిఫ్రెష్ చేయండి.", "srvTooMany": "ఇవి {0} నమోదులు ({1} మంది x {2} తేదీలు). ఒకేసారి గరిష్ఠంగా {3}. దయచేసి తక్కువ తేదీలు లేదా తక్కువ మందిని ఎంచుకోండి.", "srvReleaseClosed": "పేరు తీసేయడం మూసివేశారు: {0} గంటల కంటే తక్కువ సమయం ఉంది. దయచేసి నిర్వాహకులకు ఫోన్ చేయండి{1}.", "srvNotOnMe": "ఈ తేదీలో మీ పేరు లేదు.", "srvNotOn": "ఈ తేదీలో {0} పేరు లేదు.", "srvNobodyRelease": "ఈ తేదీలో మీరు తీసేయగల పేర్లు లేవు."},
-  hi: {"demoBtn": "डेमो देखें", "demoOpen": "वीडियो खोलें", "title": "फ़ॉलो-अप प्रोग्राम", "subtitle": "सत्रों के लिए पंजीकरण करें", "yourName": "आपका नाम", "mobile": "मोबाइल", "openOnly": "केवल खाली स्थान वाले", "prevWeek": "पिछला सप्ताह", "nextWeek": "अगला सप्ताह", "more": "2 सप्ताह और दिखाएँ", "clear": "चयन हटाएँ", "register": "पंजीकरण करें", "checkTitle": "कृपया जाँच लें", "back": "वापस", "confirm": "पक्का करें", "loading": "लोड हो रहा है…", "days": ["रवि", "सोम", "मंगल", "बुध", "गुरु", "शुक्र", "शनि"], "months": ["जन", "फ़र", "मार्च", "अप्रै", "मई", "जून", "जुला", "अग", "सित", "अक्टू", "नव", "दिस"], "monthsLong": ["जनवरी", "फ़रवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"], "today": "आज", "past": "बीता हुआ", "open": "{0} खाली", "openWord": "खाली", "full": "भरा", "you": "● आप", "thisWeek": "इस सप्ताह", "left": "{1} में से {0} खाली", "fullBadge": "भरा", "overBy": "{0} ज़्यादा", "closedBadge": "बंद", "openMap": "नक्शा खोलें", "via": "{0} द्वारा", "select": "चुनें", "selected": "चुना गया ✓", "release": "नाम हटाएँ", "releaseClosed": "नाम हटाना बंद - 12 घंटे से कम बचे हैं।", "call": "कृपया {0} को फ़ोन करें", "cancelled": "रद्द", "ended": "समाप्त", "started": "शुरू हो गया", "closed": "बंद", "fullTag": "भरा", "noSessions": "इन तारीख़ों में कोई सत्र नहीं।", "countSel": "{0} चुने गए", "rep1d": "केवल यह तारीख़", "rep4": "यही सत्र, अगली 4 तारीख़ें", "rep8": "यही सत्र, अगली 8 तारीख़ें", "rep1day": "केवल यह दिन", "rep7": "यही सत्र, अगले 7 दिन", "rep14": "यही सत्र, अगले 14 दिन", "repAll": "यही सत्र, पूरा प्रोग्राम", "needName": "कृपया पहले अपना नाम लिखें।", "needMobile": "कृपया 10 अंकों का मोबाइल नंबर डालें।", "youWord": "आप", "stBooked": "पंजीकृत", "stOver": "पंजीकृत, सीमा से ज़्यादा", "stAlready": "पहले से पंजीकृत", "stSkipped": "छोड़ा गया: {0}", "rsCancelled": "रद्द", "rsStarted": "पहले ही शुरू हो गया", "rsClosed": "बंद", "rsFull": "भरा", "rsClash": "{0} से समय टकराता है", "nothing": "इन तारीख़ों पर कुछ भी पंजीकृत नहीं हो सकता।", "done": "पंजीकृत: {0}।", "doneSkip": "छोड़े गए: {0}।", "released": "नाम हटाया गया: {0}।", "sheetTime": "शीट का समय: {0}", "language": "भाषा", "includeMe": "मुझे भी शामिल करें", "chooseSpeakers": "वक्ता चुनें ({0} चुने गए)", "searchNames": "नाम खोजें", "othersPh": "हर पंक्ति में एक व्यक्ति: नाम, फिर 10 अंकों का मोबाइल\nRavi Kumar 9123456789\nAsha 9000000002", "noMobileYet": "(मोबाइल अभी सहेजा नहीं गया)", "mobile10Ph": "10 अंकों का मोबाइल", "noMatch": "कोई मेल नहीं मिला।", "noSpeakers": "अभी कोई वक्ता सहेजा नहीं गया।", "whoMe": "कौन: केवल मैं ▾", "whoN": "कौन: {0} लोग ▾", "whoTitle": "कौन जा रहा है?", "othersLabel": "दूसरों का पंजीकरण करें", "whoDone": "ठीक है", "groupSel": "{0} लोग · {1} चुने गए", "removeX": "{0} को हटाएँ", "releaseAll": "इस तारीख़ के सभी {0} नाम हटाएँ", "mineTitle": "मेरे पंजीकरण", "mineCount": "{0} तारीख़ें।", "mineNext": "अगला: {0}", "show": "दिखाएँ", "youOnly": "आप", "youPlus": "आप + {0} और", "othersOnly": "आपके पंजीकृत {0} लोग", "or": "या", "cancelNotice": "⚠ रद्द: {0}। कृपया न जाएँ। आपकी बाकी तारीख़ें नहीं बदलीं।", "cancelOthers": "इसके लिए आपने {0} का पंजीकरण किया था: कृपया उन्हें बता दें।", "lineBad": "\"दूसरों का पंजीकरण करें\" की पंक्ति {0} में पहले नाम और फिर 10 अंकों का मोबाइल होना चाहिए, जैसे \"Ravi 9123456789\"।", "nobody": "पंजीकरण के लिए कोई नहीं है: \"मुझे भी शामिल करें\" चुनें या \"दूसरों का पंजीकरण करें\" में लोग जोड़ें।", "srvBusy": "अभी बहुत से लोग एक साथ पंजीकरण कर रहे हैं। कृपया फिर से कोशिश करें।", "srvOnlyRemove": "केवल {0} ही {1} को हटा सकते हैं।", "srvMax": "एक बार में अधिकतम {0} लोगों का पंजीकरण करें।", "srvNameLong": "नाम बहुत लंबा है।", "srvNameStart": "नाम = + - या @ से शुरू नहीं हो सकता।", "srvLineMobile": "\"दूसरों का पंजीकरण करें\" की पंक्ति {0} ({1}): कृपया 10 अंकों का मोबाइल नंबर डालें।", "srvPick": "कृपया कम से कम एक तारीख़ चुनें।", "srvGone": "वह तारीख़ अब सूची में नहीं है। कृपया पेज रिफ़्रेश करें।", "srvTooMany": "यह {0} पंजीकरण हैं ({1} लोग x {2} तारीख़ें)। एक बार में अधिकतम {3}। कृपया कम तारीख़ें या कम लोग चुनें।", "srvReleaseClosed": "नाम हटाना बंद: {0} घंटे से कम बचे हैं। कृपया आयोजक को फ़ोन करें{1}।", "srvNotOnMe": "इस तारीख़ पर आपका नाम नहीं है।", "srvNotOn": "इस तारीख़ पर {0} का नाम नहीं है।", "srvNobodyRelease": "इस तारीख़ पर हटाने के लिए आपका कोई नाम नहीं है।"} };
+  te: {"details": "వివరాలు ▾", "hideDetails": "వివరాలు దాచు ▴", "principal": "ప్రిన్సిపల్:", "demoBtn": "డెమో చూడండి", "demoOpen": "వీడియో తెరవండి", "title": "ఫాలో-అప్ ప్రోగ్రామ్", "subtitle": "సెషన్‌లకు పేరు నమోదు చేయండి", "yourName": "మీ పేరు", "mobile": "మొబైల్", "openOnly": "ఖాళీలు ఉన్నవి మాత్రమే", "prevWeek": "గత వారం", "nextWeek": "తర్వాతి వారం", "more": "ఇంకా 2 వారాలు చూపించండి", "clear": "ఎంపిక తీసేయండి", "register": "నమోదు చేయండి", "checkTitle": "దయచేసి సరిచూడండి", "back": "వెనక్కి", "confirm": "నిర్ధారించండి", "loading": "లోడ్ అవుతోంది…", "days": ["ఆది", "సోమ", "మంగళ", "బుధ", "గురు", "శుక్ర", "శని"], "months": ["జన", "ఫిబ్ర", "మార్చి", "ఏప్రి", "మే", "జూన్", "జులై", "ఆగ", "సెప్టెం", "అక్టో", "నవం", "డిసెం"], "monthsLong": ["జనవరి", "ఫిబ్రవరి", "మార్చి", "ఏప్రిల్", "మే", "జూన్", "జులై", "ఆగస్టు", "సెప్టెంబర్", "అక్టోబర్", "నవంబర్", "డిసెంబర్"], "today": "ఈరోజు", "past": "గడిచింది", "open": "{0} ఖాళీ", "openWord": "ఖాళీ", "full": "నిండింది", "you": "● మీరు", "thisWeek": "ఈ వారం", "left": "{1}లో {0} ఖాళీ", "fullBadge": "నిండింది", "overBy": "{0} ఎక్కువ", "closedBadge": "మూసివేశారు", "openMap": "మ్యాప్ తెరవండి", "via": "{0} ద్వారా", "select": "ఎంచుకోండి", "selected": "ఎంచుకున్నారు ✓", "release": "పేరు తీసేయండి", "releaseClosed": "పేరు తీసేయడం మూసివేశారు - 12 గంటల కంటే తక్కువ ఉంది.", "call": "దయచేసి {0}కి ఫోన్ చేయండి", "cancelled": "రద్దు చేశారు", "ended": "ముగిసింది", "started": "మొదలైంది", "closed": "మూసివేశారు", "fullTag": "నిండింది", "noSessions": "ఈ తేదీల్లో సెషన్‌లు లేవు.", "countSel": "{0} ఎంచుకున్నారు", "rep1d": "ఈ తేదీ మాత్రమే", "rep4": "ఇదే సెషన్, తర్వాతి 4 తేదీలు", "rep8": "ఇదే సెషన్, తర్వాతి 8 తేదీలు", "rep1day": "ఈ రోజు మాత్రమే", "rep7": "ఇదే సెషన్, తర్వాతి 7 రోజులు", "rep14": "ఇదే సెషన్, తర్వాతి 14 రోజులు", "repAll": "ఇదే సెషన్, మొత్తం ప్రోగ్రామ్", "needName": "దయచేసి ముందుగా మీ పేరు ఇవ్వండి.", "needMobile": "దయచేసి 10 అంకెల మొబైల్ నంబర్ ఇవ్వండి.", "youWord": "మీరు", "stBooked": "నమోదైంది", "stOver": "నమోదైంది, పరిమితి దాటింది", "stAlready": "ఇప్పటికే నమోదై ఉంది", "stSkipped": "వదిలేశాం: {0}", "rsCancelled": "రద్దు చేశారు", "rsStarted": "ఇప్పటికే మొదలైంది", "rsClosed": "మూసివేశారు", "rsFull": "నిండింది", "rsClash": "{0}తో సమయం కలుస్తోంది", "nothing": "ఈ తేదీల్లో ఏదీ నమోదు చేయలేము.", "done": "నమోదైంది: {0}.", "doneSkip": "వదిలేసినవి: {0}.", "released": "పేరు తీసేశాం: {0}.", "sheetTime": "షీట్ సమయం: {0}", "language": "భాష", "includeMe": "నన్ను కూడా చేర్చండి", "chooseSpeakers": "వక్తలను ఎంచుకోండి ({0} ఎంచుకున్నారు)", "searchNames": "పేర్లు వెతకండి", "othersPh": "ప్రతి లైన్‌లో ఒకరు: పేరు, తర్వాత 10 అంకెల మొబైల్\nRavi Kumar 9123456789\nAsha 9000000002", "noMobileYet": "(మొబైల్ ఇంకా సేవ్ కాలేదు)", "mobile10Ph": "10 అంకెల మొబైల్", "noMatch": "సరిపోలేదు.", "noSpeakers": "ఇంకా వక్తలు సేవ్ కాలేదు.", "whoMe": "ఎవరు: నేను మాత్రమే ▾", "whoN": "ఎవరు: {0} మంది ▾", "whoTitle": "ఎవరు వెళ్తున్నారు?", "othersLabel": "ఇతరులను నమోదు చేయండి", "whoDone": "సరే", "groupSel": "{0} మంది · {1} ఎంచుకున్నారు", "removeX": "{0}ను తీసేయండి", "releaseAll": "ఈ తేదీకి {0} మంది పేర్లూ తీసేయండి", "mineTitle": "నా నమోదులు", "mineCount": "{0} తేదీలు.", "mineNext": "తర్వాతిది: {0}", "show": "చూపించండి", "youOnly": "మీరు", "youPlus": "మీరు + ఇంకా {0} మంది", "othersOnly": "మీరు నమోదు చేసిన {0} మంది", "or": "లేదా", "cancelNotice": "⚠ రద్దు చేశారు: {0}. దయచేసి వెళ్ళకండి. మీ ఇతర తేదీలు మారలేదు.", "cancelOthers": "దీనికి మీరు {0}ను నమోదు చేశారు: దయచేసి వారికి చెప్పండి.", "lineBad": "\"ఇతరులను నమోదు చేయండి\"లో లైన్ {0}: పేరు తర్వాత 10 అంకెల మొబైల్ ఉండాలి, ఉదా. \"Ravi 9123456789\".", "nobody": "నమోదు చేయడానికి ఎవరూ లేరు: \"నన్ను కూడా చేర్చండి\" ఎంచుకోండి లేదా \"ఇతరులను నమోదు చేయండి\"లో పేర్లు చేర్చండి.", "srvBusy": "ఇప్పుడు చాలా మంది ఒకేసారి నమోదు చేస్తున్నారు. దయచేసి మళ్ళీ ప్రయత్నించండి.", "srvOnlyRemove": "{0} మాత్రమే {1}ను తొలగించగలరు.", "srvMax": "ఒకేసారి గరిష్ఠంగా {0} మందిని నమోదు చేయండి.", "srvNameLong": "పేరు చాలా పొడవుగా ఉంది.", "srvNameStart": "పేరు = + - లేదా @ తో మొదలవకూడదు.", "srvLineMobile": "\"ఇతరులను నమోదు చేయండి\"లో లైన్ {0} ({1}): దయచేసి 10 అంకెల మొబైల్ నంబర్ ఇవ్వండి.", "srvPick": "దయచేసి కనీసం ఒక తేదీ ఎంచుకోండి.", "srvGone": "ఆ తేదీ ఇప్పుడు జాబితాలో లేదు. దయచేసి పేజీని రిఫ్రెష్ చేయండి.", "srvTooMany": "ఇవి {0} నమోదులు ({1} మంది x {2} తేదీలు). ఒకేసారి గరిష్ఠంగా {3}. దయచేసి తక్కువ తేదీలు లేదా తక్కువ మందిని ఎంచుకోండి.", "srvReleaseClosed": "పేరు తీసేయడం మూసివేశారు: {0} గంటల కంటే తక్కువ సమయం ఉంది. దయచేసి నిర్వాహకులకు ఫోన్ చేయండి{1}.", "srvNotOnMe": "ఈ తేదీలో మీ పేరు లేదు.", "srvNotOn": "ఈ తేదీలో {0} పేరు లేదు.", "srvNobodyRelease": "ఈ తేదీలో మీరు తీసేయగల పేర్లు లేవు."},
+  hi: {"details": "विवरण ▾", "hideDetails": "विवरण छिपाएँ ▴", "principal": "प्रधानाचार्य:", "demoBtn": "डेमो देखें", "demoOpen": "वीडियो खोलें", "title": "फ़ॉलो-अप प्रोग्राम", "subtitle": "सत्रों के लिए पंजीकरण करें", "yourName": "आपका नाम", "mobile": "मोबाइल", "openOnly": "केवल खाली स्थान वाले", "prevWeek": "पिछला सप्ताह", "nextWeek": "अगला सप्ताह", "more": "2 सप्ताह और दिखाएँ", "clear": "चयन हटाएँ", "register": "पंजीकरण करें", "checkTitle": "कृपया जाँच लें", "back": "वापस", "confirm": "पक्का करें", "loading": "लोड हो रहा है…", "days": ["रवि", "सोम", "मंगल", "बुध", "गुरु", "शुक्र", "शनि"], "months": ["जन", "फ़र", "मार्च", "अप्रै", "मई", "जून", "जुला", "अग", "सित", "अक्टू", "नव", "दिस"], "monthsLong": ["जनवरी", "फ़रवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"], "today": "आज", "past": "बीता हुआ", "open": "{0} खाली", "openWord": "खाली", "full": "भरा", "you": "● आप", "thisWeek": "इस सप्ताह", "left": "{1} में से {0} खाली", "fullBadge": "भरा", "overBy": "{0} ज़्यादा", "closedBadge": "बंद", "openMap": "नक्शा खोलें", "via": "{0} द्वारा", "select": "चुनें", "selected": "चुना गया ✓", "release": "नाम हटाएँ", "releaseClosed": "नाम हटाना बंद - 12 घंटे से कम बचे हैं।", "call": "कृपया {0} को फ़ोन करें", "cancelled": "रद्द", "ended": "समाप्त", "started": "शुरू हो गया", "closed": "बंद", "fullTag": "भरा", "noSessions": "इन तारीख़ों में कोई सत्र नहीं।", "countSel": "{0} चुने गए", "rep1d": "केवल यह तारीख़", "rep4": "यही सत्र, अगली 4 तारीख़ें", "rep8": "यही सत्र, अगली 8 तारीख़ें", "rep1day": "केवल यह दिन", "rep7": "यही सत्र, अगले 7 दिन", "rep14": "यही सत्र, अगले 14 दिन", "repAll": "यही सत्र, पूरा प्रोग्राम", "needName": "कृपया पहले अपना नाम लिखें।", "needMobile": "कृपया 10 अंकों का मोबाइल नंबर डालें।", "youWord": "आप", "stBooked": "पंजीकृत", "stOver": "पंजीकृत, सीमा से ज़्यादा", "stAlready": "पहले से पंजीकृत", "stSkipped": "छोड़ा गया: {0}", "rsCancelled": "रद्द", "rsStarted": "पहले ही शुरू हो गया", "rsClosed": "बंद", "rsFull": "भरा", "rsClash": "{0} से समय टकराता है", "nothing": "इन तारीख़ों पर कुछ भी पंजीकृत नहीं हो सकता।", "done": "पंजीकृत: {0}।", "doneSkip": "छोड़े गए: {0}।", "released": "नाम हटाया गया: {0}।", "sheetTime": "शीट का समय: {0}", "language": "भाषा", "includeMe": "मुझे भी शामिल करें", "chooseSpeakers": "वक्ता चुनें ({0} चुने गए)", "searchNames": "नाम खोजें", "othersPh": "हर पंक्ति में एक व्यक्ति: नाम, फिर 10 अंकों का मोबाइल\nRavi Kumar 9123456789\nAsha 9000000002", "noMobileYet": "(मोबाइल अभी सहेजा नहीं गया)", "mobile10Ph": "10 अंकों का मोबाइल", "noMatch": "कोई मेल नहीं मिला।", "noSpeakers": "अभी कोई वक्ता सहेजा नहीं गया।", "whoMe": "कौन: केवल मैं ▾", "whoN": "कौन: {0} लोग ▾", "whoTitle": "कौन जा रहा है?", "othersLabel": "दूसरों का पंजीकरण करें", "whoDone": "ठीक है", "groupSel": "{0} लोग · {1} चुने गए", "removeX": "{0} को हटाएँ", "releaseAll": "इस तारीख़ के सभी {0} नाम हटाएँ", "mineTitle": "मेरे पंजीकरण", "mineCount": "{0} तारीख़ें।", "mineNext": "अगला: {0}", "show": "दिखाएँ", "youOnly": "आप", "youPlus": "आप + {0} और", "othersOnly": "आपके पंजीकृत {0} लोग", "or": "या", "cancelNotice": "⚠ रद्द: {0}। कृपया न जाएँ। आपकी बाकी तारीख़ें नहीं बदलीं।", "cancelOthers": "इसके लिए आपने {0} का पंजीकरण किया था: कृपया उन्हें बता दें।", "lineBad": "\"दूसरों का पंजीकरण करें\" की पंक्ति {0} में पहले नाम और फिर 10 अंकों का मोबाइल होना चाहिए, जैसे \"Ravi 9123456789\"।", "nobody": "पंजीकरण के लिए कोई नहीं है: \"मुझे भी शामिल करें\" चुनें या \"दूसरों का पंजीकरण करें\" में लोग जोड़ें।", "srvBusy": "अभी बहुत से लोग एक साथ पंजीकरण कर रहे हैं। कृपया फिर से कोशिश करें।", "srvOnlyRemove": "केवल {0} ही {1} को हटा सकते हैं।", "srvMax": "एक बार में अधिकतम {0} लोगों का पंजीकरण करें।", "srvNameLong": "नाम बहुत लंबा है।", "srvNameStart": "नाम = + - या @ से शुरू नहीं हो सकता।", "srvLineMobile": "\"दूसरों का पंजीकरण करें\" की पंक्ति {0} ({1}): कृपया 10 अंकों का मोबाइल नंबर डालें।", "srvPick": "कृपया कम से कम एक तारीख़ चुनें।", "srvGone": "वह तारीख़ अब सूची में नहीं है। कृपया पेज रिफ़्रेश करें।", "srvTooMany": "यह {0} पंजीकरण हैं ({1} लोग x {2} तारीख़ें)। एक बार में अधिकतम {3}। कृपया कम तारीख़ें या कम लोग चुनें।", "srvReleaseClosed": "नाम हटाना बंद: {0} घंटे से कम बचे हैं। कृपया आयोजक को फ़ोन करें{1}।", "srvNotOnMe": "इस तारीख़ पर आपका नाम नहीं है।", "srvNotOn": "इस तारीख़ पर {0} का नाम नहीं है।", "srvNobodyRelease": "इस तारीख़ पर हटाने के लिए आपका कोई नाम नहीं है।"} };
   var lang = 'en';
   function t(key) {
     var s = (TEXT[lang] &amp;&amp; TEXT[lang][key] != null ? TEXT[lang][key] : TEXT.en[key]);
@@ -1231,6 +1249,7 @@ function norm_(s) { return String(s).toLowerCase().replace(/\s+/g, ' ').trim(); 
   function clock(hhmm) { var h = +hhmm.slice(0, 2); return (h % 12 || 12) + ':' + hhmm.slice(3) + ' ' + (h &lt; 12 ? t('am') : t('pm')); }
 
   var nameInput = $('name'), mobileInput = $('mobile'), openOnly = $('openOnly');
+  var openDtl = {}; // dates whose "Details" are open on a phone; kept across the 15-second refresh
   var state = null, sel = {}, weekStart = '', listEnd = '', rangeEnd = '', busy = false, scrollTo = '';
   [[nameInput, 'followupName'], [mobileInput, 'followupMobile']].forEach(function (p) {
     try { p[0].value = localStorage.getItem(p[1]) || ''; } catch (e) {}
@@ -1433,7 +1452,7 @@ function norm_(s) { return String(s).toLowerCase().replace(/\s+/g, ' ').trim(); 
   }
 
   function card(s) {
-    var cls = 'card' + (sel[s.id] ? ' sel' : '') + (mine(s) ? ' mine' : '') + (s.cancelled ? ' cancelled' : '') + (s.ended ? ' ended' : '');
+    var cls = 'card' + (openDtl[s.id] ? ' open' : '') + (sel[s.id] ? ' sel' : '') + (mine(s) ? ' mine' : '') + (s.cancelled ? ' cancelled' : '') + (s.ended ? ' ended' : '');
     var badge = s.cancelled ? '' : s.places &lt;= 0 ? '&lt;span class="badge full"&gt;' + t('closedBadge') + '&lt;/span&gt;' :
       s.over ? '&lt;span class="badge over"&gt;' + t('overBy', s.over) + '&lt;/span&gt;' :
       !s.remaining ? '&lt;span class="badge full"&gt;' + t('fullBadge') + '&lt;/span&gt;' : '&lt;span class="badge"&gt;' + t('left', s.remaining, s.places) + '&lt;/span&gt;';
@@ -1462,13 +1481,18 @@ function norm_(s) { return String(s).toLowerCase().replace(/\s+/g, ' ').trim(); 
     return '&lt;article class="' + cls + '" data-id="' + esc(s.id) + '"&gt;&lt;div class="r1"&gt;&lt;span class="time"&gt;' + clock(s.start) + ' – ' + clock(s.end) +
       '&lt;/span&gt;' + badge + '&lt;/div&gt;&lt;div class="where"&gt;&lt;b&gt;' + esc(s.centre) + '&lt;/b&gt;' + (s.address ? ' · ' + esc(s.address) : '') + '&lt;/div&gt;' +
       (/^https?:\/\//i.test(s.map) ? '&lt;div&gt;&lt;a href="' + esc(s.map) + '" target="_blank" rel="noopener noreferrer"&gt;' + t('openMap') + '&lt;/a&gt;&lt;/div&gt;' : '') +
-      (s.notes ? '&lt;div class="notes"&gt;' + esc(s.notes) + '&lt;/div&gt;' : '') + (people ? '&lt;ol class="people"&gt;' + people + '&lt;/ol&gt;' : '') +
-      '&lt;div class="act"&gt;' + act + '&lt;/div&gt;&lt;/article&gt;';
+      (s.notes ? '&lt;div class="notes"&gt;' + esc(s.notes) + '&lt;/div&gt;' : '') +
+      (s.principal ? '&lt;div class="more"&gt;' + esc(t('principal')) + ' ' + telLink(s.principal) + '&lt;/div&gt;' : '') + (people ? '&lt;ol class="people"&gt;' + people + '&lt;/ol&gt;' : '') +
+      '&lt;div class="act"&gt;' + act + (s.principal ? '&lt;button class="light dtl" data-dtl="' + esc(s.id) + '"&gt;' + t(openDtl[s.id] ? 'hideDetails' : 'details') + '&lt;/button&gt;' : '') +
+      '&lt;/div&gt;&lt;/article&gt;';
+  }
+  function telLink(text) { // the whole text, tappable to call when it holds a phone number
+    var m = /\+?\d[\d\s\-]{8,}\d/.exec(text);
+    return m ? '&lt;a href="tel:' + m[0].replace(/[^\d+]/g, '') + '"&gt;' + esc(text) + '&lt;/a&gt;' : esc(text);
   }
   function contact(text) {
-    var m = /\+?\d[\d\s\-]{8,}\d/.exec(text);
     var parts = t('call', '\u0000').split('\u0000');
-    return esc(parts[0]) + (m ? '&lt;a href="tel:' + m[0].replace(/[^\d+]/g, '') + '"&gt;' + esc(text) + '&lt;/a&gt;' : esc(text)) + esc(parts[1] || '');
+    return esc(parts[0]) + telLink(text) + esc(parts[1] || '');
   }
 
   function renderBar() {
@@ -1546,6 +1570,7 @@ function norm_(s) { return String(s).toLowerCase().replace(/\s+/g, ' ').trim(); 
       if (!nameInput.value.trim()) { note(t('needName'), true); return; }
       run('releaseSlot', [b.getAttribute('data-release'), nameInput.value], function (r) { note(t('released', r.removed.join(', '))); refresh(); });
     }
+    else if (b.hasAttribute('data-dtl')) { var d = b.getAttribute('data-dtl'); openDtl[d] = !openDtl[d]; render(); }
     else if (b.hasAttribute('data-x')) {
       run('releaseSlot', [b.getAttribute('data-x'), nameInput.value, b.getAttribute('data-person')], function (r) { note(t('released', r.removed.join(', '))); refresh(); });
     }
@@ -1617,15 +1642,16 @@ function norm_(s) { return String(s).toLowerCase().replace(/\s+/g, ' ').trim(); 
 <p>Open the <b>Program plan</b> tab. Type <b>one line per regular session</b>. Leave <b>Line ID</b> empty: the script fills it in.</p>
 <div class="table-wrap"><table>
   <tr><th>Column</th><th>What to type</th><th>Example</th></tr>
-  <tr><td>Day</td><td>Pick from the list (Monday…Sunday, or Every day)</td><td>Saturday</td></tr>
-  <tr><td>Start / End</td><td>Time with AM or PM (End blank = 1 hour)</td><td>6:30 PM / 7:30 PM</td></tr>
+  <tr><td>Day of the Week</td><td>Pick <b>one</b> from the list (Monday…Sunday, or Every day)</td><td>Saturday</td></tr>
+  <tr><td>Start Time / End Time</td><td>Time with AM or PM (End Time blank = 1 hour)</td><td>6:30 PM / 7:30 PM</td></tr>
   <tr><td>Frequency</td><td>Pick from the list (see below)</td><td>Weekly</td></tr>
-  <tr><td>Week of month</td><td>Only for "Monthly, same weekday": 1st, 2nd, 3rd, 4th or last</td><td>2nd</td></tr>
-  <tr><td>Day of month</td><td>Only for "Monthly, same date": 1 to 31</td><td>15</td></tr>
-  <tr><td>Centre, Address, Google map</td><td>Where it happens; the map link opens on volunteers' phones</td><td>Ameerpet Centre</td></tr>
-  <tr><td>Places</td><td>Volunteers needed per date (blank = 1, 0 = closed)</td><td>4</td></tr>
+  <tr><td>Week of month</td><td>Only for "Monthly, same weekday": <b>one</b> of 1st, 2nd, 3rd, 4th, 5th or last (5th: months without one are skipped)</td><td>2nd</td></tr>
+  <tr><td>Day of month</td><td>Only for "Monthly, same date": <b>one</b> number, 1 to 31</td><td>15</td></tr>
+  <tr><td>Institution Name, Address, Google map</td><td>Where it happens; the map link opens on volunteers' phones</td><td>Ameerpet Centre</td></tr>
+  <tr><td>Volunteers Needed</td><td>Volunteers needed per date (blank = 1, 0 = closed)</td><td>4</td></tr>
   <tr><td>From / Until</td><td>First and last date. Until blank = always keep 12 weeks of dates ahead</td><td>1 Nov 2026 / 31 Mar 2027</td></tr>
-  <tr><td>Contact</td><td>Organiser name and phone, shown to volunteers when release is closed</td><td>Lakshmi 9000000009</td></tr>
+  <tr><td>Principal Contact</td><td>Principal name and phone, shown on each date under <b>Details</b></td><td>Mr Rao 9000000007</td></tr>
+  <tr><td>Sahaji Contact</td><td>Organiser name and phone, shown to volunteers when release is closed</td><td>Lakshmi 9000000009</td></tr>
   <tr><td>Notes</td><td>Anything for organisers (not shown on the page)</td><td></td></tr>
 </table></div>
 <div class="table-wrap"><table>
@@ -1639,7 +1665,9 @@ function norm_(s) { return String(s).toLowerCase().replace(/\s+/g, ' ').trim(); 
   <tr><td>One-off</td><td>Just the From date</td></tr>
 </table></div>
 <div class="box warn">Type times with <b>AM or PM</b>. If you type <code>6:30</code> the sheet shows <code>6:30 AM</code>: change it
-  if you meant evening. Never copy a line together with its Line ID; clear the Line ID of a copied line.</div>
+  if you meant evening. Never copy a line together with its Line ID; clear the Line ID of a copied line.<br>
+  <b>One value per line:</b> for a session on Monday and Thursday, or on the 1st and 3rd Saturday, type two lines. A line with a list
+  ("Mon, Thu", "1st, 3rd", "1, 15") makes no dates, and the Update report says so.</div>
 
 <h2 id="p7"><span class="step-num">7</span>Make the dates</h2>
 <ol>
@@ -1651,13 +1679,13 @@ function norm_(s) { return String(s).toLowerCase().replace(/\s+/g, ' ').trim(); 
 <p>The update also runs by itself <b>every Sunday night</b> (adds new dates for lines without an Until date, and applies plan changes).</p>
 <div class="table-wrap"><table>
   <tr><th>Slots columns</th><th>Who changes them</th></tr>
-  <tr><td>Status (Open / Cancelled), Places, Contact, Notes</td><td><b>Organisers</b> may change these for one date</td></tr>
-  <tr><td>Slot ID, Date, Day, Start, End, Centre, Address, Map</td><td>The script (change the plan line instead)</td></tr>
+  <tr><td>Status (Open / Cancelled), Volunteers Needed, Principal Contact, Sahaji Contact, Notes</td><td><b>Organisers</b> may change these for one date</td></tr>
+  <tr><td>Slot ID, Date, Day, Start Time, End Time, Institution Name, Address, Map</td><td>The script (change the plan line instead)</td></tr>
   <tr><td>Volunteers, Still needed</td><td>The page (fix by hand only when needed; one person per line, <code>Name 9876543210</code>)</td></tr>
   <tr><td>Cancellation notice sent</td><td>The WhatsApp-list menu</td></tr>
 </table></div>
 <div class="box warn"><b>Never delete a Slots row.</b> To drop a date, set its Status to <b>Cancelled</b> (a deleted row comes back on
-  the next update). A one-off date can be typed into an empty Slots row (Date, Start, End, Centre, Places); it gets its Slot ID
+  the next update). A one-off date can be typed into an empty Slots row (Date, Start Time, End Time, Institution Name, Volunteers Needed); it gets its Slot ID
   and appears on the page after the next <b>Update slots now</b>.</div>
 
 <h2 id="p8"><span class="step-num">8</span>Publish the page</h2>

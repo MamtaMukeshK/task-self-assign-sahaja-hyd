@@ -133,15 +133,16 @@ Takes about 20 minutes on a laptop or desktop computer (not a phone).</p>
 <p>Open the <b>Program plan</b> tab. Type <b>one line per regular session</b>. Leave <b>Line ID</b> empty: the script fills it in.</p>
 <div class="table-wrap"><table>
   <tr><th>Column</th><th>What to type</th><th>Example</th></tr>
-  <tr><td>Day</td><td>Pick from the list (Monday…Sunday, or Every day)</td><td>Saturday</td></tr>
-  <tr><td>Start / End</td><td>Time with AM or PM (End blank = 1 hour)</td><td>6:30 PM / 7:30 PM</td></tr>
+  <tr><td>Day of the Week</td><td>Pick <b>one</b> from the list (Monday…Sunday, or Every day)</td><td>Saturday</td></tr>
+  <tr><td>Start Time / End Time</td><td>Time with AM or PM (End Time blank = 1 hour)</td><td>6:30 PM / 7:30 PM</td></tr>
   <tr><td>Frequency</td><td>Pick from the list (see below)</td><td>Weekly</td></tr>
-  <tr><td>Week of month</td><td>Only for "Monthly, same weekday": 1st, 2nd, 3rd, 4th or last</td><td>2nd</td></tr>
-  <tr><td>Day of month</td><td>Only for "Monthly, same date": 1 to 31</td><td>15</td></tr>
-  <tr><td>Centre, Address, Google map</td><td>Where it happens; the map link opens on volunteers' phones</td><td>Ameerpet Centre</td></tr>
-  <tr><td>Places</td><td>Volunteers needed per date (blank = 1, 0 = closed)</td><td>4</td></tr>
+  <tr><td>Week of month</td><td>Only for "Monthly, same weekday": <b>one</b> of 1st, 2nd, 3rd, 4th, 5th or last (5th: months without one are skipped)</td><td>2nd</td></tr>
+  <tr><td>Day of month</td><td>Only for "Monthly, same date": <b>one</b> number, 1 to 31</td><td>15</td></tr>
+  <tr><td>Institution Name, Address, Google map</td><td>Where it happens; the map link opens on volunteers' phones</td><td>Ameerpet Centre</td></tr>
+  <tr><td>Volunteers Needed</td><td>Volunteers needed per date (blank = 1, 0 = closed)</td><td>4</td></tr>
   <tr><td>From / Until</td><td>First and last date. Until blank = always keep 12 weeks of dates ahead</td><td>1 Nov 2026 / 31 Mar 2027</td></tr>
-  <tr><td>Contact</td><td>Organiser name and phone, shown to volunteers when release is closed</td><td>Lakshmi 9000000009</td></tr>
+  <tr><td>Principal Contact</td><td>Principal name and phone, shown on each date under <b>Details</b></td><td>Mr Rao 9000000007</td></tr>
+  <tr><td>Sahaji Contact</td><td>Organiser name and phone, shown to volunteers when release is closed</td><td>Lakshmi 9000000009</td></tr>
   <tr><td>Notes</td><td>Anything for organisers (not shown on the page)</td><td></td></tr>
 </table></div>
 <div class="table-wrap"><table>
@@ -155,7 +156,9 @@ Takes about 20 minutes on a laptop or desktop computer (not a phone).</p>
   <tr><td>One-off</td><td>Just the From date</td></tr>
 </table></div>
 <div class="box warn">Type times with <b>AM or PM</b>. If you type <code>6:30</code> the sheet shows <code>6:30 AM</code>: change it
-  if you meant evening. Never copy a line together with its Line ID; clear the Line ID of a copied line.</div>
+  if you meant evening. Never copy a line together with its Line ID; clear the Line ID of a copied line.<br>
+  <b>One value per line:</b> for a session on Monday and Thursday, or on the 1st and 3rd Saturday, type two lines. A line with a list
+  ("Mon, Thu", "1st, 3rd", "1, 15") makes no dates, and the Update report says so.</div>
 
 <h2 id="p7"><span class="step-num">7</span>Make the dates</h2>
 <ol>
@@ -167,13 +170,13 @@ Takes about 20 minutes on a laptop or desktop computer (not a phone).</p>
 <p>The update also runs by itself <b>every Sunday night</b> (adds new dates for lines without an Until date, and applies plan changes).</p>
 <div class="table-wrap"><table>
   <tr><th>Slots columns</th><th>Who changes them</th></tr>
-  <tr><td>Status (Open / Cancelled), Places, Contact, Notes</td><td><b>Organisers</b> may change these for one date</td></tr>
-  <tr><td>Slot ID, Date, Day, Start, End, Centre, Address, Map</td><td>The script (change the plan line instead)</td></tr>
+  <tr><td>Status (Open / Cancelled), Volunteers Needed, Principal Contact, Sahaji Contact, Notes</td><td><b>Organisers</b> may change these for one date</td></tr>
+  <tr><td>Slot ID, Date, Day, Start Time, End Time, Institution Name, Address, Map</td><td>The script (change the plan line instead)</td></tr>
   <tr><td>Volunteers, Still needed</td><td>The page (fix by hand only when needed; one person per line, <code>Name 9876543210</code>)</td></tr>
   <tr><td>Cancellation notice sent</td><td>The WhatsApp-list menu</td></tr>
 </table></div>
 <div class="box warn"><b>Never delete a Slots row.</b> To drop a date, set its Status to <b>Cancelled</b> (a deleted row comes back on
-  the next update). A one-off date can be typed into an empty Slots row (Date, Start, End, Centre, Places); it gets its Slot ID
+  the next update). A one-off date can be typed into an empty Slots row (Date, Start Time, End Time, Institution Name, Volunteers Needed); it gets its Slot ID
   and appears on the page after the next <b>Update slots now</b>.</div>
 
 <h2 id="p8"><span class="step-num">8</span>Publish the page</h2>
