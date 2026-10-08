@@ -13,9 +13,10 @@ every session: replace "Where things stand" and "Next steps", and add to "Learni
 | Follow-up stage 2a (page) | **Built and tested** in a browser against the simulated sheet, not run on real Google: `followup/Index.html` + `doGet` + `test/followup.page.test.js`. One-week calendar, date list (2 weeks, "Show 2 more weeks"), cards, select several dates, repeat, confirmation list, Release, 12-hour rule, phone/tablet/laptop. English only. |
 | Follow-up stage 2b (page) | **Built and tested** (same limits as 2a): "Who" button (speaker list with first-time mobile, typed others, Include me too), group confirmation, ✕ per person you registered, "Release all N for this date", My registrations (count + next date + Show), red cancellation notice (names the people you registered), language switch with Telugu and Hindi (**not checked by native speakers**), server messages translated. Page version followup-2026-10-08.2. |
 | Follow-up stage 3 | **Built and tested** (simulated): sheet menu Program -> "Cancellation WhatsApp list" (dialog, one green Open WhatsApp button per affected person, own mobile) and "Mark cancellation notices as sent" (Yes/No naming the dates); both need the sheet's menu and return nothing, so the public link can't use them. Setup guide `followup/SETUP_GUIDE.html` (13 parts, Copy buttons) built by `tools/build_guide.py` from `tools/followup_guide_template.html`. "Who" button moved to the top under Mobile (user request). Version followup-2026-10-08.3. |
+| Follow-up columns (2026-10-08, user's sample) | Program plan titles renamed by the user: Day of the Week, Start Time, End Time, Institution Name, Volunteers Needed, **Principal Contact** (new; shown under "Details" on each card - phones need a tap, tablets/laptops show it), Sahaji Contact (was Contact: shown when release is closed). Slots titles renamed to match. Old titles still accepted (`COL_ALIASES`). **One value per line** (user's choice): lists in Day of the Week / Week of month / Day of month are refused and listed in the Update report (they used to be silently cut to one value - a stage-1 bug). Week of month accepts 5th (months without one skipped) as well as last. Version followup-2026-10-08.4. |
 | Follow-up stages 4, 4b | **Started 2026-10-08**: demo button + player on the page (copied from the tour page; hidden while `DEMO_VIDEO_URLS` is empty); narration and captions drafted in `docs/followup/demo-script.md` (A: Follow-up video en/te/hi, B: one Ongoing programs scene added to the tour video, C: organiser video, English). **Wording approved by the user 2026-10-08 (as written). Recording waits for the user's real-setup report** (their choice, so the videos show the page as it really looks). |
 | Branch | `claude/vibrant-planck-gsxjay`, pushed, up to date. No pull request (the user has not asked for one). |
-| Tests | `cd test && npm install && npm test`: 89 tests (77 tour page + 9 Follow-up server + 3 Follow-up page/guide), all passing on 2026-10-08. |
+| Tests | `cd test && npm install && npm test`: 90 tests (77 tour page + 10 Follow-up server + 3 Follow-up page/guide), passing on 2026-10-08. **Known intermittent:** the tour "demo video button" browser test failed in 2 of 4 full runs (passes alone; tour files untouched) - suggested as its own task; don't treat it as caused by Follow-up work, but don't ignore it either. |
 
 ## 2. Waiting on the user (do not build past these without an answer)
 1. ~~Confirm the 5 stage-1 assumptions~~ **All 5 confirmed by the user 2026-10-08** (details in `docs/followup/STAGE1_PLAN.md`):
@@ -136,6 +137,13 @@ every session: replace "Where things stand" and "Next steps", and add to "Learni
   actual elements (links) instead.
 - Guide templates: `tools/followup_guide_template.html` reuses the tour guide's head/style/Copy-button script
   (assembled once by a script); `tools/build_guide.py` builds both guides; a browser test checks the Copy boxes equal the files.
+
+- Check how the code treats input it doesn't expect, not only valid input: lists in one-value columns were silently cut
+  to their first value with nothing in the Update report (found 2026-10-08 by trying them). Refuse loudly instead.
+- Files the user uploads may hold real phone numbers: copy them into their own scratch folder, read with `python3 -I`,
+  take only the structure (column titles), and never commit their data. Keep made-up data in the repository sample.
+- When a full test run fails a test that passes alone and whose files are untouched, run the full suite a few more
+  times, record the rate, and raise it (suggested task) rather than calling it a flake and moving on.
 
 **Stage 3 cost** about 40,000 tokens. **Stage 2b cost** about 65,000 tokens. **Stage 2a cost** about 60,000 tokens (estimate for all of stage 2: 60,000-85,000), helped by reading only the needed
 parts of the tour `Index.html` with grep/sed and writing the page in one pass from the agreed mock-up.
